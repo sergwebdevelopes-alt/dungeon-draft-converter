@@ -11,11 +11,20 @@ const FOUNDRY_DIR = 'FOUNDRY_VTT_DD2VTT';
 const JPEG_QUALITY = 80;
 const WEBP_QUALITY = 80;
 const MAX_OUTPUT_PIXELS = 200_000_000;
-const LOGO_SIZE_RATIO = 0.1;
-const LOGO_MARGIN_RATIO = 0.03;
+
+const LOGO_LIMITS = {
+  size: { min: 2, max: 20, step: 1, default: 10 },
+  margin: { min: 0, max: 5, step: 0.5, default: 3 },
+} as const;
+
+type LogoSetting = keyof typeof LOGO_LIMITS;
 
 class MapTooLargeError extends Error {
   name = 'MapTooLargeError';
+}
+
+class InvalidLogoPlacementError extends Error {
+  name = 'InvalidLogoPlacementError';
 }
 
 interface FormatPreset {
@@ -35,10 +44,16 @@ const VARIANTS = ['NoGrid', 'Grid'] as const;
 
 type Variant = (typeof VARIANTS)[number];
 
+interface LogoOptions {
+  image: Buffer;
+  size: number;
+  margin: number;
+}
+
 interface ConvertOptions {
   presets?: readonly FormatPreset[];
   variants?: readonly Variant[];
-  logo?: Buffer;
+  logo?: LogoOptions;
 }
 
 interface OutputFile {
@@ -83,15 +98,24 @@ function getOutputSize(
   return { width, height };
 }
 
+function checkLogoPercent(setting: LogoSetting, value: number): void {
+  const { min, max } = LOGO_LIMITS[setting];
+  if (!Number.isFinite(value) || value < min || value > max) {
+    throw new InvalidLogoPlacementError(
+      `Logo ${setting} must be a number between ${min}% and ${max}%.`,
+    );
+  }
+}
+
 async function renderLogo(
-  logo: Buffer,
+  logo: LogoOptions,
   mapSize: Size,
 ): Promise<OverlayOptions> {
   const shorterSide = Math.min(mapSize.width, mapSize.height);
-  const box = Math.max(1, Math.round(shorterSide * LOGO_SIZE_RATIO));
-  const margin = Math.round(shorterSide * LOGO_MARGIN_RATIO);
+  const box = Math.max(1, Math.round((shorterSide * logo.size) / 100));
+  const margin = Math.round((shorterSide * logo.margin) / 100);
 
-  const { data, info } = await sharp(logo)
+  const { data, info } = await sharp(logo.image)
     .autoOrient()
     .resize(box, box, { fit: 'inside' })
     .png()
@@ -99,8 +123,8 @@ async function renderLogo(
 
   return {
     input: data,
-    left: mapSize.width - info.width - margin,
-    top: mapSize.height - info.height - margin,
+    left: Math.max(0, mapSize.width - info.width - margin),
+    top: Math.max(0, mapSize.height - info.height - margin),
   };
 }
 
@@ -110,7 +134,7 @@ async function convertImage(options: {
   size: Size;
   resize: boolean;
   withGrid: boolean;
-  logo?: Buffer;
+  logo?: LogoOptions;
 }): Promise<Buffer> {
   const { buffer, preset, size, resize, withGrid, logo } = options;
 
@@ -151,6 +175,11 @@ async function convertMap(
   map: LoadedMap,
   { presets = FORMAT_PRESETS, variants = VARIANTS, logo }: ConvertOptions = {},
 ): Promise<OutputFile[]> {
+  if (logo) {
+    checkLogoPercent('size', logo.size);
+    checkLogoPercent('margin', logo.margin);
+  }
+
   const sourceSize = await getImageDimensions(map.buffer);
   const canDrawGrid = map.pixelsPerGrid !== undefined;
   const availableVariants = canDrawGrid
@@ -244,7 +273,10 @@ export {
   JPEG_QUALITY,
   WEBP_QUALITY,
   MAX_OUTPUT_PIXELS,
+  LOGO_LIMITS,
   MapTooLargeError,
+  InvalidLogoPlacementError,
+  checkLogoPercent,
   FORMAT_PRESETS,
   VARIANTS,
   getImageDimensions,
@@ -253,4 +285,11 @@ export {
   processMap,
   run,
 };
-export type { FormatPreset, Variant, ConvertOptions, OutputFile };
+export type {
+  FormatPreset,
+  Variant,
+  LogoSetting,
+  LogoOptions,
+  ConvertOptions,
+  OutputFile,
+};

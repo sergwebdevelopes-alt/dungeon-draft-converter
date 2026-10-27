@@ -11,10 +11,14 @@ import multer, { MulterError } from 'multer';
 import sharp from 'sharp';
 import { parseDd2vtt, type LoadedMap } from './dd2vtt.ts';
 import {
+  checkLogoPercent,
   convertMap,
   FORMAT_PRESETS,
+  InvalidLogoPlacementError,
+  LOGO_LIMITS,
   MapTooLargeError,
   VARIANTS,
+  type LogoSetting,
   type Variant,
 } from './convert.ts';
 
@@ -72,6 +76,17 @@ const uploadFiles = multer({
 
 function queryString(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function parseLogoPercent(raw: unknown, setting: LogoSetting): number {
+  if (raw === undefined || raw === '') {
+    return LOGO_LIMITS[setting].default;
+  }
+
+  const value =
+    typeof raw === 'string' && /^\d+(\.\d+)?$/.test(raw) ? Number(raw) : NaN;
+  checkLogoPercent(setting, value);
+  return value;
 }
 
 function parseList<T extends string>(
@@ -184,9 +199,16 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
     VARIANTS,
     'variants',
   );
+  const logoSize = parseLogoPercent(req.query.logoSize, 'size');
+  const logoMargin = parseLogoPercent(req.query.logoMargin, 'margin');
 
   const map = parseMap(takeUploadedFile(req, 'map'), fileName);
-  const logo = await validateLogo(takeUploadedFile(req, 'logo'));
+  const logoImage = await validateLogo(takeUploadedFile(req, 'logo'));
+  const logo = logoImage && {
+    image: logoImage,
+    size: logoSize,
+    margin: logoMargin,
+  };
 
   const files = await enqueue(async () =>
     clientGone ? [] : convertMap(map, { presets, variants, logo }),
@@ -235,6 +257,8 @@ const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
       422,
       `${error.message} Try unselecting the larger formats.`,
     );
+  } else if (error instanceof InvalidLogoPlacementError) {
+    httpError = new HttpError(400, error.message);
   } else if (error instanceof MulterError) {
     httpError =
       error.code === 'LIMIT_FILE_SIZE'
@@ -260,6 +284,7 @@ async function createApp(server: http.Server): Promise<express.Express> {
       variants: VARIANTS,
       maxUploadBytes: MAX_UPLOAD_BYTES,
       maxLogoBytes: MAX_LOGO_BYTES,
+      logo: LOGO_LIMITS,
     });
   });
 

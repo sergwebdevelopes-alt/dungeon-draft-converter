@@ -285,6 +285,69 @@ code {
   border-radius: 4px;
 }
 
+.link-button:disabled {
+  color: var(--muted);
+  cursor: default;
+  opacity: 0.5;
+}
+
+.placement {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.placement-preview {
+  position: relative;
+  flex: none;
+  width: 120px;
+  height: 80px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background:
+    linear-gradient(var(--border) 1px, transparent 1px) 0 0 / 16px 16px,
+    linear-gradient(90deg, var(--border) 1px, transparent 1px) 0 0 / 16px 16px,
+    var(--surface-sunken);
+}
+
+.placement-preview img {
+  position: absolute;
+  object-fit: contain;
+  object-position: right bottom;
+}
+
+.placement-sliders {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.slider label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.slider-value {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.slider input {
+  width: 100%;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+
+.placement-reset {
+  margin-left: auto;
+  font-size: 13px;
+}
+
 .options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -608,6 +671,29 @@ code {
     grid-area: actions;
     justify-content: flex-end;
     border-right: 1px solid var(--border);
+  }
+
+  .card.has-placement {
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      'file formats'
+      'logo grid'
+      'actions placement';
+  }
+
+  .card.has-placement .step-grid {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card.has-placement .step,
+  .card.has-placement .actions {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+
+  .step-placement {
+    grid-area: placement;
+    border-bottom: 0;
   }
 }
 

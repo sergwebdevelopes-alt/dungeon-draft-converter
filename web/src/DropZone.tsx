@@ -1,5 +1,6 @@
 import { useEffect, useState, type DragEvent, type MouseEvent } from 'react';
 import { formatBytes } from './format.ts';
+import { useObjectUrl } from './useObjectUrl.ts';
 
 interface DropZoneProps {
   file: File | null;
@@ -11,22 +12,6 @@ interface DropZoneProps {
   preview?: boolean;
   onFile: (file: File) => void;
   onClear?: () => void;
-}
-
-function useObjectUrl(file: File | null): string | null {
-  const [url, setUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!file) {
-      setUrl(null);
-      return;
-    }
-    const objectUrl = URL.createObjectURL(file);
-    setUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [file]);
-
-  return url;
 }
 
 function DropZone({

@@ -1,17 +1,27 @@
-import type { FormatPreset, Variant } from '../../src/convert.ts';
+import type {
+  FormatPreset,
+  LOGO_LIMITS,
+  LogoSetting,
+  Variant,
+} from '../../src/convert.ts';
+
+type LogoLimits = typeof LOGO_LIMITS;
+
+type LogoPlacement = Record<LogoSetting, number>;
 
 interface Config {
   presets: FormatPreset[];
   variants: Variant[];
   maxUploadBytes: number;
   maxLogoBytes: number;
+  logo: LogoLimits;
 }
 
 interface ConvertRequest {
   file: File;
   presets: string[];
   variants: Variant[];
-  logo?: File;
+  logo?: { image: File; placement: LogoPlacement };
 }
 
 async function readError(res: Response): Promise<string> {
@@ -36,11 +46,15 @@ async function convertFile(
     presets: presets.join(','),
     variants: variants.join(','),
   });
+  if (logo) {
+    params.set('logoSize', String(logo.placement.size));
+    params.set('logoMargin', String(logo.placement.margin));
+  }
 
   const formData = new FormData();
   formData.append('map', file);
   if (logo) {
-    formData.append('logo', logo);
+    formData.append('logo', logo.image);
   }
 
   const res = await fetch(`/api/convert?${params}`, {
@@ -59,4 +73,4 @@ function isAbortError(error: unknown): boolean {
 }
 
 export { fetchConfig, convertFile, isAbortError };
-export type { Config, FormatPreset, Variant };
+export type { Config, FormatPreset, LogoLimits, LogoPlacement, Variant };

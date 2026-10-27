@@ -4,10 +4,18 @@ import {
   fetchConfig,
   isAbortError,
   type Config,
+  type LogoPlacement,
   type Variant,
 } from './api.ts';
 import { DropZone } from './DropZone.tsx';
 import { formatBytes, formatDuration } from './format.ts';
+import {
+  clampPlacement,
+  defaultPlacement,
+  isDefaultPlacement,
+  LogoPlacementPanel,
+} from './LogoPlacement.tsx';
+import { loadSettings, saveSettings } from './settings.ts';
 import { Option } from './Option.tsx';
 import { OptionSkeleton } from './OptionSkeleton.tsx';
 
@@ -49,6 +57,7 @@ function App() {
   const [configError, setConfigError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [logo, setLogo] = useState<File | null>(null);
+  const [placement, setPlacement] = useState<LogoPlacement | null>(null);
   const [presets, setPresets] = useState<string[]>([]);
   const [variants, setVariants] = useState<Variant[]>([]);
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
@@ -60,8 +69,10 @@ function App() {
     fetchConfig(controller.signal)
       .then((loaded) => {
         setConfig(loaded);
-        setPresets(loaded.presets.map((p) => p.name));
-        setVariants(loaded.variants);
+        const saved = loadSettings(loaded);
+        setPresets(saved.presets);
+        setVariants(saved.variants);
+        setPlacement(saved.placement);
       })
       .catch((error: unknown) => {
         if (!isAbortError(error)) {
@@ -70,6 +81,12 @@ function App() {
       });
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    if (placement) {
+      saveSettings({ presets, variants, placement });
+    }
+  }, [presets, variants, placement]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -128,14 +145,25 @@ function App() {
       return;
     }
     setLogo(selected);
+    clearResult();
+  }
+
+  function clearResult() {
     setStatus((current) =>
-      current.kind === 'error' ? { kind: 'idle' } : current,
+      current.kind === 'done' || current.kind === 'error'
+        ? { kind: 'idle' }
+        : current,
     );
+  }
+
+  function changePlacement(value: LogoPlacement) {
+    setPlacement(value);
+    clearResult();
   }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!file || !canSubmit) {
+    if (!file || !config || !canSubmit) {
       return;
     }
 
@@ -148,8 +176,12 @@ function App() {
     setStatus({ kind: 'converting', startedAt });
 
     try {
+      const logoOptions =
+        logo && placement
+          ? { image: logo, placement: clampPlacement(placement, config.logo) }
+          : undefined;
       const blob = await convertFile(
-        { file, logo: logo ?? undefined, presets, variants },
+        { file, logo: logoOptions, presets, variants },
         controller.signal,
       );
       const url = URL.createObjectURL(blob);
@@ -193,7 +225,10 @@ function App() {
         </p>
       </header>
 
-      <form className="card" onSubmit={(event) => void handleSubmit(event)}>
+      <form
+        className={`card${logo ? ' has-placement' : ''}`}
+        onSubmit={(event) => void handleSubmit(event)}
+      >
         <section className="step step-file">
           <h2>
             <span className="step-number">1</span> Map file
@@ -216,7 +251,10 @@ function App() {
             file={logo}
             disabled={converting}
             onFile={selectLogo}
-            onClear={() => setLogo(null)}
+            onClear={() => {
+              setLogo(null);
+              clearResult();
+            }}
             accept={LOGO_TYPES.join(',')}
             title="Add your logo"
             hint="PNG, JPG or WebP · placed bottom-right"
@@ -244,9 +282,10 @@ function App() {
                         PRESET_HINTS[preset.name] ??
                         `${preset.ppi} px per square`
                       }
-                      onChange={() =>
-                        setPresets((list) => toggle(list, preset.name))
-                      }
+                      onChange={() => {
+                        setPresets((list) => toggle(list, preset.name));
+                        clearResult();
+                      }}
                     />
                   ))
                 : Array.from({ length: 4 }, (_, i) => (
@@ -269,14 +308,40 @@ function App() {
                     disabled={converting}
                     title={VARIANT_LABELS[variant].title}
                     hint={VARIANT_LABELS[variant].hint}
-                    onChange={() =>
-                      setVariants((list) => toggle(list, variant))
-                    }
+                    onChange={() => {
+                      setVariants((list) => toggle(list, variant));
+                      clearResult();
+                    }}
                   />
                 ))
               : Array.from({ length: 2 }, (_, i) => <OptionSkeleton key={i} />)}
           </div>
         </section>
+
+        {logo && config && placement && (
+          <section className="step step-placement">
+            <h2>
+              <span className="step-number">5</span> Logo placement
+              <button
+                type="button"
+                className="link-button placement-reset"
+                disabled={
+                  converting || isDefaultPlacement(placement, config.logo)
+                }
+                onClick={() => changePlacement(defaultPlacement(config.logo))}
+              >
+                Reset
+              </button>
+            </h2>
+            <LogoPlacementPanel
+              logo={logo}
+              limits={config.logo}
+              value={placement}
+              disabled={converting}
+              onChange={changePlacement}
+            />
+          </section>
+        )}
 
         <footer className="actions">
           {status.kind === 'error' && (
