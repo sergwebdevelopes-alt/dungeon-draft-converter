@@ -15,6 +15,7 @@ import {
   convertMap,
   FORMAT_PRESETS,
   InvalidLogoPlacementError,
+  InvalidMapImageError,
   LOGO_LIMITS,
   MapTooLargeError,
   VARIANTS,
@@ -23,6 +24,8 @@ import {
 } from './convert.ts';
 
 const PORT = Number(process.env.PORT ?? 3000);
+const MAP_EXTENSION = '.dd2vtt';
+const MAX_MAP_NAME_LENGTH = 100;
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 const MAX_LOGO_PIXELS = 25_000_000;
@@ -105,6 +108,20 @@ function parseList<T extends string>(
   return values as T[];
 }
 
+function safeMapFileName(raw: string | undefined): string {
+  const base = path.basename(raw ?? `map${MAP_EXTENSION}`);
+  if (!base.toLowerCase().endsWith(MAP_EXTENSION)) {
+    throw new HttpError(400, 'Please upload a .dd2vtt file.');
+  }
+
+  const stem = base
+    .slice(0, -MAP_EXTENSION.length)
+    .replace(/[^\p{L}\p{N} _.()-]/gu, '_')
+    .slice(0, MAX_MAP_NAME_LENGTH)
+    .replace(/^[. ]+|[. ]+$/g, '');
+  return `${stem || 'map'}${MAP_EXTENSION}`;
+}
+
 function contentDisposition(fileName: string): string {
   const ascii = fileName.replace(/[^\w.-]/g, '_');
   return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
@@ -183,10 +200,7 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
     clientGone = !res.writableFinished;
   });
 
-  const fileName = path.basename(queryString(req.query.name) ?? 'map.dd2vtt');
-  if (!fileName.toLowerCase().endsWith('.dd2vtt')) {
-    throw new HttpError(400, 'Please upload a .dd2vtt file.');
-  }
+  const fileName = safeMapFileName(queryString(req.query.name));
 
   const presetNames = parseList(
     queryString(req.query.presets),
@@ -257,7 +271,10 @@ const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
       422,
       `${error.message} Try unselecting the larger formats.`,
     );
-  } else if (error instanceof InvalidLogoPlacementError) {
+  } else if (
+    error instanceof InvalidLogoPlacementError ||
+    error instanceof InvalidMapImageError
+  ) {
     httpError = new HttpError(400, error.message);
   } else if (error instanceof MulterError) {
     httpError =

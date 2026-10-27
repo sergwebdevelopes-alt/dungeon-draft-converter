@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import sharp, { type OverlayOptions } from 'sharp';
+import sharp, { type OverlayOptions, type Sharp } from 'sharp';
 import { createGridSvg } from './grid.ts';
 import { loadDd2vttMaps, type LoadedMap } from './dd2vtt.ts';
 
@@ -11,6 +11,8 @@ const FOUNDRY_DIR = 'FOUNDRY_VTT_DD2VTT';
 const JPEG_QUALITY = 80;
 const WEBP_QUALITY = 80;
 const MAX_OUTPUT_PIXELS = 200_000_000;
+const MAX_INPUT_PIXELS = 200_000_000;
+const MAP_IMAGE_FORMATS = new Set(['png', 'jpeg', 'webp']);
 
 const LOGO_LIMITS = {
   size: { min: 2, max: 20, step: 1, default: 10 },
@@ -25,6 +27,10 @@ class MapTooLargeError extends Error {
 
 class InvalidLogoPlacementError extends Error {
   name = 'InvalidLogoPlacementError';
+}
+
+class InvalidMapImageError extends Error {
+  name = 'InvalidMapImageError';
 }
 
 interface FormatPreset {
@@ -66,13 +72,37 @@ interface Size {
   height: number;
 }
 
-async function getImageDimensions(buffer: Buffer): Promise<Size> {
-  const { width, height } = await sharp(buffer).metadata();
-  if (!width || !height) {
-    throw new Error(
-      'Could not read image dimensions (width/height missing from metadata).',
+function readMapImage(buffer: Buffer): Sharp {
+  return sharp(buffer, { limitInputPixels: MAX_INPUT_PIXELS });
+}
+
+async function readMapImageSize(map: LoadedMap): Promise<Size> {
+  let metadata;
+  try {
+    metadata = await sharp(map.buffer, { limitInputPixels: false }).metadata();
+  } catch {
+    throw new InvalidMapImageError(
+      `The image in "${map.fileNameWithExt}" could not be read.`,
     );
   }
+
+  const { format, width, height } = metadata;
+  if (!MAP_IMAGE_FORMATS.has(format)) {
+    throw new InvalidMapImageError(
+      `The image in "${map.fileNameWithExt}" must be PNG, JPG or WebP, got ${format.toUpperCase()}.`,
+    );
+  }
+  if (!width || !height) {
+    throw new InvalidMapImageError(
+      `The image in "${map.fileNameWithExt}" has no dimensions.`,
+    );
+  }
+  if (width * height > MAX_INPUT_PIXELS) {
+    throw new InvalidMapImageError(
+      `The image in "${map.fileNameWithExt}" is ${width}×${height} px, which exceeds the ${MAX_INPUT_PIXELS / 1_000_000} megapixel limit.`,
+    );
+  }
+
   return { width, height };
 }
 
@@ -81,11 +111,7 @@ function getOutputSize(
   preset: FormatPreset,
   sourceSize: Size,
 ): Size {
-  if (!map.pixelsPerGrid) {
-    return sourceSize;
-  }
-
-  const scale = preset.ppi / map.pixelsPerGrid;
+  const scale = map.pixelsPerGrid ? preset.ppi / map.pixelsPerGrid : 1;
   const width = Math.round(sourceSize.width * scale);
   const height = Math.round(sourceSize.height * scale);
 
@@ -138,7 +164,7 @@ async function convertImage(options: {
 }): Promise<Buffer> {
   const { buffer, preset, size, resize, withGrid, logo } = options;
 
-  let pipeline = sharp(buffer);
+  let pipeline = readMapImage(buffer);
   if (resize) {
     pipeline = pipeline.resize(size.width, size.height);
   }
@@ -180,7 +206,7 @@ async function convertMap(
     checkLogoPercent('margin', logo.margin);
   }
 
-  const sourceSize = await getImageDimensions(map.buffer);
+  const sourceSize = await readMapImageSize(map);
   const canDrawGrid = map.pixelsPerGrid !== undefined;
   const availableVariants = canDrawGrid
     ? variants
@@ -273,13 +299,15 @@ export {
   JPEG_QUALITY,
   WEBP_QUALITY,
   MAX_OUTPUT_PIXELS,
+  MAX_INPUT_PIXELS,
   LOGO_LIMITS,
   MapTooLargeError,
   InvalidLogoPlacementError,
+  InvalidMapImageError,
   checkLogoPercent,
   FORMAT_PRESETS,
   VARIANTS,
-  getImageDimensions,
+  readMapImageSize,
   convertImage,
   convertMap,
   processMap,
