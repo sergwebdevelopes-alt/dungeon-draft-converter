@@ -9,19 +9,33 @@
     "typecheck": "tsc",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "start": "NODE_ENV=production node src/server.ts",
+    "dev": "node --watch-path=src src/server.ts",
+    "build": "vite build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.3.0",
     "@types/node": "^26.1.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.6",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "tsx": "^4.23.7",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.66.0"
+    "typescript-eslint": "^8.66.0",
+    "vite": "^8.3.1"
   },
   "dependencies": {
+    "express": "^5.2.1",
+    "fflate": "^0.8.3",
+    "multer": "^2.5.0",
     "sharp": "^0.35.3"
   }
 }

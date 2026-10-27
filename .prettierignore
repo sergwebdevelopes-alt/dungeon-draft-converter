@@ -1,3 +1,4 @@
 dist/
 source/
 package-lock.json
+web/dist/
