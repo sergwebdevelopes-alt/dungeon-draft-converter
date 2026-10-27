@@ -14,6 +14,7 @@ import {
   checkLogoPercent,
   convertMap,
   FORMAT_PRESETS,
+  FOUNDRY_DIR,
   InvalidLogoPlacementError,
   InvalidMapImageError,
   LOGO_LIMITS,
@@ -140,16 +141,18 @@ function takeUploadedFile(
   return file;
 }
 
-function parseMap(
+function requireMapFile(
   file: Express.Multer.File | undefined,
-  fileName: string,
-): LoadedMap {
+): Express.Multer.File {
   if (!file || file.size === 0) {
     throw new HttpError(400, 'Please upload a .dd2vtt map file.');
   }
+  return file;
+}
 
+function parseMap(content: Buffer, fileName: string): LoadedMap {
   try {
-    return parseDd2vtt(fileName, file.buffer.toString('utf-8'));
+    return parseDd2vtt(fileName, content.toString('utf-8'));
   } catch (error) {
     throw new HttpError(
       400,
@@ -216,7 +219,8 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
   const logoSize = parseLogoPercent(req.query.logoSize, 'size');
   const logoMargin = parseLogoPercent(req.query.logoMargin, 'margin');
 
-  const map = parseMap(takeUploadedFile(req, 'map'), fileName);
+  const mapFile = requireMapFile(takeUploadedFile(req, 'map'));
+  const map = parseMap(mapFile.buffer, fileName);
   const logoImage = await validateLogo(takeUploadedFile(req, 'logo'));
   const logo = logoImage && {
     image: logoImage,
@@ -237,7 +241,10 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
     );
   }
 
-  const entries: Zippable = {};
+  const entries: Zippable = {
+    [`${map.fileNameWithoutExt}/${FOUNDRY_DIR}/${map.fileNameWithExt}`]:
+      mapFile.buffer,
+  };
   for (const file of files) {
     entries[`${map.fileNameWithoutExt}/${file.path}`] = file.data;
   }
