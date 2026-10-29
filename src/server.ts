@@ -6,10 +6,11 @@ import express, {
   type RequestHandler,
   type Response,
 } from 'express';
-import { zipSync, type Zippable } from 'fflate';
+import { Zip, ZipPassThrough } from 'fflate';
 import multer, { MulterError } from 'multer';
 import sharp from 'sharp';
-import { parseDd2vtt, type LoadedMap } from './dd2vtt.ts';
+import { createReadStream } from 'node:fs';
+import { InvalidMapFileError, type LoadedMap } from './dd2vtt.ts';
 import {
   checkLogoPercent,
   convertMap,
@@ -24,6 +25,13 @@ import {
   type Variant,
 } from './convert.ts';
 import { LevelMismatchError, mergeLevels } from './merge.ts';
+import {
+  createUploadDir,
+  keepUploadsDuring,
+  uploadDirOf,
+  uploadStorage,
+  type UploadedFile,
+} from './upload.ts';
 
 const PORT = Number(process.env.PORT ?? 3000);
 const MAP_EXTENSION = '.dd2vtt';
@@ -89,7 +97,7 @@ const limitTotalUpload: RequestHandler = (req, _res, next) => {
 };
 
 const uploadFiles = multer({
-  storage: multer.memoryStorage(),
+  storage: uploadStorage,
   defParamCharset: 'utf8',
   limits: { fileSize: MAX_UPLOAD_BYTES, files: MAX_LEVELS + 1 },
 }).fields([
@@ -150,10 +158,15 @@ function contentDisposition(fileName: string): string {
   return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
 }
 
+interface ZipEntry {
+  path: string;
+  data: Buffer | AsyncIterable<Buffer>;
+}
+
 function takeUploadedFiles(
   req: Request,
   field: 'maps' | 'logo',
-): Express.Multer.File[] {
+): UploadedFile[] {
   const files = req.files;
   if (!files || Array.isArray(files)) {
     return [];
@@ -164,7 +177,7 @@ function takeUploadedFiles(
 }
 
 function parseLevels(
-  files: Express.Multer.File[],
+  files: UploadedFile[],
   mainName: string | undefined,
 ): LoadedMap[] {
   if (files.length === 0) {
@@ -174,26 +187,19 @@ function parseLevels(
     const fileName = safeMapFileName(
       index === 0 ? (mainName ?? file.originalname) : file.originalname,
     );
-    if (file.size === 0) {
-      throw new HttpError(400, `"${fileName}" is empty.`);
+    if (!file.map) {
+      throw new HttpError(400, `"${fileName}" could not be read.`);
     }
-    return parseMap(file.buffer, fileName);
+    return {
+      ...file.map,
+      fileNameWithExt: fileName,
+      fileNameWithoutExt: path.parse(fileName).name,
+    };
   });
 }
 
 function mergedFileName(mainFileName: string): string {
   return `${path.parse(mainFileName).name}_merged${MAP_EXTENSION}`;
-}
-
-function parseMap(content: Buffer, fileName: string): LoadedMap {
-  try {
-    return parseDd2vtt(fileName, content.toString('utf-8'));
-  } catch (error) {
-    throw new HttpError(
-      400,
-      error instanceof Error ? error.message : String(error),
-    );
-  }
 }
 
 async function validateLogo(
@@ -254,8 +260,7 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
 
   const mapFiles = takeUploadedFiles(req, 'maps');
   const levels = parseLevels(mapFiles, queryString(req.query.name));
-  const original = levels.length === 1 ? mapFiles[0].buffer : undefined;
-  mapFiles.length = 0;
+  const original = levels.length === 1 ? mapFiles[0].path : undefined;
 
   const logoImage = await validateLogo(takeUploadedFiles(req, 'logo')[0]);
   const logo = logoImage && {
@@ -264,51 +269,103 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
     margin: logoMargin,
   };
 
-  const result = await enqueue(async () => {
+  const workDir = uploadDirOf(req);
+  const work = enqueue(async () => {
     if (clientGone) {
-      return undefined;
+      return;
     }
     const merged =
       original === undefined
-        ? await mergeLevels(levels, mergedFileName(levels[0].fileNameWithExt))
+        ? await mergeLevels(
+            levels,
+            mergedFileName(levels[0].fileNameWithExt),
+            workDir,
+          )
         : undefined;
     const map = merged?.map ?? levels[0];
-    return {
-      map,
-      foundryFile: merged?.dd2vtt ?? original,
-      files: await convertMap(map, { presets, variants, logo }),
-    };
+    const foundryFile = merged?.dd2vtt ?? original;
+    const { count, files } = await convertMap(map, workDir, {
+      presets,
+      variants,
+      logo,
+    });
+    if (count === 0) {
+      throw new HttpError(
+        422,
+        'This map has no grid information, so only "No grid" images can be made.',
+      );
+    }
+
+    async function* entries(): AsyncGenerator<ZipEntry> {
+      if (foundryFile) {
+        yield {
+          path: `${FOUNDRY_DIR}/${map.fileNameWithExt}`,
+          data:
+            typeof foundryFile === 'string'
+              ? createReadStream(foundryFile)
+              : foundryFile,
+        };
+      }
+      yield* files;
+    }
+    await streamZip(res, map.fileNameWithoutExt, entries(), () => clientGone);
   });
-  if (!result || clientGone) {
-    return;
-  }
-  const { map, foundryFile, files } = result;
-  if (files.length === 0) {
-    throw new HttpError(
-      422,
-      'This map has no grid information, so only "No grid" images can be made.',
-    );
-  }
+  keepUploadsDuring(req, work);
+  await work;
+}
 
-  const entries: Zippable = {};
-  if (foundryFile) {
-    entries[`${map.fileNameWithoutExt}/${FOUNDRY_DIR}/${map.fileNameWithExt}`] =
-      foundryFile;
-  }
-  for (const file of files) {
-    entries[`${map.fileNameWithoutExt}/${file.path}`] = file.data;
-  }
-  const zip = zipSync(entries, { level: 0 });
+function drained(res: Response): Promise<void> {
+  return new Promise((resolve) => {
+    const done = () => {
+      res.off('drain', done);
+      res.off('close', done);
+      resolve();
+    };
+    res.on('drain', done);
+    res.on('close', done);
+  });
+}
 
-  res
-    .status(200)
-    .set({
-      'Content-Type': 'application/zip',
-      'Content-Disposition': contentDisposition(
-        `${map.fileNameWithoutExt}.zip`,
-      ),
-    })
-    .end(zip);
+async function streamZip(
+  res: Response,
+  root: string,
+  entries: AsyncIterable<ZipEntry>,
+  clientGone: () => boolean,
+): Promise<void> {
+  res.status(200).set({
+    'Content-Type': 'application/zip',
+    'Content-Disposition': contentDisposition(`${root}.zip`),
+  });
+  const zip = new Zip((error, chunk, final) => {
+    if (error) {
+      res.destroy(error);
+      return;
+    }
+    res.write(chunk);
+    if (final) {
+      res.end();
+    }
+  });
+
+  for await (const entry of entries) {
+    if (clientGone()) {
+      return;
+    }
+    const file = new ZipPassThrough(`${root}/${entry.path}`);
+    zip.add(file);
+    const chunks = Buffer.isBuffer(entry.data) ? [entry.data] : entry.data;
+    for await (const chunk of chunks) {
+      if (clientGone()) {
+        return;
+      }
+      file.push(chunk);
+      if (res.writableNeedDrain) {
+        await drained(res);
+      }
+    }
+    file.push(new Uint8Array(0), true);
+  }
+  zip.end();
 }
 
 function uploadError(error: MulterError): HttpError {
@@ -348,6 +405,8 @@ const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
     error instanceof InvalidLogoPlacementError ||
     error instanceof InvalidMapImageError
   ) {
+    httpError = new HttpError(400, error.message);
+  } else if (error instanceof InvalidMapFileError) {
     httpError = new HttpError(400, error.message);
   } else if (error instanceof LevelMismatchError) {
     httpError = new HttpError(422, error.message);
@@ -412,6 +471,7 @@ async function createApp(server: http.Server): Promise<express.Express> {
     '/api/convert',
     limitPendingConversions,
     limitTotalUpload,
+    createUploadDir,
     uploadFiles,
     handleConvert,
   );

@@ -12,5 +12,5 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx"
   },
-  "include": ["src", "test", "web/src", "vite.config.ts"]
+  "include": ["src", "scripts", "test", "web/src", "vite.config.ts"]
 }

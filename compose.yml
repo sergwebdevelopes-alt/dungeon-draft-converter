@@ -8,9 +8,12 @@ services:
     mem_limit: 4g
     restart: unless-stopped
     read_only: true
-    tmpfs:
-      - /tmp
+    volumes:
+      - uploads:/tmp
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
+
+volumes:
+  uploads:

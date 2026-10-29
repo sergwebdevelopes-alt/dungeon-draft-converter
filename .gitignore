@@ -1,3 +1,4 @@
 node_modules/
-dist/
-.DS_Storeweb/dist/
+.DS_Store
+web/dist/
+source/Bench_*.dd2vtt

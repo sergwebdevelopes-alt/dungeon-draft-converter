@@ -1,10 +1,10 @@
 # dungeon-draft-converter
 
-Converts [Dungeondraft](https://dungeondraft.net/) `.dd2vtt` exports into VTT- and print-ready images, from the browser or the command line.
+Converts [Dungeondraft](https://dungeondraft.net/) `.dd2vtt` exports into VTT- and print-ready images, in the browser.
 
 ## Web app
 
-Upload a `.dd2vtt` file, pick formats and grid variants, optionally add a logo, and download a zip with the [same layout as the command line](#output).
+Upload a `.dd2vtt` file, pick formats and grid variants, optionally add a logo, and download a zip ([layout](#output)).
 
 ### Docker
 
@@ -26,23 +26,12 @@ npm run build
 npm start
 ```
 
-## Command line
-
-Put your `.dd2vtt` files into `source/`, then either double-click **`Convert Maps.command`** (macOS, no terminal needed) or run:
-
-```sh
-npm install
-npm run convert
-```
-
-Results land in `dist/`, which is wiped on every run.
-
 ## Output
 
-For each map:
+The zip contains:
 
 ```
-dist/<Name>/
+<Name>/
 ├── FOUNDRY_VTT_DD2VTT/   # copy of the original for Foundry VTT
 ├── JPG_70/               # <Name>_70px_NoGrid.jpg + <Name>_70px_Grid.jpg
 ├── JPG_140/
@@ -52,7 +41,7 @@ dist/<Name>/
 
 Each preset resizes the map so one grid square is 70 / 140 / 300 pixels and tags the file with the matching DPI, so prints come out at 1 inch per square. The `Grid` variant has a dashed grid drawn on top; it's skipped (and no resizing happens) if the file has no `resolution.pixels_per_grid`.
 
-The web app's zip contains only the presets and variants you selected. If you add a logo (PNG, JPG or WebP, up to 5 MB), it's placed in the bottom-right corner of every image. Its size (2–20%) and margin (0–5%) are set in the page, as a percentage of the map's shorter side.
+The zip contains only the presets and variants you selected. If you add a logo (PNG, JPG or WebP, up to 5 MB), it's placed in the bottom-right corner of every image. Its size (2–20%) and margin (0–5%) are set in the page, as a percentage of the map's shorter side.
 
 ## Combining levels
 

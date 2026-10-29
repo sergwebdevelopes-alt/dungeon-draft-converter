@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "convert": "tsx src/main.ts",
     "test": "tsx --test test/*.test.ts",
     "typecheck": "tsc",
     "lint": "eslint .",
@@ -12,7 +11,8 @@
     "format:check": "prettier --check .",
     "start": "NODE_ENV=production node src/server.ts",
     "dev": "node --watch-path=src src/server.ts",
-    "build": "vite build"
+    "build": "vite build",
+    "bench": "node scripts/bench.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,6 +1,7 @@
+import fs from 'fs/promises';
 import path from 'path';
 import sharp from 'sharp';
-import type { LoadedMap } from './dd2vtt.ts';
+import { serializeDd2vtt, type LoadedMap, type MapImage } from './dd2vtt.ts';
 import { MAX_INPUT_PIXELS, readMapImageSize } from './convert.ts';
 import { bakeLighting, hasBakedLighting, stackLevels } from './lighting.ts';
 
@@ -28,7 +29,7 @@ interface Resolution {
 
 interface MergedLevels {
   map: LoadedMap;
-  dd2vtt: Buffer;
+  dd2vtt: AsyncIterable<Buffer>;
   lights: { main: number; added: number; dropped: number };
 }
 
@@ -99,7 +100,7 @@ function toPixel(
 }
 
 async function readAlpha(level: LoadedMap): Promise<Buffer> {
-  return sharp(level.buffer, { limitInputPixels: MAX_INPUT_PIXELS })
+  return sharp(level.image, { limitInputPixels: MAX_INPUT_PIXELS })
     .ensureAlpha()
     .extractChannel(3)
     .raw()
@@ -173,9 +174,34 @@ async function mergeLights(
   };
 }
 
+async function stackLitLevels(
+  levels: readonly LoadedMap[],
+  width: number,
+  height: number,
+  workDir: string,
+): Promise<MapImage> {
+  const litLevels: LoadedMap[] = [];
+  for (const level of levels) {
+    litLevels.push(await bakeLighting(level, workDir, MAX_INPUT_PIXELS));
+  }
+  const image = await stackLevels(
+    litLevels,
+    width,
+    height,
+    workDir,
+    MAX_INPUT_PIXELS,
+  );
+  const bakedFiles = litLevels
+    .filter((lit, index) => lit.image !== levels[index].image)
+    .map((lit) => fs.rm(lit.image, { force: true }));
+  await Promise.all(bakedFiles);
+  return image;
+}
+
 async function mergeLevels(
   levels: readonly LoadedMap[],
   fileName: string,
+  workDir: string,
 ): Promise<MergedLevels> {
   if (levels.length < 2) {
     throw new Error('Merging needs a main map and at least one level below.');
@@ -184,17 +210,17 @@ async function mergeLevels(
   const [main] = levels;
   const { width, height } = await checkLevelsMatch(levels);
 
-  const image = await stackLevels(levels, width, height, MAX_INPUT_PIXELS);
+  const image = await stackLevels(
+    levels,
+    width,
+    height,
+    workDir,
+    MAX_INPUT_PIXELS,
+  );
   const baked = levels.every(hasBakedLighting);
-  const litLevels: LoadedMap[] = [];
-  if (!baked) {
-    for (const level of levels) {
-      litLevels.push(await bakeLighting(level, MAX_INPUT_PIXELS));
-    }
-  }
   const litImage = baked
     ? image
-    : await stackLevels(litLevels, width, height, MAX_INPUT_PIXELS);
+    : await stackLitLevels(levels, width, height, workDir);
 
   const { lights, added, dropped } = await mergeLights(levels, width, height);
   const environment = {
@@ -202,15 +228,13 @@ async function mergeLevels(
     baked_lighting: baked,
   };
   const metadata = { ...main.metadata, environment, lights };
-  const dd2vtt = Buffer.from(
-    JSON.stringify({ ...metadata, image: image.toString('base64') }),
-  );
+  const dd2vtt = serializeDd2vtt(metadata, image);
 
   return {
     map: {
       fileNameWithExt: fileName,
       fileNameWithoutExt: path.parse(fileName).name,
-      buffer: litImage,
+      image: litImage,
       pixelsPerGrid: main.pixelsPerGrid,
       metadata: {
         ...metadata,

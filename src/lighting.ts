@@ -1,5 +1,6 @@
-import sharp from 'sharp';
-import type { LoadedMap } from './dd2vtt.ts';
+import fs from 'fs/promises';
+import sharp, { type Sharp } from 'sharp';
+import { newImagePath, type LoadedMap, type MapImage } from './dd2vtt.ts';
 
 const MAX_FIELD_PIXELS = 8_000_000;
 const MIN_AMBIENT = 0.05;
@@ -274,52 +275,72 @@ async function dodgeMask(
     .toBuffer();
 }
 
+async function writeImage(
+  pipeline: Sharp,
+  workDir: string,
+  compressionLevel = 1,
+): Promise<MapImage> {
+  const file = newImagePath(workDir);
+  await pipeline.png({ compressionLevel }).toFile(file);
+  return file;
+}
+
+async function removeImages(...files: MapImage[]): Promise<void> {
+  await Promise.all(files.map((file) => fs.rm(file, { force: true })));
+}
+
 async function relight(
-  image: Buffer,
+  image: MapImage,
   mask: Buffer,
+  workDir: string,
   limitInputPixels: number,
-): Promise<Buffer> {
-  const alpha = await sharp(image, { limitInputPixels })
-    .ensureAlpha()
-    .extractChannel(3)
-    .png({ compressionLevel: 1 })
-    .toBuffer();
-  const dodged = await sharp(image, { limitInputPixels })
-    .ensureAlpha()
-    .composite([{ input: mask, blend: 'colour-dodge' }])
-    .png({ compressionLevel: 1 })
-    .toBuffer();
-  const rgb = await sharp(dodged, { limitInputPixels })
-    .removeAlpha()
-    .png({ compressionLevel: 1 })
-    .toBuffer();
-  return sharp(rgb, { limitInputPixels })
-    .joinChannel(alpha)
-    .png({ compressionLevel: 1 })
-    .toBuffer();
+): Promise<MapImage> {
+  const alpha = await writeImage(
+    sharp(image, { limitInputPixels }).ensureAlpha().extractChannel(3),
+    workDir,
+  );
+  const dodged = await writeImage(
+    sharp(image, { limitInputPixels })
+      .ensureAlpha()
+      .composite([{ input: mask, blend: 'colour-dodge' }]),
+    workDir,
+  );
+  const rgb = await writeImage(
+    sharp(dodged, { limitInputPixels }).removeAlpha(),
+    workDir,
+  );
+  const relit = await writeImage(
+    sharp(rgb, { limitInputPixels }).joinChannel(alpha),
+    workDir,
+  );
+  await removeImages(alpha, dodged, rgb);
+  return relit;
 }
 
 async function bakeLighting(
   level: LoadedMap,
+  workDir: string,
   limitInputPixels: number,
 ): Promise<LoadedMap> {
   const pixelsPerGrid = level.pixelsPerGrid;
   if (hasBakedLighting(level) || !pixelsPerGrid) {
     return level;
   }
-  const { width, height } = await sharp(level.buffer, {
+  const { width, height } = await sharp(level.image, {
     limitInputPixels,
   }).metadata();
   const ambient = ambientLight(level);
-  const rgba = await sharp(level.buffer, { limitInputPixels })
-    .toColourspace('srgb')
-    .ensureAlpha()
-    .png({ compressionLevel: 1 })
-    .toBuffer();
-  let image: Buffer = await sharp(rgba, { limitInputPixels })
-    .linear([...ambient, 1], [0, 0, 0, 0])
-    .png({ compressionLevel: 1 })
-    .toBuffer();
+  const rgba = await writeImage(
+    sharp(level.image, { limitInputPixels })
+      .toColourspace('srgb')
+      .ensureAlpha(),
+    workDir,
+  );
+  let image = await writeImage(
+    sharp(rgba, { limitInputPixels }).linear([...ambient, 1], [0, 0, 0, 0]),
+    workDir,
+  );
+  await removeImages(rgba);
 
   if (readLights(level).length > 0) {
     const grid = fieldGrid(
@@ -338,13 +359,15 @@ async function bakeLighting(
       height,
     );
     if (mask) {
-      image = await relight(image, mask, limitInputPixels);
+      const relit = await relight(image, mask, workDir, limitInputPixels);
+      await removeImages(image);
+      image = relit;
     }
   }
 
   return {
     ...level,
-    buffer: image,
+    image,
     metadata: {
       ...level.metadata,
       environment: {
@@ -359,8 +382,9 @@ async function stackLevels(
   levels: readonly LoadedMap[],
   width: number,
   height: number,
+  workDir: string,
   limitInputPixels: number,
-): Promise<Buffer> {
+): Promise<MapImage> {
   const stack = [...levels].reverse();
   const resolution = record(levels[0].metadata.resolution);
   const pixelsPerGrid = levels[0].pixelsPerGrid;
@@ -374,7 +398,13 @@ async function stackLevels(
         )
       : undefined;
 
-  let image = stack[0].buffer;
+  let image = stack[0].image;
+  const replace = async (next: MapImage) => {
+    if (image !== stack[0].image) {
+      await removeImages(image);
+    }
+    image = next;
+  };
   let lightBelow: Float32Array | undefined;
 
   for (const level of stack.slice(1)) {
@@ -390,16 +420,21 @@ async function stackLevels(
         height,
       );
       if (mask) {
-        image = await relight(image, mask, limitInputPixels);
+        await replace(await relight(image, mask, workDir, limitInputPixels));
       }
       for (let i = 0; i < added.length; i++) {
         lightBelow[i] += added[i];
       }
     }
-    image = await sharp(image, { limitInputPixels })
-      .composite([{ input: level.buffer, blend: 'over', limitInputPixels }])
-      .png({ compressionLevel: level === levels[0] ? 6 : 1 })
-      .toBuffer();
+    await replace(
+      await writeImage(
+        sharp(image, { limitInputPixels }).composite([
+          { input: level.image, blend: 'over', limitInputPixels },
+        ]),
+        workDir,
+        level === levels[0] ? 6 : 1,
+      ),
+    );
   }
   return image;
 }

@@ -1,12 +1,8 @@
-import fs from 'fs/promises';
-import path from 'path';
 import sharp, { type OverlayOptions, type Sharp } from 'sharp';
-import { createGridSvg } from './grid.ts';
-import { loadDd2vttMaps, type LoadedMap } from './dd2vtt.ts';
+import { createGridSvg, gridTileSquares } from './grid.ts';
+import type { LoadedMap, MapImage } from './dd2vtt.ts';
 import { bakeLighting } from './lighting.ts';
 
-const SOURCE_DIR = 'source';
-const DIST_DIR = 'dist';
 const FOUNDRY_DIR = 'FOUNDRY_VTT_DD2VTT';
 
 const JPEG_QUALITY = 80;
@@ -69,19 +65,24 @@ interface OutputFile {
   data: Buffer;
 }
 
+interface Conversion {
+  count: number;
+  files: AsyncGenerator<OutputFile>;
+}
+
 interface Size {
   width: number;
   height: number;
 }
 
-function readMapImage(buffer: Buffer): Sharp {
-  return sharp(buffer, { limitInputPixels: MAX_INPUT_PIXELS });
+function readMapImage(image: MapImage): Sharp {
+  return sharp(image, { limitInputPixels: MAX_INPUT_PIXELS });
 }
 
 async function readMapImageSize(map: LoadedMap): Promise<Size> {
   let metadata;
   try {
-    metadata = await sharp(map.buffer, { limitInputPixels: false }).metadata();
+    metadata = await sharp(map.image, { limitInputPixels: false }).metadata();
   } catch {
     throw new InvalidMapImageError(
       `The image in "${map.fileNameWithExt}" could not be read.`,
@@ -161,25 +162,39 @@ async function renderLogo(
   };
 }
 
+function gridOverlay(size: Size, gridSize: number): OverlayOptions {
+  const squares = gridTileSquares(gridSize);
+  if (!squares) {
+    const svg = createGridSvg(size.width, size.height, gridSize);
+    return { input: Buffer.from(svg), blend: 'over' };
+  }
+  const tile = squares * gridSize;
+  return {
+    input: Buffer.from(createGridSvg(tile, tile, gridSize)),
+    tile: true,
+    gravity: 'northwest',
+    blend: 'over',
+  };
+}
+
 async function convertImage(options: {
-  buffer: Buffer;
+  image: MapImage;
   preset: FormatPreset;
   size: Size;
   resize: boolean;
   withGrid: boolean;
   logo?: LogoOptions;
 }): Promise<Buffer> {
-  const { buffer, preset, size, resize, withGrid, logo } = options;
+  const { image, preset, size, resize, withGrid, logo } = options;
 
-  let pipeline = readMapImage(buffer);
+  let pipeline = readMapImage(image);
   if (resize) {
     pipeline = pipeline.resize(size.width, size.height);
   }
 
   const overlays: OverlayOptions[] = [];
   if (withGrid) {
-    const gridSvg = createGridSvg(size.width, size.height, preset.ppi);
-    overlays.push({ input: Buffer.from(gridSvg), blend: 'over' });
+    overlays.push(gridOverlay(size, preset.ppi));
   }
   if (logo) {
     overlays.push(await renderLogo(logo, size));
@@ -206,15 +221,15 @@ function outputPath(
 
 async function convertMap(
   map: LoadedMap,
+  workDir: string,
   { presets = FORMAT_PRESETS, variants = VARIANTS, logo }: ConvertOptions = {},
-): Promise<OutputFile[]> {
+): Promise<Conversion> {
   if (logo) {
     checkLogoPercent('size', logo.size);
     checkLogoPercent('margin', logo.margin);
   }
 
   const sourceSize = await readMapImageSize(map);
-  const { buffer } = await bakeLighting(map, MAX_INPUT_PIXELS);
   const canDrawGrid = map.pixelsPerGrid !== undefined;
   const availableVariants = canDrawGrid
     ? variants
@@ -233,78 +248,30 @@ async function convertMap(
     }));
   });
 
-  const files: OutputFile[] = [];
-  for (const { preset, variant, size, resize } of jobs) {
-    files.push({
-      path: outputPath(map, preset, variant),
-      data: await convertImage({
-        buffer,
-        preset,
-        size,
-        resize,
-        withGrid: variant === 'Grid',
-        logo,
-      }),
-    });
-  }
-  return files;
-}
-
-async function processMap(
-  map: LoadedMap,
-  sourceDir: string,
-  distDir: string,
-): Promise<void> {
-  const mapDir = path.join(distDir, map.fileNameWithoutExt);
-  const foundryDir = path.join(mapDir, FOUNDRY_DIR);
-
-  await fs.mkdir(foundryDir, { recursive: true });
-  await fs.copyFile(
-    path.join(sourceDir, map.fileNameWithExt),
-    path.join(foundryDir, map.fileNameWithExt),
-  );
-
-  const files = await convertMap(map);
-
-  await Promise.all(
-    files.map(async (file) => {
-      const filePath = path.join(mapDir, file.path);
-      await fs.mkdir(path.dirname(filePath), { recursive: true });
-      await fs.writeFile(filePath, file.data);
-    }),
-  );
-}
-
-async function run(sourceDir = SOURCE_DIR, distDir = DIST_DIR): Promise<void> {
-  const maps = await loadDd2vttMaps(sourceDir);
-
-  await fs.rm(distDir, { recursive: true, force: true });
-  await fs.mkdir(distDir, { recursive: true });
-
-  const failures: { name: string; error: unknown }[] = [];
-
-  for (const map of maps) {
-    try {
-      await processMap(map, sourceDir, distDir);
-      console.log(`✓ ${map.fileNameWithoutExt}`);
-    } catch (error) {
-      failures.push({ name: map.fileNameWithoutExt, error });
-      console.error(`✗ ${map.fileNameWithoutExt}:`, error);
+  async function* render(): AsyncGenerator<OutputFile> {
+    if (jobs.length === 0) {
+      return;
+    }
+    const { image } = await bakeLighting(map, workDir, MAX_INPUT_PIXELS);
+    for (const { preset, variant, size, resize } of jobs) {
+      yield {
+        path: outputPath(map, preset, variant),
+        data: await convertImage({
+          image,
+          preset,
+          size,
+          resize,
+          withGrid: variant === 'Grid',
+          logo,
+        }),
+      };
     }
   }
 
-  if (failures.length > 0) {
-    throw new Error(
-      `${failures.length} of ${maps.length} map(s) failed to convert: ${failures
-        .map((f) => f.name)
-        .join(', ')}`,
-    );
-  }
+  return { count: jobs.length, files: render() };
 }
 
 export {
-  SOURCE_DIR,
-  DIST_DIR,
   FOUNDRY_DIR,
   JPEG_QUALITY,
   WEBP_QUALITY,
@@ -320,8 +287,6 @@ export {
   readMapImageSize,
   convertImage,
   convertMap,
-  processMap,
-  run,
 };
 export type {
   FormatPreset,
@@ -329,5 +294,6 @@ export type {
   LogoSetting,
   LogoOptions,
   ConvertOptions,
+  Conversion,
   OutputFile,
 };
