@@ -9,6 +9,7 @@ import {
 } from './api.ts';
 import { DropZone } from './DropZone.tsx';
 import { formatBytes, formatDuration } from './format.ts';
+import { LevelList, levelKey } from './LevelList.tsx';
 import {
   clampPlacement,
   defaultPlacement,
@@ -45,6 +46,11 @@ function toggle<T>(list: T[], value: T): T[] {
     : [...list, value];
 }
 
+function zipName(maps: File[]): string {
+  const stem = maps[0].name.replace(/\.dd2vtt$/i, '');
+  return maps.length > 1 ? `${stem}_merged.zip` : `${stem}.zip`;
+}
+
 function download(url: string, fileName: string) {
   const link = document.createElement('a');
   link.href = url;
@@ -55,7 +61,7 @@ function download(url: string, fileName: string) {
 function App() {
   const [config, setConfig] = useState<Config | null>(null);
   const [configError, setConfigError] = useState<string | null>(null);
-  const [file, setFile] = useState<File | null>(null);
+  const [maps, setMaps] = useState<File[]>([]);
   const [logo, setLogo] = useState<File | null>(null);
   const [placement, setPlacement] = useState<LogoPlacement | null>(null);
   const [presets, setPresets] = useState<string[]>([]);
@@ -108,25 +114,58 @@ function App() {
   const converting = status.kind === 'converting';
   const canSubmit =
     !!config &&
-    !!file &&
+    maps.length > 0 &&
     presets.length > 0 &&
     variants.length > 0 &&
     !converting;
 
-  function selectFile(selected: File) {
-    if (!selected.name.toLowerCase().endsWith('.dd2vtt')) {
-      setStatus({ kind: 'error', message: 'Please choose a .dd2vtt file.' });
+  function addMaps(selected: File[]) {
+    if (!config) {
       return;
     }
-    if (config && selected.size > config.maxUploadBytes) {
-      setStatus({
-        kind: 'error',
-        message: `This file is too large (max ${formatBytes(config.maxUploadBytes)}).`,
-      });
-      return;
+    const next = [...maps];
+    const keys = new Set(next.map(levelKey));
+    let total = next.reduce((sum, map) => sum + map.size, 0);
+    let error: string | null = null;
+
+    for (const file of selected) {
+      if (keys.has(levelKey(file))) {
+        continue;
+      }
+      if (!file.name.toLowerCase().endsWith('.dd2vtt')) {
+        error = `"${file.name}" is not a .dd2vtt file.`;
+      } else if (file.size > config.maxUploadBytes) {
+        error = `"${file.name}" is too large (max ${formatBytes(config.maxUploadBytes)} per map).`;
+      } else if (next.length >= config.maxLevels) {
+        error = `At most ${config.maxLevels} maps can be combined.`;
+      } else if (total + file.size > config.maxTotalUploadBytes) {
+        error = `All maps together can be at most ${formatBytes(config.maxTotalUploadBytes)}.`;
+      } else {
+        next.push(file);
+        keys.add(levelKey(file));
+        total += file.size;
+        continue;
+      }
+      break;
     }
-    setFile(selected);
-    setStatus({ kind: 'idle' });
+
+    setMaps(next);
+    setStatus(error ? { kind: 'error', message: error } : { kind: 'idle' });
+  }
+
+  function moveMap(from: number, to: number) {
+    setMaps((list) => {
+      const next = [...list];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+    clearResult();
+  }
+
+  function removeMap(index: number) {
+    setMaps((list) => list.filter((_, i) => i !== index));
+    clearResult();
   }
 
   function selectLogo(selected: File) {
@@ -163,7 +202,7 @@ function App() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!file || !config || !canSubmit) {
+    if (maps.length === 0 || !config || !canSubmit) {
       return;
     }
 
@@ -181,11 +220,11 @@ function App() {
           ? { image: logo, placement: clampPlacement(placement, config.logo) }
           : undefined;
       const blob = await convertFile(
-        { file, logo: logoOptions, presets, variants },
+        { maps, logo: logoOptions, presets, variants },
         controller.signal,
       );
       const url = URL.createObjectURL(blob);
-      const fileName = `${file.name.replace(/\.dd2vtt$/i, '')}.zip`;
+      const fileName = zipName(maps);
       setStatus({ kind: 'done', url, fileName });
       download(url, fileName);
     } catch (error) {
@@ -205,7 +244,7 @@ function App() {
   }
 
   function reset() {
-    setFile(null);
+    setMaps([]);
     setStatus({ kind: 'idle' });
   }
 
@@ -231,15 +270,41 @@ function App() {
       >
         <section className="step step-file">
           <h2>
-            <span className="step-number">1</span> Map file
+            <span className="step-number">1</span> Maps
+            {maps.length > 1 && (
+              <span className="muted optional">top is the main map</span>
+            )}
           </h2>
-          <DropZone
-            file={file}
-            disabled={converting}
-            onFile={selectFile}
-            accept=".dd2vtt"
-            title="Drop your .dd2vtt file here"
-          />
+          {maps.length === 0 ? (
+            <DropZone
+              file={null}
+              disabled={converting}
+              onFiles={addMaps}
+              accept=".dd2vtt"
+              title="Drop your .dd2vtt files here"
+              hint="One map, or up to 10 levels to merge"
+              multiple
+            />
+          ) : (
+            <>
+              <DropZone
+                file={null}
+                disabled={converting}
+                onFiles={addMaps}
+                accept=".dd2vtt"
+                title="Add maps below"
+                hint=""
+                compact
+                multiple
+              />
+              <LevelList
+                levels={maps}
+                disabled={converting}
+                onMove={moveMap}
+                onRemove={removeMap}
+              />
+            </>
+          )}
         </section>
 
         <section className="step step-logo">
@@ -250,7 +315,7 @@ function App() {
           <DropZone
             file={logo}
             disabled={converting}
-            onFile={selectLogo}
+            onFiles={(files) => selectLogo(files[0])}
             onClear={() => {
               setLogo(null);
               clearResult();

@@ -3,6 +3,7 @@ import path from 'path';
 import sharp, { type OverlayOptions, type Sharp } from 'sharp';
 import { createGridSvg } from './grid.ts';
 import { loadDd2vttMaps, type LoadedMap } from './dd2vtt.ts';
+import { bakeLighting } from './lighting.ts';
 
 const SOURCE_DIR = 'source';
 const DIST_DIR = 'dist';
@@ -10,7 +11,8 @@ const FOUNDRY_DIR = 'FOUNDRY_VTT_DD2VTT';
 
 const JPEG_QUALITY = 80;
 const WEBP_QUALITY = 80;
-const MAX_OUTPUT_PIXELS = 200_000_000;
+const MAX_OUTPUT_PIXELS = 250_000_000;
+const WEBP_MAX_SIDE = 16383;
 const MAX_INPUT_PIXELS = 200_000_000;
 const MAP_IMAGE_FORMATS = new Set(['png', 'jpeg', 'webp']);
 
@@ -120,6 +122,11 @@ function getOutputSize(
       `"${map.fileNameWithExt}" would be ${width}×${height} px in ${preset.name}, which exceeds the ${MAX_OUTPUT_PIXELS / 1_000_000} megapixel limit.`,
     );
   }
+  if (preset.format === 'webp' && Math.max(width, height) > WEBP_MAX_SIDE) {
+    throw new MapTooLargeError(
+      `"${map.fileNameWithExt}" would be ${width}×${height} px in ${preset.name}, but WebP images can't be wider or taller than ${WEBP_MAX_SIDE} px.`,
+    );
+  }
 
   return { width, height };
 }
@@ -207,6 +214,7 @@ async function convertMap(
   }
 
   const sourceSize = await readMapImageSize(map);
+  const { buffer } = await bakeLighting(map, MAX_INPUT_PIXELS);
   const canDrawGrid = map.pixelsPerGrid !== undefined;
   const availableVariants = canDrawGrid
     ? variants
@@ -225,19 +233,21 @@ async function convertMap(
     }));
   });
 
-  return Promise.all(
-    jobs.map(async ({ preset, variant, size, resize }) => ({
+  const files: OutputFile[] = [];
+  for (const { preset, variant, size, resize } of jobs) {
+    files.push({
       path: outputPath(map, preset, variant),
       data: await convertImage({
-        buffer: map.buffer,
+        buffer,
         preset,
         size,
         resize,
         withGrid: variant === 'Grid',
         logo,
       }),
-    })),
-  );
+    });
+  }
+  return files;
 }
 
 async function processMap(

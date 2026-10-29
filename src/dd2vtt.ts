@@ -14,12 +14,13 @@ interface LoadedMap {
   fileNameWithoutExt: string;
   buffer: Buffer;
   pixelsPerGrid?: number;
+  metadata: Record<string, unknown>;
 }
 
 function parseDd2vtt(fileName: string, content: string): LoadedMap {
-  let json: Dd2vttData;
+  let json: Dd2vttData & Record<string, unknown>;
   try {
-    json = JSON.parse(content) as Dd2vttData;
+    json = JSON.parse(content) as Dd2vttData & Record<string, unknown>;
   } catch (error) {
     throw new Error(
       `Invalid JSON in "${fileName}": ${error instanceof Error ? error.message : String(error)}`,
@@ -50,11 +51,15 @@ function parseDd2vtt(fileName: string, content: string): LoadedMap {
     );
   }
 
+  const metadata: Record<string, unknown> = { ...json };
+  delete metadata.image;
+
   return {
     fileNameWithExt: fileName,
     fileNameWithoutExt: path.parse(fileName).name,
     buffer,
     pixelsPerGrid,
+    metadata,
   };
 }
 

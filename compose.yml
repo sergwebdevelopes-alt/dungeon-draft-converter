@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    image: dungeon-draft-converter
+    container_name: dd-converter
+    ports:
+      - '${HOST_PORT:-3000}:3000'
+    mem_limit: 4g
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true

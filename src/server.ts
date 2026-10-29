@@ -23,15 +23,19 @@ import {
   type LogoSetting,
   type Variant,
 } from './convert.ts';
+import { LevelMismatchError, mergeLevels } from './merge.ts';
 
 const PORT = Number(process.env.PORT ?? 3000);
 const MAP_EXTENSION = '.dd2vtt';
 const MAX_MAP_NAME_LENGTH = 100;
-const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
+const MAX_TOTAL_UPLOAD_BYTES = 400 * 1024 * 1024;
+const MULTIPART_OVERHEAD_BYTES = 1024 * 1024;
+const MAX_LEVELS = 10;
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 const MAX_LOGO_PIXELS = 25_000_000;
 const LOGO_FORMATS = new Set(['png', 'jpeg', 'webp']);
-const MAX_PENDING_CONVERSIONS = 4;
+const MAX_PENDING_CONVERSIONS = 2;
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const ROOT_DIR = path.join(import.meta.dirname, '..');
 const WEB_DIST_DIR = path.join(ROOT_DIR, 'web/dist');
@@ -70,11 +74,26 @@ const limitPendingConversions: RequestHandler = (_req, res, next) => {
   next();
 };
 
+const limitTotalUpload: RequestHandler = (req, _res, next) => {
+  const length = Number(req.headers['content-length']);
+  if (!Number.isFinite(length)) {
+    throw new HttpError(411, 'The upload size is missing.');
+  }
+  if (length > MAX_TOTAL_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES) {
+    throw new HttpError(
+      413,
+      `All files together can be at most ${MAX_TOTAL_UPLOAD_BYTES / 1024 / 1024} MB.`,
+    );
+  }
+  next();
+};
+
 const uploadFiles = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_UPLOAD_BYTES, files: 2 },
+  defParamCharset: 'utf8',
+  limits: { fileSize: MAX_UPLOAD_BYTES, files: MAX_LEVELS + 1 },
 }).fields([
-  { name: 'map', maxCount: 1 },
+  { name: 'maps', maxCount: MAX_LEVELS },
   { name: 'logo', maxCount: 1 },
 ]);
 
@@ -112,7 +131,10 @@ function parseList<T extends string>(
 function safeMapFileName(raw: string | undefined): string {
   const base = path.basename(raw ?? `map${MAP_EXTENSION}`);
   if (!base.toLowerCase().endsWith(MAP_EXTENSION)) {
-    throw new HttpError(400, 'Please upload a .dd2vtt file.');
+    throw new HttpError(
+      400,
+      `"${base.slice(0, MAX_MAP_NAME_LENGTH)}" is not a .dd2vtt file.`,
+    );
   }
 
   const stem = base
@@ -128,26 +150,39 @@ function contentDisposition(fileName: string): string {
   return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
 }
 
-function takeUploadedFile(
+function takeUploadedFiles(
   req: Request,
-  field: 'map' | 'logo',
-): Express.Multer.File | undefined {
+  field: 'maps' | 'logo',
+): Express.Multer.File[] {
   const files = req.files;
   if (!files || Array.isArray(files)) {
-    return undefined;
+    return [];
   }
-  const file = files[field]?.[0];
+  const taken = files[field] ?? [];
   delete files[field];
-  return file;
+  return taken;
 }
 
-function requireMapFile(
-  file: Express.Multer.File | undefined,
-): Express.Multer.File {
-  if (!file || file.size === 0) {
+function parseLevels(
+  files: Express.Multer.File[],
+  mainName: string | undefined,
+): LoadedMap[] {
+  if (files.length === 0) {
     throw new HttpError(400, 'Please upload a .dd2vtt map file.');
   }
-  return file;
+  return files.map((file, index) => {
+    const fileName = safeMapFileName(
+      index === 0 ? (mainName ?? file.originalname) : file.originalname,
+    );
+    if (file.size === 0) {
+      throw new HttpError(400, `"${fileName}" is empty.`);
+    }
+    return parseMap(file.buffer, fileName);
+  });
+}
+
+function mergedFileName(mainFileName: string): string {
+  return `${path.parse(mainFileName).name}_merged${MAP_EXTENSION}`;
 }
 
 function parseMap(content: Buffer, fileName: string): LoadedMap {
@@ -203,8 +238,6 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
     clientGone = !res.writableFinished;
   });
 
-  const fileName = safeMapFileName(queryString(req.query.name));
-
   const presetNames = parseList(
     queryString(req.query.presets),
     FORMAT_PRESETS.map((p) => p.name),
@@ -219,21 +252,37 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
   const logoSize = parseLogoPercent(req.query.logoSize, 'size');
   const logoMargin = parseLogoPercent(req.query.logoMargin, 'margin');
 
-  const mapFile = requireMapFile(takeUploadedFile(req, 'map'));
-  const map = parseMap(mapFile.buffer, fileName);
-  const logoImage = await validateLogo(takeUploadedFile(req, 'logo'));
+  const mapFiles = takeUploadedFiles(req, 'maps');
+  const levels = parseLevels(mapFiles, queryString(req.query.name));
+  const original = levels.length === 1 ? mapFiles[0].buffer : undefined;
+  mapFiles.length = 0;
+
+  const logoImage = await validateLogo(takeUploadedFiles(req, 'logo')[0]);
   const logo = logoImage && {
     image: logoImage,
     size: logoSize,
     margin: logoMargin,
   };
 
-  const files = await enqueue(async () =>
-    clientGone ? [] : convertMap(map, { presets, variants, logo }),
-  );
-  if (clientGone) {
+  const result = await enqueue(async () => {
+    if (clientGone) {
+      return undefined;
+    }
+    const merged =
+      original === undefined
+        ? await mergeLevels(levels, mergedFileName(levels[0].fileNameWithExt))
+        : undefined;
+    const map = merged?.map ?? levels[0];
+    return {
+      map,
+      foundryFile: merged?.dd2vtt ?? original,
+      files: await convertMap(map, { presets, variants, logo }),
+    };
+  });
+  if (!result || clientGone) {
     return;
   }
+  const { map, foundryFile, files } = result;
   if (files.length === 0) {
     throw new HttpError(
       422,
@@ -241,10 +290,11 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
     );
   }
 
-  const entries: Zippable = {
-    [`${map.fileNameWithoutExt}/${FOUNDRY_DIR}/${map.fileNameWithExt}`]:
-      mapFile.buffer,
-  };
+  const entries: Zippable = {};
+  if (foundryFile) {
+    entries[`${map.fileNameWithoutExt}/${FOUNDRY_DIR}/${map.fileNameWithExt}`] =
+      foundryFile;
+  }
   for (const file of files) {
     entries[`${map.fileNameWithoutExt}/${file.path}`] = file.data;
   }
@@ -259,6 +309,22 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
       ),
     })
     .end(zip);
+}
+
+function uploadError(error: MulterError): HttpError {
+  if (error.code === 'LIMIT_FILE_SIZE') {
+    return new HttpError(
+      413,
+      `Each file can be at most ${MAX_UPLOAD_BYTES / 1024 / 1024} MB.`,
+    );
+  }
+  if (
+    error.code === 'LIMIT_FILE_COUNT' ||
+    (error.code === 'LIMIT_UNEXPECTED_FILE' && error.field === 'maps')
+  ) {
+    return new HttpError(400, `At most ${MAX_LEVELS} maps can be combined.`);
+  }
+  return new HttpError(400, `Invalid upload: ${error.message}.`);
 }
 
 const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
@@ -283,14 +349,10 @@ const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
     error instanceof InvalidMapImageError
   ) {
     httpError = new HttpError(400, error.message);
+  } else if (error instanceof LevelMismatchError) {
+    httpError = new HttpError(422, error.message);
   } else if (error instanceof MulterError) {
-    httpError =
-      error.code === 'LIMIT_FILE_SIZE'
-        ? new HttpError(
-            413,
-            `File is too large (max ${MAX_UPLOAD_BYTES / 1024 / 1024} MB).`,
-          )
-        : new HttpError(400, `Invalid upload: ${error.message}.`);
+    httpError = uploadError(error);
   } else {
     console.error(error);
     httpError = new HttpError(500, 'Conversion failed.');
@@ -339,12 +401,20 @@ async function createApp(server: http.Server): Promise<express.Express> {
       presets: FORMAT_PRESETS,
       variants: VARIANTS,
       maxUploadBytes: MAX_UPLOAD_BYTES,
+      maxTotalUploadBytes: MAX_TOTAL_UPLOAD_BYTES,
+      maxLevels: MAX_LEVELS,
       maxLogoBytes: MAX_LOGO_BYTES,
       logo: LOGO_LIMITS,
     });
   });
 
-  app.post('/api/convert', limitPendingConversions, uploadFiles, handleConvert);
+  app.post(
+    '/api/convert',
+    limitPendingConversions,
+    limitTotalUpload,
+    uploadFiles,
+    handleConvert,
+  );
 
   app.use('/api', () => {
     throw new HttpError(404, 'Not found.');

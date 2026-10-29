@@ -241,10 +241,125 @@ code {
   font-weight: 400;
 }
 
+.levels {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.level {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.level[draggable='true'] {
+  cursor: grab;
+}
+
+.level.is-dragging {
+  opacity: 0.4;
+}
+
+.level.is-drop-target {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.level-handle svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+.level-text {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.level-text .muted {
+  flex: none;
+  font-size: 12px;
+}
+
+.level-badge {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--surface-sunken);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.level-badge.is-main {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.level-actions {
+  display: flex;
+  flex: none;
+  gap: 2px;
+}
+
+.icon-button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.icon-button:hover:not(:disabled) {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.icon-button.is-remove:hover:not(:disabled) {
+  color: var(--danger);
+}
+
+.icon-button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.icon-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .dropzone.is-compact {
   min-height: 0;
   padding: 12px 14px;
   gap: 12px;
+}
+
+.dropzone.is-compact .dropzone-icon {
+  width: 32px;
+  height: 32px;
+  padding: 6px;
 }
 
 .dropzone-preview {
@@ -651,6 +766,14 @@ code {
   .step-file .dropzone.has-file .dropzone-text {
     flex: 1;
     min-width: 0;
+  }
+
+  .step-file .dropzone.is-compact {
+    flex: none;
+    flex-direction: row;
+    justify-content: flex-start;
+    min-height: 0;
+    text-align: left;
   }
 
   .step-logo {

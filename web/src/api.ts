@@ -13,12 +13,14 @@ interface Config {
   presets: FormatPreset[];
   variants: Variant[];
   maxUploadBytes: number;
+  maxTotalUploadBytes: number;
+  maxLevels: number;
   maxLogoBytes: number;
   logo: LogoLimits;
 }
 
 interface ConvertRequest {
-  file: File;
+  maps: File[];
   presets: string[];
   variants: Variant[];
   logo?: { image: File; placement: LogoPlacement };
@@ -38,11 +40,11 @@ async function fetchConfig(signal: AbortSignal): Promise<Config> {
 }
 
 async function convertFile(
-  { file, logo, presets, variants }: ConvertRequest,
+  { maps, logo, presets, variants }: ConvertRequest,
   signal: AbortSignal,
 ): Promise<Blob> {
   const params = new URLSearchParams({
-    name: file.name,
+    name: maps[0].name,
     presets: presets.join(','),
     variants: variants.join(','),
   });
@@ -52,7 +54,9 @@ async function convertFile(
   }
 
   const formData = new FormData();
-  formData.append('map', file);
+  for (const map of maps) {
+    formData.append('maps', map);
+  }
   if (logo) {
     formData.append('logo', logo.image);
   }

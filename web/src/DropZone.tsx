@@ -10,20 +10,22 @@ interface DropZoneProps {
   hint?: string;
   compact?: boolean;
   preview?: boolean;
-  onFile: (file: File) => void;
+  multiple?: boolean;
+  onFiles: (files: File[]) => void;
   onClear?: () => void;
 }
 
 function DropZone({
   file,
   disabled,
-  onFile,
+  onFiles,
   onClear,
   title,
   hint,
   accept,
   compact = false,
   preview = false,
+  multiple = false,
 }: DropZoneProps) {
   const [over, setOver] = useState(false);
   const previewUrl = useObjectUrl(preview ? file : null);
@@ -54,9 +56,9 @@ function DropZone({
   function handleDrop(event: DragEvent) {
     event.preventDefault();
     setOver(false);
-    const dropped = event.dataTransfer.files[0];
-    if (dropped && !disabled) {
-      onFile(dropped);
+    const dropped = [...event.dataTransfer.files];
+    if (dropped.length > 0 && !disabled) {
+      onFiles(multiple ? dropped : dropped.slice(0, 1));
     }
   }
 
@@ -87,11 +89,12 @@ function DropZone({
         className="sr-only"
         type="file"
         accept={accept}
+        multiple={multiple}
         disabled={disabled}
         onChange={(event) => {
-          const selected = event.target.files?.[0];
-          if (selected) {
-            onFile(selected);
+          const selected = [...(event.target.files ?? [])];
+          if (selected.length > 0) {
+            onFiles(selected);
           }
           event.target.value = '';
         }}
@@ -127,7 +130,9 @@ function DropZone({
           <UploadIcon />
           <span className="dropzone-text">
             <strong>{title ?? 'Drop your file here'}</strong>
-            <span className="muted">{hint ?? 'or click to browse'}</span>
+            {hint !== '' && (
+              <span className="muted">{hint ?? 'or click to browse'}</span>
+            )}
           </span>
         </>
       )}
