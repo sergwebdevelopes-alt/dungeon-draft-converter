@@ -43,10 +43,17 @@ const MAX_LEVELS = 10;
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 const MAX_LOGO_PIXELS = 25_000_000;
 const LOGO_FORMATS = new Set(['png', 'jpeg', 'webp']);
-const MAX_PENDING_CONVERSIONS = 2;
+const MAX_PENDING_CONVERSIONS = 10;
+const SHARP_CONCURRENCY = Number(process.env.SHARP_CONCURRENCY ?? 0);
+const CONVERSION_TIMEOUT_MS =
+  Number(process.env.CONVERSION_TIMEOUT_SECONDS ?? 300) * 1000;
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const ROOT_DIR = path.join(import.meta.dirname, '..');
 const WEB_DIST_DIR = path.join(ROOT_DIR, 'web/dist');
+
+if (SHARP_CONCURRENCY > 0) {
+  sharp.concurrency(SHARP_CONCURRENCY);
+}
 
 class HttpError extends Error {
   status: number;
@@ -104,6 +111,12 @@ const uploadFiles = multer({
   { name: 'maps', maxCount: MAX_LEVELS },
   { name: 'logo', maxCount: 1 },
 ]);
+
+function formatDuration(ms: number): string {
+  const [value, unit] =
+    ms >= 60_000 ? [ms / 60_000, 'minute'] : [ms / 1000, 'second'];
+  return `${value} ${unit}${value === 1 ? '' : 's'}`;
+}
 
 function queryString(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
@@ -270,10 +283,32 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
   };
 
   const workDir = uploadDirOf(req);
-  const work = enqueue(async () => {
-    if (clientGone) {
+  let timedOut = false;
+  const stopped = () => clientGone || timedOut;
+  const stopOnTimeout = () => {
+    timedOut = true;
+    if (res.headersSent) {
+      res.destroy();
       return;
     }
+    res.status(503).json({
+      error: `The conversion took longer than ${formatDuration(CONVERSION_TIMEOUT_MS)} and was stopped. Try fewer formats or a smaller map.`,
+    });
+  };
+
+  const work = enqueue(async () => {
+    if (stopped()) {
+      return;
+    }
+    const timer = setTimeout(stopOnTimeout, CONVERSION_TIMEOUT_MS);
+    try {
+      await convertAndSend();
+    } finally {
+      clearTimeout(timer);
+    }
+  });
+
+  async function convertAndSend(): Promise<void> {
     const merged =
       original === undefined
         ? await mergeLevels(
@@ -282,6 +317,9 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
             workDir,
           )
         : undefined;
+    if (stopped()) {
+      return;
+    }
     const map = merged?.map ?? levels[0];
     const foundryFile = merged?.dd2vtt ?? original;
     const { count, files } = await convertMap(map, workDir, {
@@ -308,10 +346,17 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
       }
       yield* files;
     }
-    await streamZip(res, map.fileNameWithoutExt, entries(), () => clientGone);
-  });
+    await streamZip(res, map.fileNameWithoutExt, entries(), stopped);
+  }
+
   keepUploadsDuring(req, work);
-  await work;
+  try {
+    await work;
+  } catch (error) {
+    if (!timedOut) {
+      throw error;
+    }
+  }
 }
 
 function drained(res: Response): Promise<void> {
@@ -330,7 +375,7 @@ async function streamZip(
   res: Response,
   root: string,
   entries: AsyncIterable<ZipEntry>,
-  clientGone: () => boolean,
+  stopped: () => boolean,
 ): Promise<void> {
   res.status(200).set({
     'Content-Type': 'application/zip',
@@ -348,14 +393,14 @@ async function streamZip(
   });
 
   for await (const entry of entries) {
-    if (clientGone()) {
+    if (stopped()) {
       return;
     }
     const file = new ZipPassThrough(`${root}/${entry.path}`);
     zip.add(file);
     const chunks = Buffer.isBuffer(entry.data) ? [entry.data] : entry.data;
     for await (const chunk of chunks) {
-      if (clientGone()) {
+      if (stopped()) {
         return;
       }
       file.push(chunk);

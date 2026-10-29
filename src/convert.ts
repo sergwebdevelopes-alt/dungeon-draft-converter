@@ -7,6 +7,7 @@ const FOUNDRY_DIR = 'FOUNDRY_VTT_DD2VTT';
 
 const JPEG_QUALITY = 80;
 const WEBP_QUALITY = 80;
+const WEBP_EFFORT = 1;
 const MAX_OUTPUT_PIXELS = 250_000_000;
 const WEBP_MAX_SIDE = 16383;
 const MAX_INPUT_PIXELS = 200_000_000;
@@ -205,7 +206,7 @@ async function convertImage(options: {
 
   pipeline =
     preset.format === 'webp'
-      ? pipeline.webp({ quality: WEBP_QUALITY })
+      ? pipeline.webp({ quality: WEBP_QUALITY, effort: WEBP_EFFORT })
       : pipeline.jpeg({ quality: JPEG_QUALITY });
 
   return pipeline.withMetadata({ density: preset.ppi }).toBuffer();

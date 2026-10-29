@@ -61,7 +61,7 @@ The web app rejects:
 - map images over 200 megapixels, and outputs over 250 megapixels
 - WebP outputs wider or taller than 16383 px (a WebP format limit)
 
-Big maps need a lot of memory: a 12800×8800 map takes about 2.7 GB to convert at 140 px per square, which is why Docker gets 4 GB. The web app converts one map at a time and handles up to 2 requests at once (uploading, waiting or converting); beyond that it answers "busy, try again".
+Big maps need a lot of memory: a 12800×8800 map takes about 1.5 GB to convert at 140 px per square, and up to about 2.7 GB when you pick several formats, which is why Docker gets 4 GB. The web app converts one map at a time. Up to 10 requests can be in progress at once (uploading, waiting or converting); beyond that it answers "busy, try again". A conversion that takes longer than 5 minutes is stopped (set `CONVERSION_TIMEOUT_SECONDS` to change it). Waiting uploads are kept on disk, not in memory: each request can take up to about 1 GB of temporary disk space (the upload plus its decoded image), so leave about 10 GB free.
 
 ## Development
 
@@ -72,3 +72,5 @@ npm run dev
 Starts the server on http://localhost:3000 with hot reload: Vite runs inside Express, so the API and the page share one port. Use `PORT=3001 npm run dev` to change it.
 
 `npm test` · `npm run typecheck` · `npm run lint` · `npm run format` · `npm run build`
+
+`npm run bench` measures time and peak memory per request and appends the results to `bench/results.md`. It creates its test maps in `source/` on the first run. `BENCH_TARGET=docker` runs it against the Docker image (rebuilt first) instead of a local server, and `BENCH_ONLY=<text>` runs only the cases whose name contains that text.

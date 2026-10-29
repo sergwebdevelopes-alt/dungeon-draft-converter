@@ -1,4 +1,4 @@
-import { execFile, spawn, type ChildProcess } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import { openAsBlob } from 'node:fs';
 import os from 'node:os';
@@ -11,6 +11,13 @@ const SOURCE_DIR = path.join(ROOT_DIR, 'source');
 const RESULTS_FILE = path.join(ROOT_DIR, 'bench/results.md');
 const PORT = Number(process.env.BENCH_PORT ?? 3160);
 const SAMPLE_MS = 100;
+const TARGET = process.env.BENCH_TARGET === 'docker' ? 'docker' : 'local';
+const DOCKER_IMAGE = 'dungeon-draft-converter';
+const DOCKER_CONTAINER = 'dd-bench';
+const DOCKER_MEMORY = '4g';
+const DOCKER_ENV = (process.env.BENCH_DOCKER_ENV ?? '')
+  .split(/\s+/)
+  .filter(Boolean);
 const COLUMNS = 6;
 const ROWS = 4;
 const SQUARES = { x: 120, y: 88 };
@@ -32,6 +39,12 @@ interface BenchCase {
   maps: string[];
   presets: string;
   variants: string;
+}
+
+interface BenchServer {
+  residentMb(): Promise<number>;
+  peakMb(): Promise<number>;
+  stop(): Promise<void>;
 }
 
 interface BenchResult {
@@ -227,7 +240,22 @@ async function missingMaps(benchCase: BenchCase): Promise<string[]> {
   return missing;
 }
 
-async function residentMb(pid: number): Promise<number> {
+async function waitUntilReady(): Promise<void> {
+  const deadline = Date.now() + 30_000;
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(`http://localhost:${PORT}/api/config`);
+      if (response.ok) {
+        return;
+      }
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+  }
+  throw new Error(`The server did not start on port ${PORT}.`);
+}
+
+async function processResidentMb(pid: number): Promise<number> {
   try {
     const { stdout } = await run('ps', ['-o', 'rss=', '-p', String(pid)]);
     return Number(stdout.trim()) / 1024;
@@ -236,47 +264,116 @@ async function residentMb(pid: number): Promise<number> {
   }
 }
 
-async function startServer(): Promise<ChildProcess> {
+async function startLocalServer(): Promise<BenchServer> {
   const server = spawn(process.execPath, ['src/server.ts'], {
     cwd: ROOT_DIR,
     env: { ...process.env, PORT: String(PORT), NODE_ENV: 'production' },
     stdio: ['ignore', 'ignore', 'inherit'],
   });
-  const deadline = Date.now() + 15_000;
-  while (Date.now() < deadline) {
-    try {
-      const response = await fetch(`http://localhost:${PORT}/api/config`);
-      if (response.ok) {
-        return server;
-      }
-    } catch {
-      await new Promise((resolve) => setTimeout(resolve, 200));
+  const pid = server.pid!;
+  const stop = async () => {
+    if (server.exitCode !== null) {
+      return;
     }
+    const exited = new Promise((resolve) => server.once('exit', resolve));
+    server.kill();
+    await exited;
+  };
+  try {
+    await waitUntilReady();
+  } catch (error) {
+    await stop();
+    throw error;
   }
-  server.kill();
-  throw new Error(`The server did not start on port ${PORT}.`);
+
+  let peak = await processResidentMb(pid);
+  const sampler = setInterval(() => {
+    void processResidentMb(pid).then((mb) => {
+      peak = Math.max(peak, mb);
+    });
+  }, SAMPLE_MS);
+
+  return {
+    residentMb: () => processResidentMb(pid),
+    peakMb: async () => Math.max(peak, await processResidentMb(pid)),
+    stop: async () => {
+      clearInterval(sampler);
+      await stop();
+    },
+  };
 }
 
-async function stopServer(server: ChildProcess): Promise<void> {
-  if (server.exitCode !== null) {
-    return;
+async function containerStatusMb(field: 'VmRSS' | 'VmHWM'): Promise<number> {
+  const { stdout } = await run('docker', [
+    'exec',
+    DOCKER_CONTAINER,
+    'cat',
+    '/proc/1/status',
+  ]);
+  const kb = new RegExp(`^${field}:\\s+(\\d+) kB`, 'm').exec(stdout)?.[1];
+  if (!kb) {
+    throw new Error(`${field} is missing from the container's /proc/1/status.`);
   }
-  const exited = new Promise((resolve) => server.once('exit', resolve));
-  server.kill();
-  await exited;
+  return Number(kb) / 1024;
+}
+
+async function removeContainer(): Promise<void> {
+  await run('docker', ['rm', '-f', DOCKER_CONTAINER]).catch(() => undefined);
+}
+
+async function startDockerServer(): Promise<BenchServer> {
+  await removeContainer();
+  await run('docker', [
+    'run',
+    '-d',
+    '--rm',
+    '--name',
+    DOCKER_CONTAINER,
+    '-p',
+    `${PORT}:3000`,
+    '--memory',
+    DOCKER_MEMORY,
+    '--read-only',
+    '-v',
+    '/tmp',
+    '--cap-drop',
+    'ALL',
+    '--security-opt',
+    'no-new-privileges:true',
+    ...DOCKER_ENV.flatMap((variable) => ['-e', variable]),
+    DOCKER_IMAGE,
+  ]);
+  try {
+    await waitUntilReady();
+  } catch (error) {
+    await removeContainer();
+    throw error;
+  }
+  return {
+    residentMb: () => containerStatusMb('VmRSS'),
+    peakMb: () => containerStatusMb('VmHWM'),
+    stop: removeContainer,
+  };
+}
+
+async function describeTarget(): Promise<string> {
+  const map = `map ${SQUARES.x}×${SQUARES.y} squares`;
+  if (TARGET === 'local') {
+    return `Local: ${os.type()} ${os.arch()}, ${os.cpus()[0]?.model ?? 'unknown CPU'}, Node ${process.version}, ${map}. Peak memory: process RSS sampled every ${SAMPLE_MS} ms`;
+  }
+  const { stdout } = await run('docker', [
+    'version',
+    '--format',
+    '{{.Server.Version}} {{.Server.Os}}/{{.Server.Arch}}',
+  ]);
+  return `Docker ${stdout.trim()}, image ${DOCKER_IMAGE} (jemalloc), memory limit ${DOCKER_MEMORY}${DOCKER_ENV.length > 0 ? `, env ${DOCKER_ENV.join(' ')}` : ''}, ${map}. Peak memory: process VmHWM`;
 }
 
 async function runCase(benchCase: BenchCase): Promise<BenchResult> {
-  const server = await startServer();
-  const pid = server.pid!;
+  const server =
+    TARGET === 'docker' ? await startDockerServer() : await startLocalServer();
   try {
-    const baselineMb = await residentMb(pid);
-    let peakMb = baselineMb;
-    const sampler = setInterval(() => {
-      void residentMb(pid).then((mb) => {
-        peakMb = Math.max(peakMb, mb);
-      });
-    }, SAMPLE_MS);
+    const baselineMb = await server.residentMb();
 
     const form = new FormData();
     for (const name of benchCase.maps) {
@@ -295,8 +392,7 @@ async function runCase(benchCase: BenchCase): Promise<BenchResult> {
     );
     const zip = await response.arrayBuffer();
     const seconds = (performance.now() - started) / 1000;
-    clearInterval(sampler);
-    peakMb = Math.max(peakMb, await residentMb(pid));
+    const peakMb = await server.peakMb();
 
     if (!response.ok) {
       throw new Error(
@@ -311,7 +407,7 @@ async function runCase(benchCase: BenchCase): Promise<BenchResult> {
       zipMb: zip.byteLength / 1024 / 1024,
     };
   } finally {
-    await stopServer(server);
+    await server.stop();
   }
 }
 
@@ -346,6 +442,10 @@ async function main(): Promise<void> {
   for (const map of MAPS) {
     await createBenchMap(map);
   }
+  if (TARGET === 'docker') {
+    console.log('Building the Docker image...');
+    await run('docker', ['compose', 'build'], { cwd: ROOT_DIR });
+  }
 
   const results: BenchResult[] = [];
   const only = process.env.BENCH_ONLY?.toLowerCase();
@@ -370,14 +470,14 @@ async function main(): Promise<void> {
 
   const table = formatTable(results);
   const heading = `## ${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC, ${await gitCommit()}`;
-  const machine = `${os.type()} ${os.arch()}, ${os.cpus()[0]?.model ?? 'unknown CPU'}, Node ${process.version}, map ${SQUARES.x}×${SQUARES.y} squares`;
+  const machine = await describeTarget();
   console.log(`\n${table}`);
 
   const existing = await fs
     .readFile(RESULTS_FILE, 'utf8')
     .catch(
       () =>
-        '# Benchmark results\n\nAppended by `npm run bench`. Peak memory is the server process RSS, sampled every 100 ms.\n',
+        '# Benchmark results\n\nAppended by `npm run bench` (`BENCH_TARGET=docker` for the Docker image).\n',
     );
   await fs.mkdir(path.dirname(RESULTS_FILE), { recursive: true });
   await fs.writeFile(
