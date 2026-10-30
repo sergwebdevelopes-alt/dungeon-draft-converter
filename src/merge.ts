@@ -6,6 +6,8 @@ import { MAX_INPUT_PIXELS, readMapImageSize } from './convert.ts';
 import { bakeLighting, hasBakedLighting, stackLevels } from './lighting.ts';
 
 const COVERED_ALPHA = 128;
+const FOUNDRY_COMPRESSION_LEVEL = 6;
+const LIT_COMPRESSION_LEVEL = 1;
 
 class LevelMismatchError extends Error {
   name = 'LevelMismatchError';
@@ -190,6 +192,7 @@ async function stackLitLevels(
     height,
     workDir,
     MAX_INPUT_PIXELS,
+    LIT_COMPRESSION_LEVEL,
   );
   const bakedFiles = litLevels
     .filter((lit, index) => lit.image !== levels[index].image)
@@ -216,6 +219,7 @@ async function mergeLevels(
     height,
     workDir,
     MAX_INPUT_PIXELS,
+    FOUNDRY_COMPRESSION_LEVEL,
   );
   const baked = levels.every(hasBakedLighting);
   const litImage = baked

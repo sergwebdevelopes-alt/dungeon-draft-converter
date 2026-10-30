@@ -398,6 +398,7 @@ async function stackLevels(
   height: number,
   workDir: string,
   limitInputPixels: number,
+  compressionLevel: number,
 ): Promise<MapImage> {
   const stack = [...levels].reverse();
   const resolution = record(levels[0].metadata.resolution);
@@ -446,7 +447,7 @@ async function stackLevels(
     ]);
     await replace(
       level === levels[0]
-        ? await writeImage(stacked, workDir, 6)
+        ? await writeImage(stacked, workDir, compressionLevel)
         : await writeTempImage(stacked, workDir),
     );
   }
