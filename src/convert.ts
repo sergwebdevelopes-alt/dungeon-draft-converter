@@ -7,6 +7,7 @@ import { bakeLighting } from './lighting.ts';
 const FOUNDRY_DIR = 'FOUNDRY_VTT_DD2VTT';
 
 const JPEG_QUALITY = 80;
+const JPEG_OPTIMISE_CODING = false;
 const WEBP_QUALITY = 80;
 const WEBP_EFFORT = 1;
 const MAX_OUTPUT_PIXELS = 250_000_000;
@@ -208,7 +209,10 @@ async function convertImage(options: {
   pipeline =
     preset.format === 'webp'
       ? pipeline.webp({ quality: WEBP_QUALITY, effort: WEBP_EFFORT })
-      : pipeline.jpeg({ quality: JPEG_QUALITY });
+      : pipeline.jpeg({
+          quality: JPEG_QUALITY,
+          optimiseCoding: JPEG_OPTIMISE_CODING,
+        });
 
   return pipeline.withMetadata({ density: preset.ppi }).toBuffer();
 }
