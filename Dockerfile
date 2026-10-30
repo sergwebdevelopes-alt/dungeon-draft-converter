@@ -13,7 +13,8 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/* \
   && ln -s "/usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2" /usr/lib/libjemalloc.so.2
 WORKDIR /app
-ENV NODE_ENV=production PORT=3000 LD_PRELOAD=/usr/lib/libjemalloc.so.2
+ENV NODE_ENV=production PORT=3000 LD_PRELOAD=/usr/lib/libjemalloc.so.2 \
+  MALLOC_CONF=background_thread:true,dirty_decay_ms:1000,muzzy_decay_ms:0
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY src ./src
