@@ -91,8 +91,8 @@ function toLoadedMap(
   };
 }
 
-function newImagePath(workDir: string): MapImage {
-  return path.join(workDir, `${randomUUID()}.png`);
+function newImagePath(workDir: string, extension = 'png'): MapImage {
+  return path.join(workDir, `${randomUUID()}.${extension}`);
 }
 
 class Dd2vttScanner {

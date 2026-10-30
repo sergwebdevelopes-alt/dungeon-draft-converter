@@ -195,3 +195,19 @@ Docker 29.2.1 linux/arm64, image dungeon-draft-converter (jemalloc), memory limi
 | Case | Time | Peak memory | Added by request | Zip |
 |---|---|---|---|---|
 | Unlit 60×44, all presets, both | 9.5 s | 2635 MB | 2461 MB | 62.7 MB |
+
+## 2026-10-30 09:43 UTC, 6c05104 + uncommitted changes
+
+Docker 29.2.1 linux/arm64, image dungeon-draft-converter (jemalloc), memory limit 4g, maps Bench_120x88 120×88, Bench_120x88_upper 120×88, Bench_120x88_lit 120×88, Bench_60x44 60×44 squares. Peak memory: process VmHWM
+
+| Case | Time | Peak memory | Added by request | Zip |
+|---|---|---|---|---|
+| Unlit 60×44, all presets, both | 7.4 s | 2645 MB | 2469 MB | 62.7 MB |
+
+## 2026-10-30 09:43 UTC, 6c05104 + uncommitted changes
+
+Docker 29.2.1 linux/arm64, image dungeon-draft-converter (jemalloc), memory limit 4g, maps Bench_120x88 120×88, Bench_120x88_upper 120×88, Bench_120x88_lit 120×88, Bench_60x44 60×44 squares. Peak memory: process VmHWM
+
+| Case | Time | Peak memory | Added by request | Zip |
+|---|---|---|---|---|
+| Unlit 60×44, all presets, both | 6.9 s | 2805 MB | 2634 MB | 62.7 MB |

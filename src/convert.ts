@@ -1,6 +1,7 @@
+import fs from 'fs/promises';
 import sharp, { type OverlayOptions, type Sharp } from 'sharp';
 import { createGridSvg, gridTileSquares } from './grid.ts';
-import type { LoadedMap, MapImage } from './dd2vtt.ts';
+import { newImagePath, type LoadedMap, type MapImage } from './dd2vtt.ts';
 import { bakeLighting } from './lighting.ts';
 
 const FOUNDRY_DIR = 'FOUNDRY_VTT_DD2VTT';
@@ -77,8 +78,11 @@ interface Size {
   height: number;
 }
 
-function readMapImage(image: MapImage): Sharp {
-  return sharp(image, { limitInputPixels: MAX_INPUT_PIXELS });
+function readMapImage(
+  image: MapImage,
+  limitInputPixels = MAX_INPUT_PIXELS,
+): Sharp {
+  return sharp(image, { limitInputPixels });
 }
 
 async function readMapImageSize(map: LoadedMap): Promise<Size> {
@@ -183,16 +187,12 @@ async function convertImage(options: {
   image: MapImage;
   preset: FormatPreset;
   size: Size;
-  resize: boolean;
   withGrid: boolean;
   logo?: LogoOptions;
 }): Promise<Buffer> {
-  const { image, preset, size, resize, withGrid, logo } = options;
+  const { image, preset, size, withGrid, logo } = options;
 
-  let pipeline = readMapImage(image);
-  if (resize) {
-    pipeline = pipeline.resize(size.width, size.height);
-  }
+  let pipeline = readMapImage(image, MAX_OUTPUT_PIXELS);
 
   const overlays: OverlayOptions[] = [];
   if (withGrid) {
@@ -266,32 +266,30 @@ async function convertMap(
     ? variants
     : variants.filter((variant) => variant !== 'Grid');
 
-  const jobs = presets.flatMap((preset) => {
+  const steps = presets.map((preset) => {
     const size = getOutputSize(map, preset, sourceSize);
     const resize =
       size.width !== sourceSize.width || size.height !== sourceSize.height;
-
-    return availableVariants.map((variant) => ({
+    const jobs = availableVariants.map((variant) => ({
       preset,
       variant,
       size,
-      resize,
     }));
+    return { size, resize, jobs };
   });
+  const count = steps.length * availableVariants.length;
 
-  async function* render(): AsyncGenerator<OutputFile> {
-    if (jobs.length === 0) {
-      return;
-    }
-    const { image } = await bakeLighting(map, workDir, MAX_INPUT_PIXELS);
+  async function* convertJobs(
+    image: MapImage,
+    jobs: (typeof steps)[number]['jobs'],
+  ): AsyncGenerator<OutputFile> {
     for (const group of groupJobs(jobs)) {
       const results = await Promise.allSettled(
-        group.map(({ preset, variant, size, resize }) =>
+        group.map(({ preset, variant, size }) =>
           convertImage({
             image,
             preset,
             size,
-            resize,
             withGrid: variant === 'Grid',
             logo,
           }),
@@ -307,7 +305,35 @@ async function convertMap(
     }
   }
 
-  return { count: jobs.length, files: render() };
+  async function* render(): AsyncGenerator<OutputFile> {
+    if (count === 0) {
+      return;
+    }
+    const { image } = await bakeLighting(map, workDir, MAX_INPUT_PIXELS);
+    const source = newImagePath(workDir, 'v');
+    try {
+      await readMapImage(image).toFile(source);
+      for (const { size, resize, jobs } of steps) {
+        const resized = resize ? newImagePath(workDir, 'v') : source;
+        try {
+          if (resize) {
+            await readMapImage(source)
+              .resize(size.width, size.height)
+              .toFile(resized);
+          }
+          yield* convertJobs(resized, jobs);
+        } finally {
+          if (resize) {
+            await fs.rm(resized, { force: true });
+          }
+        }
+      }
+    } finally {
+      await fs.rm(source, { force: true });
+    }
+  }
+
+  return { count, files: render() };
 }
 
 export {
