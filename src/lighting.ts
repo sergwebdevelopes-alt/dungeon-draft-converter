@@ -253,7 +253,8 @@ async function dodgeMask(
   grid: FieldGrid,
   width: number,
   height: number,
-): Promise<Buffer | undefined> {
+  workDir: string,
+): Promise<MapImage | undefined> {
   const mask = Buffer.alloc(grid.width * grid.height * 3);
   let any = false;
   for (let i = 0; i < mask.length; i++) {
@@ -267,12 +268,12 @@ async function dodgeMask(
   if (!any) {
     return undefined;
   }
-  return sharp(mask, {
-    raw: { width: grid.width, height: grid.height, channels: 3 },
-  })
-    .resize(width, height, { kernel: 'linear' })
-    .png({ compressionLevel: 1 })
-    .toBuffer();
+  return writeTempImage(
+    sharp(mask, {
+      raw: { width: grid.width, height: grid.height, channels: 3 },
+    }).resize(width, height, { kernel: 'linear' }),
+    workDir,
+  );
 }
 
 async function writeImage(
@@ -285,35 +286,44 @@ async function writeImage(
   return file;
 }
 
+async function writeTempImage(
+  pipeline: Sharp,
+  workDir: string,
+): Promise<MapImage> {
+  const file = newImagePath(workDir, 'v');
+  await pipeline.toFile(file);
+  return file;
+}
+
 async function removeImages(...files: MapImage[]): Promise<void> {
   await Promise.all(files.map((file) => fs.rm(file, { force: true })));
 }
 
 async function relight(
   image: MapImage,
-  mask: Buffer,
+  mask: MapImage,
   workDir: string,
   limitInputPixels: number,
 ): Promise<MapImage> {
-  const alpha = await writeImage(
+  const alpha = await writeTempImage(
     sharp(image, { limitInputPixels }).ensureAlpha().extractChannel(3),
     workDir,
   );
-  const dodged = await writeImage(
+  const dodged = await writeTempImage(
     sharp(image, { limitInputPixels })
       .ensureAlpha()
-      .composite([{ input: mask, blend: 'colour-dodge' }]),
+      .composite([{ input: mask, blend: 'colour-dodge', limitInputPixels }]),
     workDir,
   );
-  const rgb = await writeImage(
+  const rgb = await writeTempImage(
     sharp(dodged, { limitInputPixels }).removeAlpha(),
     workDir,
   );
-  const relit = await writeImage(
+  const relit = await writeTempImage(
     sharp(rgb, { limitInputPixels }).joinChannel(alpha),
     workDir,
   );
-  await removeImages(alpha, dodged, rgb);
+  await removeImages(mask, alpha, dodged, rgb);
   return relit;
 }
 
@@ -330,13 +340,13 @@ async function bakeLighting(
     limitInputPixels,
   }).metadata();
   const ambient = ambientLight(level);
-  const rgba = await writeImage(
+  const rgba = await writeTempImage(
     sharp(level.image, { limitInputPixels })
       .toColourspace('srgb')
       .ensureAlpha(),
     workDir,
   );
-  let image = await writeImage(
+  const darkened = await writeTempImage(
     sharp(rgba, { limitInputPixels }).linear([...ambient, 1], [0, 0, 0, 0]),
     workDir,
   );
@@ -357,14 +367,18 @@ async function bakeLighting(
       grid,
       width,
       height,
+      workDir,
     );
     if (mask) {
-      const relit = await relight(image, mask, workDir, limitInputPixels);
-      await removeImages(image);
-      image = relit;
+      const relit = await relight(darkened, mask, workDir, limitInputPixels);
+      await removeImages(darkened);
+      return withBakedLighting(level, relit);
     }
   }
+  return withBakedLighting(level, darkened);
+}
 
+function withBakedLighting(level: LoadedMap, image: MapImage): LoadedMap {
   return {
     ...level,
     image,
@@ -418,6 +432,7 @@ async function stackLevels(
         grid,
         width,
         height,
+        workDir,
       );
       if (mask) {
         await replace(await relight(image, mask, workDir, limitInputPixels));
@@ -426,14 +441,13 @@ async function stackLevels(
         lightBelow[i] += added[i];
       }
     }
+    const stacked = sharp(image, { limitInputPixels }).composite([
+      { input: level.image, blend: 'over', limitInputPixels },
+    ]);
     await replace(
-      await writeImage(
-        sharp(image, { limitInputPixels }).composite([
-          { input: level.image, blend: 'over', limitInputPixels },
-        ]),
-        workDir,
-        level === levels[0] ? 6 : 1,
-      ),
+      level === levels[0]
+        ? await writeImage(stacked, workDir, 6)
+        : await writeTempImage(stacked, workDir),
     );
   }
   return image;
