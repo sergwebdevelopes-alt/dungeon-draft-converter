@@ -2,9 +2,12 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   convertFile,
   fetchConfig,
+  fetchQueuePosition,
   isAbortError,
+  newTicket,
   type Config,
   type LogoPlacement,
+  type QueuePosition,
   type Variant,
 } from './api.ts';
 import { DropZone } from './DropZone.tsx';
@@ -20,11 +23,23 @@ import { loadSettings, saveSettings } from './settings.ts';
 import { Option } from './Option.tsx';
 import { OptionSkeleton } from './OptionSkeleton.tsx';
 
+type Progress =
+  | { state: 'uploading' }
+  | Exclude<QueuePosition, { state: 'unknown' }>
+  | { state: 'downloading' };
+
 type Status =
   | { kind: 'idle' }
-  | { kind: 'converting'; startedAt: number }
+  | {
+      kind: 'converting';
+      startedAt: number;
+      ticket: string;
+      progress: Progress;
+    }
   | { kind: 'done'; url: string; fileName: string }
   | { kind: 'error'; message: string };
+
+const QUEUE_POLL_MS = 2000;
 
 const PRESET_HINTS: Record<string, string> = {
   JPG_70: 'Small file, loads fast',
@@ -49,6 +64,34 @@ function toggle<T>(list: T[], value: T): T[] {
 function zipName(maps: File[]): string {
   const stem = maps[0].name.replace(/\.dd2vtt$/i, '');
   return maps.length > 1 ? `${stem}_merged.zip` : `${stem}.zip`;
+}
+
+function progressLabel(progress: Progress): string {
+  switch (progress.state) {
+    case 'uploading':
+      return 'Uploading…';
+    case 'waiting':
+      if (progress.ahead === 0) {
+        return 'Starting…';
+      }
+      return `Waiting in line: ${progress.ahead} ${progress.ahead === 1 ? 'map' : 'maps'} ahead of yours`;
+    case 'converting':
+      return 'Converting…';
+    case 'downloading':
+      return 'Converting and downloading…';
+  }
+}
+
+function withProgress(
+  status: Status,
+  ticket: string,
+  progress: Progress,
+): Status {
+  return status.kind === 'converting' &&
+    status.ticket === ticket &&
+    status.progress.state !== 'downloading'
+    ? { ...status, progress }
+    : status;
 }
 
 function download(url: string, fileName: string) {
@@ -103,6 +146,32 @@ function App() {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, [status.kind]);
+
+  const pollTicket =
+    status.kind === 'converting' && status.progress.state !== 'downloading'
+      ? status.ticket
+      : null;
+
+  useEffect(() => {
+    if (!pollTicket) {
+      return;
+    }
+    const controller = new AbortController();
+    const poll = () => {
+      fetchQueuePosition(pollTicket, controller.signal)
+        .then((position) => {
+          if (position.state !== 'unknown') {
+            setStatus((current) => withProgress(current, pollTicket, position));
+          }
+        })
+        .catch(() => undefined);
+    };
+    const timer = setInterval(poll, QUEUE_POLL_MS);
+    return () => {
+      clearInterval(timer);
+      controller.abort();
+    };
+  }, [pollTicket]);
 
   useEffect(() => {
     if (status.kind !== 'done') {
@@ -211,8 +280,14 @@ function App() {
     abortRef.current = controller;
 
     const startedAt = Date.now();
+    const ticket = newTicket();
     setNow(startedAt);
-    setStatus({ kind: 'converting', startedAt });
+    setStatus({
+      kind: 'converting',
+      startedAt,
+      ticket,
+      progress: { state: 'uploading' },
+    });
 
     try {
       const logoOptions =
@@ -220,8 +295,12 @@ function App() {
           ? { image: logo, placement: clampPlacement(placement, config.logo) }
           : undefined;
       const blob = await convertFile(
-        { maps, logo: logoOptions, presets, variants },
+        { ticket, maps, logo: logoOptions, presets, variants },
         controller.signal,
+        () =>
+          setStatus((current) =>
+            withProgress(current, ticket, { state: 'downloading' }),
+          ),
       );
       const url = URL.createObjectURL(blob);
       const fileName = zipName(maps);
@@ -419,7 +498,7 @@ function App() {
             <div className="progress" role="status">
               <div className="progress-bar" />
               <div className="progress-row">
-                <span>Uploading and converting…</span>
+                <span>{progressLabel(status.progress)}</span>
                 <span className="muted">
                   {formatDuration(now - status.startedAt)}
                 </span>

@@ -72,6 +72,42 @@ function enqueue<T>(task: () => Promise<T>): Promise<T> {
   return result;
 }
 
+type TicketState = 'waiting' | 'converting';
+
+type QueuePosition =
+  | { state: 'waiting'; ahead: number }
+  | { state: 'converting' }
+  | { state: 'unknown' };
+
+const TICKET_PATTERN = /^[0-9a-f]{32}$/;
+
+const tickets = new Map<string, TicketState>();
+
+function parseTicket(value: unknown): string | undefined {
+  const ticket = queryString(value);
+  if (ticket === undefined) {
+    return undefined;
+  }
+  if (!TICKET_PATTERN.test(ticket)) {
+    throw new HttpError(400, 'The queue ticket is not valid.');
+  }
+  if (tickets.has(ticket)) {
+    throw new HttpError(409, 'This queue ticket is already in use.');
+  }
+  return ticket;
+}
+
+function queuePosition(ticket: string): QueuePosition {
+  const state = tickets.get(ticket);
+  if (state === undefined) {
+    return { state: 'unknown' };
+  }
+  if (state === 'converting') {
+    return { state };
+  }
+  return { state, ahead: [...tickets.keys()].indexOf(ticket) };
+}
+
 let pendingConversions = 0;
 
 const limitPendingConversions: RequestHandler = (_req, res, next) => {
@@ -270,6 +306,7 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
   );
   const logoSize = parseLogoPercent(req.query.logoSize, 'size');
   const logoMargin = parseLogoPercent(req.query.logoMargin, 'margin');
+  const ticket = parseTicket(req.query.ticket);
 
   const mapFiles = takeUploadedFiles(req, 'maps');
   const levels = parseLevels(mapFiles, queryString(req.query.name));
@@ -296,9 +333,17 @@ async function handleConvert(req: Request, res: Response): Promise<void> {
     });
   };
 
+  if (ticket && !stopped()) {
+    tickets.set(ticket, 'waiting');
+    res.once('close', () => tickets.delete(ticket));
+  }
+
   const work = enqueue(async () => {
     if (stopped()) {
       return;
+    }
+    if (ticket && tickets.has(ticket)) {
+      tickets.set(ticket, 'converting');
     }
     const timer = setTimeout(stopOnTimeout, CONVERSION_TIMEOUT_MS);
     try {
@@ -512,6 +557,10 @@ async function createApp(server: http.Server): Promise<express.Express> {
     });
   });
 
+  app.get('/api/queue/:ticket', (req, res) => {
+    res.set('Cache-Control', 'no-store').json(queuePosition(req.params.ticket));
+  });
+
   app.post(
     '/api/convert',
     limitPendingConversions,
@@ -552,3 +601,4 @@ if (import.meta.main) {
 }
 
 export { MAX_UPLOAD_BYTES, createApp };
+export type { QueuePosition };

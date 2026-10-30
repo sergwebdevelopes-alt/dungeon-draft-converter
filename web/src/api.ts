@@ -4,6 +4,7 @@ import type {
   LogoSetting,
   Variant,
 } from '../../src/convert.ts';
+import type { QueuePosition } from '../../src/server.ts';
 
 type LogoLimits = typeof LOGO_LIMITS;
 
@@ -20,6 +21,7 @@ interface Config {
 }
 
 interface ConvertRequest {
+  ticket: string;
   maps: File[];
   presets: string[];
   variants: Variant[];
@@ -39,11 +41,29 @@ async function fetchConfig(signal: AbortSignal): Promise<Config> {
   return (await res.json()) as Config;
 }
 
-async function convertFile(
-  { maps, logo, presets, variants }: ConvertRequest,
+function newTicket(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function fetchQueuePosition(
+  ticket: string,
   signal: AbortSignal,
+): Promise<QueuePosition> {
+  const res = await fetch(`/api/queue/${ticket}`, { signal });
+  if (!res.ok) {
+    throw new Error(await readError(res));
+  }
+  return (await res.json()) as QueuePosition;
+}
+
+async function convertFile(
+  { ticket, maps, logo, presets, variants }: ConvertRequest,
+  signal: AbortSignal,
+  onDownloading: () => void,
 ): Promise<Blob> {
   const params = new URLSearchParams({
+    ticket,
     name: maps[0].name,
     presets: presets.join(','),
     variants: variants.join(','),
@@ -69,6 +89,7 @@ async function convertFile(
   if (!res.ok) {
     throw new Error(await readError(res));
   }
+  onDownloading();
   return res.blob();
 }
 
@@ -76,5 +97,18 @@ function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError';
 }
 
-export { fetchConfig, convertFile, isAbortError };
-export type { Config, FormatPreset, LogoLimits, LogoPlacement, Variant };
+export {
+  fetchConfig,
+  fetchQueuePosition,
+  convertFile,
+  isAbortError,
+  newTicket,
+};
+export type {
+  Config,
+  FormatPreset,
+  LogoLimits,
+  LogoPlacement,
+  QueuePosition,
+  Variant,
+};
