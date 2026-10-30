@@ -171,3 +171,27 @@ Docker 29.2.1 linux/arm64, image dungeon-draft-converter (jemalloc), memory limi
 | JPG_140, Grid | 7.7 s | 1698 MB | 1530 MB | 39.6 MB |
 | JPG_70 + JPG_140, both | 12.1 s | 1746 MB | 1573 MB | 75.3 MB |
 | Merge 2 levels, JPG_70, both | 15.9 s | 979 MB | 807 MB | 29.5 MB |
+
+## 2026-10-30 09:16 UTC, 01e5d5e + uncommitted changes
+
+Docker 29.2.1 linux/arm64, image dungeon-draft-converter (jemalloc), memory limit 4g, env MAX_PARALLEL_IMAGES=4, maps Bench_120x88 120×88, Bench_120x88_upper 120×88, Bench_120x88_lit 120×88, Bench_60x44 60×44 squares. Peak memory: process VmHWM
+
+| Case | Time | Peak memory | Added by request | Zip |
+|---|---|---|---|---|
+| Unlit 60×44, all presets, both | 8.2 s | 3577 MB | 3403 MB | 62.7 MB |
+
+## 2026-10-30 09:16 UTC, 01e5d5e + uncommitted changes
+
+Docker 29.2.1 linux/arm64, image dungeon-draft-converter (jemalloc), memory limit 4g, env MAX_PARALLEL_IMAGES=2, maps Bench_120x88 120×88, Bench_120x88_upper 120×88, Bench_120x88_lit 120×88, Bench_60x44 60×44 squares. Peak memory: process VmHWM
+
+| Case | Time | Peak memory | Added by request | Zip |
+|---|---|---|---|---|
+| Unlit 60×44, all presets, both | 8.0 s | 3158 MB | 2982 MB | 62.7 MB |
+
+## 2026-10-30 09:17 UTC, 01e5d5e + uncommitted changes
+
+Docker 29.2.1 linux/arm64, image dungeon-draft-converter (jemalloc), memory limit 4g, env MAX_PARALLEL_IMAGES=1, maps Bench_120x88 120×88, Bench_120x88_upper 120×88, Bench_120x88_lit 120×88, Bench_60x44 60×44 squares. Peak memory: process VmHWM
+
+| Case | Time | Peak memory | Added by request | Zip |
+|---|---|---|---|---|
+| Unlit 60×44, all presets, both | 9.5 s | 2635 MB | 2461 MB | 62.7 MB |

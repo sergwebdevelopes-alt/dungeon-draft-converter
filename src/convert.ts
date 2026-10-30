@@ -11,6 +11,7 @@ const WEBP_EFFORT = 1;
 const MAX_OUTPUT_PIXELS = 250_000_000;
 const WEBP_MAX_SIDE = 16383;
 const MAX_INPUT_PIXELS = 200_000_000;
+const MAX_PARALLEL_IMAGES = Number(process.env.MAX_PARALLEL_IMAGES ?? 2);
 const MAP_IMAGE_FORMATS = new Set(['png', 'jpeg', 'webp']);
 
 const LOGO_LIMITS = {
@@ -220,6 +221,35 @@ function outputPath(
   return `${preset.name}/${map.fileNameWithoutExt}_${preset.ppi}px_${variant}.${preset.format}`;
 }
 
+function groupJobs<T extends { size: Size }>(jobs: readonly T[]): T[][] {
+  const groups: T[][] = [];
+  let currentGroup: T[] = [];
+  let currentGroupPixels = 0;
+
+  for (const job of jobs) {
+    const jobPixels = job.size.width * job.size.height;
+
+    const exceedsLimits =
+      currentGroup.length >= MAX_PARALLEL_IMAGES ||
+      currentGroupPixels + jobPixels > MAX_OUTPUT_PIXELS;
+
+    if (exceedsLimits && currentGroup.length > 0) {
+      groups.push(currentGroup);
+      currentGroup = [];
+      currentGroupPixels = 0;
+    }
+
+    currentGroup.push(job);
+    currentGroupPixels += jobPixels;
+  }
+
+  if (currentGroup.length > 0) {
+    groups.push(currentGroup);
+  }
+
+  return groups;
+}
+
 async function convertMap(
   map: LoadedMap,
   workDir: string,
@@ -254,18 +284,26 @@ async function convertMap(
       return;
     }
     const { image } = await bakeLighting(map, workDir, MAX_INPUT_PIXELS);
-    for (const { preset, variant, size, resize } of jobs) {
-      yield {
-        path: outputPath(map, preset, variant),
-        data: await convertImage({
-          image,
-          preset,
-          size,
-          resize,
-          withGrid: variant === 'Grid',
-          logo,
-        }),
-      };
+    for (const group of groupJobs(jobs)) {
+      const results = await Promise.allSettled(
+        group.map(({ preset, variant, size, resize }) =>
+          convertImage({
+            image,
+            preset,
+            size,
+            resize,
+            withGrid: variant === 'Grid',
+            logo,
+          }),
+        ),
+      );
+      for (const [i, result] of results.entries()) {
+        if (result.status === 'rejected') {
+          throw result.reason;
+        }
+        const { preset, variant } = group[i];
+        yield { path: outputPath(map, preset, variant), data: result.value };
+      }
     }
   }
 

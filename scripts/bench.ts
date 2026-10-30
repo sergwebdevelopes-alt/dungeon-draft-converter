@@ -18,9 +18,6 @@ const DOCKER_MEMORY = '4g';
 const DOCKER_ENV = (process.env.BENCH_DOCKER_ENV ?? '')
   .split(/\s+/)
   .filter(Boolean);
-const COLUMNS = 6;
-const ROWS = 4;
-const SQUARES = { x: 120, y: 88 };
 
 const run = promisify(execFile);
 
@@ -32,6 +29,7 @@ interface Point {
 interface BenchMap {
   name: string;
   source: string;
+  squares: Point;
 }
 
 interface BenchCase {
@@ -56,9 +54,14 @@ interface BenchResult {
 }
 
 const MAPS: BenchMap[] = [
-  { name: 'Bench_120x88', source: 'L1_lightOFF' },
-  { name: 'Bench_120x88_upper', source: 'L2_lightOFF' },
-  { name: 'Bench_120x88_lit', source: 'L1' },
+  { name: 'Bench_120x88', source: 'L1_lightOFF', squares: { x: 120, y: 88 } },
+  {
+    name: 'Bench_120x88_upper',
+    source: 'L2_lightOFF',
+    squares: { x: 120, y: 88 },
+  },
+  { name: 'Bench_120x88_lit', source: 'L1', squares: { x: 120, y: 88 } },
+  { name: 'Bench_60x44', source: 'L1_lightOFF', squares: { x: 60, y: 44 } },
 ];
 
 const CASES: BenchCase[] = [
@@ -111,6 +114,12 @@ const CASES: BenchCase[] = [
     variants: 'NoGrid,Grid',
   },
   {
+    name: 'Unlit 60×44, all presets, both',
+    maps: ['Bench_60x44'],
+    presets: 'JPG_70,JPG_140,JPG_300,WEBP_140',
+    variants: 'NoGrid,Grid',
+  },
+  {
     name: 'Merge 2 levels, JPG_70, both',
     maps: ['Bench_120x88_upper', 'Bench_120x88'],
     presets: 'JPG_70',
@@ -126,7 +135,11 @@ function shift(point: Point, dx: number, dy: number): Point {
   return { x: point.x + dx, y: point.y + dy };
 }
 
-async function createBenchMap({ name, source }: BenchMap): Promise<void> {
+async function createBenchMap({
+  name,
+  source,
+  squares,
+}: BenchMap): Promise<void> {
   const file = mapPath(name);
   try {
     await fs.access(file);
@@ -148,8 +161,8 @@ async function createBenchMap({ name, source }: BenchMap): Promise<void> {
   };
   const tile = json.resolution.map_size;
   const ppg = json.resolution.pixels_per_grid;
-  const width = SQUARES.x * ppg;
-  const height = SQUARES.y * ppg;
+  const width = squares.x * ppg;
+  const height = squares.y * ppg;
   const image = Buffer.from(json.image, 'base64');
 
   const overlays = [];
@@ -158,17 +171,20 @@ async function createBenchMap({ name, source }: BenchMap): Promise<void> {
   const portals: typeof json.portals = [];
   const lights: typeof json.lights = [];
 
-  for (let row = 0; row < ROWS; row++) {
-    for (let column = 0; column < COLUMNS; column++) {
+  const columns = Math.ceil(squares.x / tile.x);
+  const rows = Math.ceil(squares.y / tile.y);
+  for (let row = 0; row < rows; row++) {
+    for (let column = 0; column < columns; column++) {
       const dx = column * tile.x;
       const dy = row * tile.y;
+      const visibleColumns = Math.min(tile.x * ppg, width - dx * ppg);
       const visibleRows = Math.min(tile.y * ppg, height - dy * ppg);
       overlays.push({
         input: await sharp(image)
           .extract({
             left: 0,
             top: 0,
-            width: tile.x * ppg,
+            width: visibleColumns,
             height: visibleRows,
           })
           .png()
@@ -197,7 +213,10 @@ async function createBenchMap({ name, source }: BenchMap): Promise<void> {
             ...light,
             position: shift(light.position, dx, dy),
           }))
-          .filter((light) => light.position.y < SQUARES.y),
+          .filter(
+            (light) =>
+              light.position.x < squares.x && light.position.y < squares.y,
+          ),
       );
     }
   }
@@ -218,7 +237,7 @@ async function createBenchMap({ name, source }: BenchMap): Promise<void> {
     file,
     JSON.stringify({
       ...json,
-      resolution: { ...json.resolution, map_size: SQUARES },
+      resolution: { ...json.resolution, map_size: squares },
       line_of_sight: lineOfSight,
       objects_line_of_sight: objectsLineOfSight,
       portals,
@@ -357,7 +376,7 @@ async function startDockerServer(): Promise<BenchServer> {
 }
 
 async function describeTarget(): Promise<string> {
-  const map = `map ${SQUARES.x}×${SQUARES.y} squares`;
+  const map = `maps ${MAPS.map(({ name, squares }) => `${name} ${squares.x}×${squares.y}`).join(', ')} squares`;
   if (TARGET === 'local') {
     return `Local: ${os.type()} ${os.arch()}, ${os.cpus()[0]?.model ?? 'unknown CPU'}, Node ${process.version}, ${map}. Peak memory: process RSS sampled every ${SAMPLE_MS} ms`;
   }
