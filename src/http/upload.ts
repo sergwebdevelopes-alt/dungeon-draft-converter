@@ -5,6 +5,7 @@ import type { Request, RequestHandler } from 'express';
 import multer, { MulterError, type StorageEngine } from 'multer';
 import {
   MAX_LEVELS,
+  MAX_MAP_NAME_LENGTH,
   MAX_TOTAL_UPLOAD_BYTES,
   MAX_UPLOAD_BYTES,
   MULTIPART_OVERHEAD_BYTES,
@@ -125,7 +126,7 @@ async function storeMap(
   const fileName = path.basename(file.originalname);
   if (!fileName.toLowerCase().endsWith(MAP_EXTENSION)) {
     throw new InvalidMapFileError(
-      `"${fileName.slice(0, 100)}" is not a .dd2vtt file.`,
+      `"${fileName.slice(0, MAX_MAP_NAME_LENGTH)}" is not a .dd2vtt file.`,
     );
   }
   const uploadDir = uploadDirOf(req);

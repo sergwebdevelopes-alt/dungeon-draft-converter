@@ -4,3 +4,4 @@ source
 test
 .git
 web/dist
+src/**/*.test.ts

@@ -4,7 +4,7 @@ import { createGridSvg, gridTileSquares } from './grid.ts';
 import { newImagePath, type LoadedMap, type MapImage } from './dd2vtt.ts';
 import { bakeLighting } from './lighting.ts';
 import { InvalidInputError, UnprocessableError } from './errors.ts';
-import { MAX_PARALLEL_IMAGES } from '../config.ts';
+import { MAX_LOGO_PIXELS, MAX_PARALLEL_IMAGES } from '../config.ts';
 import { formatMegapixels } from '../utils/format.ts';
 
 const JPEG_QUALITY = 80;
@@ -16,6 +16,7 @@ const WEBP_MAX_SIDE = 16383;
 const WEBP_MAX_PIXELS = 100_000_000;
 const MAX_INPUT_PIXELS = 200_000_000;
 const MAP_IMAGE_FORMATS = new Set(['png', 'jpeg', 'webp']);
+const LOGO_FORMATS = new Set(['png', 'jpeg', 'webp']);
 
 const LOGO_LIMITS = {
   size: { min: 2, max: 20, step: 1, default: 10 },
@@ -23,6 +24,10 @@ const LOGO_LIMITS = {
 } as const;
 
 type LogoSetting = keyof typeof LOGO_LIMITS;
+
+class InvalidLogoError extends InvalidInputError {
+  name = 'InvalidLogoError';
+}
 
 class MapTooLargeError extends UnprocessableError {
   name = 'MapTooLargeError';
@@ -158,6 +163,29 @@ function checkLogoPercent(setting: LogoSetting, value: number): void {
   if (!Number.isFinite(value) || value < min || value > max) {
     throw new InvalidLogoPlacementError(
       `Logo ${setting} must be a number between ${min}% and ${max}%.`,
+    );
+  }
+}
+
+async function checkLogoImage(image: Buffer): Promise<void> {
+  const notAnImage = new InvalidLogoError(
+    'Logo must be a PNG, JPG or WebP image.',
+  );
+
+  let metadata;
+  try {
+    metadata = await sharp(image).metadata();
+  } catch {
+    throw notAnImage;
+  }
+
+  if (!LOGO_FORMATS.has(metadata.format)) {
+    throw notAnImage;
+  }
+
+  if (metadata.width * metadata.height > MAX_LOGO_PIXELS) {
+    throw new InvalidLogoError(
+      `Logo dimensions are too large (max ${formatMegapixels(MAX_LOGO_PIXELS)}).`,
     );
   }
 }
@@ -369,6 +397,8 @@ export {
   MapTooLargeError,
   InvalidLogoPlacementError,
   InvalidMapImageError,
+  InvalidLogoError,
+  checkLogoImage,
   checkLogoPercent,
   FORMAT_PRESETS,
   VARIANTS,

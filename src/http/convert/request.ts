@@ -1,8 +1,9 @@
 import path from 'node:path';
 import type { Request } from 'express';
-import sharp from 'sharp';
-import { MAX_LOGO_BYTES, MAX_LOGO_PIXELS } from '../../config.ts';
+import { MAX_LOGO_BYTES, MAX_MAP_NAME_LENGTH } from '../../config.ts';
+import { MAP_EXTENSION, type LoadedMap } from '../../core/dd2vtt.ts';
 import {
+  checkLogoImage,
   checkLogoPercent,
   FORMAT_PRESETS,
   LOGO_LIMITS,
@@ -12,15 +13,14 @@ import {
   type LogoSetting,
   type Variant,
 } from '../../core/images.ts';
-import { MAP_EXTENSION, type LoadedMap } from '../../core/dd2vtt.ts';
 import type { ConversionQueue } from '../../queue/conversion-queue.ts';
+import { formatMegabytes } from '../../utils/format.ts';
 import { HttpError } from '../errors.ts';
-import { formatMegabytes, formatMegapixels } from '../../utils/format.ts';
 import { MAP_FIELD, type UploadedFile } from '../upload.ts';
 
-const MAX_MAP_NAME_LENGTH = 100;
-const LOGO_FORMATS = new Set(['png', 'jpeg', 'webp']);
 const TICKET_PATTERN = /^[0-9a-f]{32}$/;
+
+type Query = Request['query'];
 
 interface ConvertRequest {
   presets: FormatPreset[];
@@ -43,12 +43,29 @@ function parseList<T extends string>(
   if (!raw) {
     return [...allowed];
   }
+
   const values = raw.split(',').filter(Boolean);
   const unknown = values.filter((v) => !allowed.includes(v as T));
+
   if (unknown.length > 0 || values.length === 0) {
     throw new HttpError(400, `Unknown ${label}: ${unknown.join(', ')}`);
   }
+
   return values as T[];
+}
+
+function parsePresets(raw: unknown): FormatPreset[] {
+  const names = parseList(
+    queryString(raw),
+    FORMAT_PRESETS.map((p) => p.name),
+    'presets',
+  );
+
+  return FORMAT_PRESETS.filter((p) => names.includes(p.name));
+}
+
+function parseVariants(raw: unknown): Variant[] {
+  return parseList<Variant>(queryString(raw), VARIANTS, 'variants');
 }
 
 function parseLogoPercent(raw: unknown, setting: LogoSetting): number {
@@ -58,29 +75,45 @@ function parseLogoPercent(raw: unknown, setting: LogoSetting): number {
 
   const value =
     typeof raw === 'string' && /^\d+(\.\d+)?$/.test(raw) ? Number(raw) : NaN;
+
   checkLogoPercent(setting, value);
+
   return value;
 }
 
-function parseTicket(
-  value: unknown,
-  queue: ConversionQueue,
-): string | undefined {
-  const ticket = queryString(value);
+function parseTicket(raw: unknown, queue: ConversionQueue): string | undefined {
+  const ticket = queryString(raw);
+
   if (ticket === undefined) {
     return undefined;
   }
+
   if (!TICKET_PATTERN.test(ticket)) {
     throw new HttpError(400, 'The queue ticket is not valid.');
   }
+
   if (queue.hasTicket(ticket)) {
     throw new HttpError(409, 'This queue ticket is already in use.');
   }
+
   return ticket;
+}
+
+function parseOptions(query: Query, queue: ConversionQueue) {
+  return {
+    presets: parsePresets(query.presets),
+    variants: parseVariants(query.variants),
+    logoPlacement: {
+      size: parseLogoPercent(query.logoSize, 'size'),
+      margin: parseLogoPercent(query.logoMargin, 'margin'),
+    },
+    ticket: parseTicket(query.ticket, queue),
+  };
 }
 
 function safeMapFileName(raw: string | undefined): string {
   const base = path.basename(raw ?? `map${MAP_EXTENSION}`);
+
   if (!base.toLowerCase().endsWith(MAP_EXTENSION)) {
     throw new HttpError(
       400,
@@ -93,6 +126,7 @@ function safeMapFileName(raw: string | undefined): string {
     .replace(/[^\p{L}\p{N} _.()-]/gu, '_')
     .slice(0, MAX_MAP_NAME_LENGTH)
     .replace(/^[. ]+|[. ]+$/g, '');
+
   return `${stem || 'map'}${MAP_EXTENSION}`;
 }
 
@@ -101,11 +135,14 @@ function takeUploadedFiles(
   field: typeof MAP_FIELD | 'logo',
 ): UploadedFile[] {
   const files = req.files;
+
   if (!files || Array.isArray(files)) {
     return [];
   }
+
   const taken = files[field] ?? [];
   delete files[field];
+
   return taken;
 }
 
@@ -116,13 +153,16 @@ function parseLevels(
   if (files.length === 0) {
     throw new HttpError(400, 'Please upload a .dd2vtt map file.');
   }
+
   return files.map((file, index) => {
     const fileName = safeMapFileName(
       index === 0 ? (mainName ?? file.originalname) : file.originalname,
     );
+
     if (!file.map) {
       throw new HttpError(400, `"${fileName}" could not be read.`);
     }
+
     return {
       ...file.map,
       fileNameWithExt: fileName,
@@ -131,12 +171,13 @@ function parseLevels(
   });
 }
 
-async function validateLogo(
+async function parseLogoImage(
   file: Express.Multer.File | undefined,
 ): Promise<Buffer | undefined> {
   if (!file) {
     return undefined;
   }
+
   if (file.size > MAX_LOGO_BYTES) {
     throw new HttpError(
       413,
@@ -144,58 +185,33 @@ async function validateLogo(
     );
   }
 
-  const invalidLogo = new HttpError(
-    400,
-    'Logo must be a PNG, JPG or WebP image.',
-  );
-  let metadata;
-  try {
-    metadata = await sharp(file.buffer).metadata();
-  } catch {
-    throw invalidLogo;
-  }
-  if (!LOGO_FORMATS.has(metadata.format)) {
-    throw invalidLogo;
-  }
-  if (metadata.width * metadata.height > MAX_LOGO_PIXELS) {
-    throw new HttpError(
-      400,
-      `Logo dimensions are too large (max ${formatMegapixels(MAX_LOGO_PIXELS)}).`,
-    );
-  }
+  await checkLogoImage(file.buffer);
 
   return file.buffer;
+}
+
+async function parseUploads(req: Request) {
+  const mapFiles = takeUploadedFiles(req, MAP_FIELD);
+  const levels = parseLevels(mapFiles, queryString(req.query.name));
+
+  return {
+    levels,
+    original: levels.length === 1 ? mapFiles[0].path : undefined,
+    logoImage: await parseLogoImage(takeUploadedFiles(req, 'logo')[0]),
+  };
 }
 
 async function parseConvertRequest(
   req: Request,
   queue: ConversionQueue,
 ): Promise<ConvertRequest> {
-  const presetNames = parseList(
-    queryString(req.query.presets),
-    FORMAT_PRESETS.map((p) => p.name),
-    'presets',
+  const { presets, variants, logoPlacement, ticket } = parseOptions(
+    req.query,
+    queue,
   );
-  const presets = FORMAT_PRESETS.filter((p) => presetNames.includes(p.name));
-  const variants = parseList<Variant>(
-    queryString(req.query.variants),
-    VARIANTS,
-    'variants',
-  );
-  const logoSize = parseLogoPercent(req.query.logoSize, 'size');
-  const logoMargin = parseLogoPercent(req.query.logoMargin, 'margin');
-  const ticket = parseTicket(req.query.ticket, queue);
+  const { levels, original, logoImage } = await parseUploads(req);
 
-  const mapFiles = takeUploadedFiles(req, MAP_FIELD);
-  const levels = parseLevels(mapFiles, queryString(req.query.name));
-  const original = levels.length === 1 ? mapFiles[0].path : undefined;
-
-  const logoImage = await validateLogo(takeUploadedFiles(req, 'logo')[0]);
-  const logo = logoImage && {
-    image: logoImage,
-    size: logoSize,
-    margin: logoMargin,
-  };
+  const logo = logoImage && { image: logoImage, ...logoPlacement };
 
   return { presets, variants, ticket, levels, original, logo };
 }

@@ -22,7 +22,7 @@ export default tseslint.config(
     extends: [tseslint.configs.disableTypeChecked],
   },
   {
-    files: ['test/**/*.test.ts'],
+    files: ['test/**/*.test.ts', 'src/**/*.test.ts'],
     rules: {
       '@typescript-eslint/no-floating-promises': [
         'error',

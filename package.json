@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "tsx --test test/*.test.ts",
+    "test": "tsx --test \"test/*.test.ts\" \"src/**/*.test.ts\"",
     "typecheck": "tsc",
     "lint": "eslint .",
     "format": "prettier --write .",
