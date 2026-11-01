@@ -12,6 +12,7 @@ const WEBP_QUALITY = 80;
 const WEBP_EFFORT = 1;
 const MAX_OUTPUT_PIXELS = 250_000_000;
 const WEBP_MAX_SIDE = 16383;
+const WEBP_MAX_PIXELS = 100_000_000;
 const MAX_INPUT_PIXELS = 200_000_000;
 const MAX_PARALLEL_IMAGES = Number(process.env.MAX_PARALLEL_IMAGES ?? 2);
 const MAP_IMAGE_FORMATS = new Set(['png', 'jpeg', 'webp']);
@@ -79,6 +80,10 @@ interface Size {
   height: number;
 }
 
+interface OutputSize extends Size {
+  ppi: number;
+}
+
 function readMapImage(
   image: MapImage,
   limitInputPixels = MAX_INPUT_PIXELS,
@@ -120,8 +125,22 @@ function getOutputSize(
   map: LoadedMap,
   preset: FormatPreset,
   sourceSize: Size,
-): Size {
-  const scale = map.pixelsPerGrid ? preset.ppi / map.pixelsPerGrid : 1;
+): OutputSize {
+  const maxScale =
+    preset.format === 'webp'
+      ? Math.min(
+          WEBP_MAX_SIDE / Math.max(sourceSize.width, sourceSize.height),
+          Math.sqrt(WEBP_MAX_PIXELS / (sourceSize.width * sourceSize.height)),
+        )
+      : Infinity;
+  let ppi = preset.ppi;
+  let scale: number;
+  if (map.pixelsPerGrid) {
+    ppi = Math.min(ppi, Math.floor(maxScale * map.pixelsPerGrid));
+    scale = ppi / map.pixelsPerGrid;
+  } else {
+    scale = Math.min(1, maxScale);
+  }
   const width = Math.round(sourceSize.width * scale);
   const height = Math.round(sourceSize.height * scale);
 
@@ -130,13 +149,8 @@ function getOutputSize(
       `"${map.fileNameWithExt}" would be ${width}×${height} px in ${preset.name}, which exceeds the ${MAX_OUTPUT_PIXELS / 1_000_000} megapixel limit.`,
     );
   }
-  if (preset.format === 'webp' && Math.max(width, height) > WEBP_MAX_SIDE) {
-    throw new MapTooLargeError(
-      `"${map.fileNameWithExt}" would be ${width}×${height} px in ${preset.name}, but WebP images can't be wider or taller than ${WEBP_MAX_SIDE} px.`,
-    );
-  }
 
-  return { width, height };
+  return { width, height, ppi };
 }
 
 function checkLogoPercent(setting: LogoSetting, value: number): void {
@@ -187,7 +201,7 @@ function gridOverlay(size: Size, gridSize: number): OverlayOptions {
 async function convertImage(options: {
   image: MapImage;
   preset: FormatPreset;
-  size: Size;
+  size: OutputSize;
   withGrid: boolean;
   logo?: LogoOptions;
 }): Promise<Buffer> {
@@ -197,7 +211,7 @@ async function convertImage(options: {
 
   const overlays: OverlayOptions[] = [];
   if (withGrid) {
-    overlays.push(gridOverlay(size, preset.ppi));
+    overlays.push(gridOverlay(size, size.ppi));
   }
   if (logo) {
     overlays.push(await renderLogo(logo, size));
@@ -214,15 +228,18 @@ async function convertImage(options: {
           optimiseCoding: JPEG_OPTIMISE_CODING,
         });
 
-  return pipeline.withMetadata({ density: preset.ppi }).toBuffer();
+  return pipeline.withMetadata({ density: size.ppi }).toBuffer();
 }
 
 function outputPath(
   map: LoadedMap,
   preset: FormatPreset,
   variant: Variant,
+  ppi: number,
 ): string {
-  return `${preset.name}/${map.fileNameWithoutExt}_${preset.ppi}px_${variant}.${preset.format}`;
+  const folder =
+    ppi === preset.ppi ? preset.name : `${preset.format.toUpperCase()}_${ppi}`;
+  return `${folder}/${map.fileNameWithoutExt}_${ppi}px_${variant}.${preset.format}`;
 }
 
 function groupJobs<T extends { size: Size }>(jobs: readonly T[]): T[][] {
@@ -303,8 +320,11 @@ async function convertMap(
         if (result.status === 'rejected') {
           throw result.reason;
         }
-        const { preset, variant } = group[i];
-        yield { path: outputPath(map, preset, variant), data: result.value };
+        const { preset, variant, size } = group[i];
+        yield {
+          path: outputPath(map, preset, variant, size.ppi),
+          data: result.value,
+        };
       }
     }
   }

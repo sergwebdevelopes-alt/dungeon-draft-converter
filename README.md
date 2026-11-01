@@ -41,6 +41,8 @@ The zip contains:
 
 Each preset resizes the map so one grid square is 70 / 140 / 300 pixels and tags the file with the matching DPI, so prints come out at 1 inch per square. The `Grid` variant has a dashed grid drawn on top; it's skipped (and no resizing happens) if the file has no `resolution.pixels_per_grid`.
 
+WebP images are made smaller when needed, because WebP can't be wider or taller than 16383 px and very large WebP images fail to encode: a big map gets fewer pixels per square (for example 97 instead of 140, keeping the grid aligned), and the folder and file names say so, such as `WEBP_97/<Name>_97px_Grid.webp`. The images are capped at 100 megapixels.
+
 The zip contains only the presets and variants you selected. If you add a logo (PNG, JPG or WebP, up to 5 MB), it's placed in the bottom-right corner of every image. Its size (2–20%) and margin (0–5%) are set in the page, as a percentage of the map's shorter side.
 
 ## Maps exported without lighting
@@ -63,7 +65,6 @@ The web app rejects:
 - more than 10 maps at once
 - map images that aren't PNG, JPG or WebP
 - map images over 200 megapixels, and outputs over 250 megapixels
-- WebP outputs wider or taller than 16383 px (a WebP format limit)
 
 Big maps need a lot of memory: a 12800×8800 map takes about 1.4 GB to convert at 140 px per square, and up to about 1.9 GB when you pick several formats, which is why Docker gets 4 GB. The web app converts one map at a time, making up to 2 of its images in parallel. Up to 10 requests can be in progress at once (uploading, waiting or converting); beyond that it answers "busy, try again". While a request waits, the page shows how many maps are ahead of it. A conversion that takes longer than 5 minutes is stopped.
 
