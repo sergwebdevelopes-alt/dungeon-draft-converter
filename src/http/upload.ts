@@ -3,12 +3,19 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import type { Request, RequestHandler } from 'express';
-import type { StorageEngine } from 'multer';
+import multer, { type StorageEngine } from 'multer';
+import {
+  MAX_LEVELS,
+  MAX_TOTAL_UPLOAD_BYTES,
+  MAX_UPLOAD_BYTES,
+  MULTIPART_OVERHEAD_BYTES,
+} from '../config.ts';
 import {
   InvalidMapFileError,
   readDd2vttStream,
   type LoadedMap,
-} from './dd2vtt.ts';
+} from '../core/dd2vtt.ts';
+import { HttpError } from './errors.ts';
 
 const UPLOAD_DIR_PREFIX = 'dd2vtt-';
 const MAP_FIELD = 'maps';
@@ -107,5 +114,34 @@ const uploadStorage: StorageEngine = {
   },
 };
 
-export { createUploadDir, keepUploadsDuring, uploadDirOf, uploadStorage };
+const limitTotalUpload: RequestHandler = (req, _res, next) => {
+  const length = Number(req.headers['content-length']);
+  if (!Number.isFinite(length)) {
+    throw new HttpError(411, 'The upload size is missing.');
+  }
+  if (length > MAX_TOTAL_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES) {
+    throw new HttpError(
+      413,
+      `All files together can be at most ${MAX_TOTAL_UPLOAD_BYTES / 1024 / 1024} MB.`,
+    );
+  }
+  next();
+};
+
+const uploadFiles = multer({
+  storage: uploadStorage,
+  defParamCharset: 'utf8',
+  limits: { fileSize: MAX_UPLOAD_BYTES, files: MAX_LEVELS + 1 },
+}).fields([
+  { name: MAP_FIELD, maxCount: MAX_LEVELS },
+  { name: 'logo', maxCount: 1 },
+]);
+
+export {
+  createUploadDir,
+  keepUploadsDuring,
+  limitTotalUpload,
+  uploadDirOf,
+  uploadFiles,
+};
 export type { UploadedFile };

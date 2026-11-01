@@ -3,6 +3,7 @@ import sharp, { type OverlayOptions, type Sharp } from 'sharp';
 import { createGridSvg, gridTileSquares } from './grid.ts';
 import { newImagePath, type LoadedMap, type MapImage } from './dd2vtt.ts';
 import { bakeLighting } from './lighting.ts';
+import { MAX_PARALLEL_IMAGES } from '../config.ts';
 
 const FOUNDRY_DIR = 'FOUNDRY_VTT_DD2VTT';
 
@@ -14,7 +15,6 @@ const MAX_OUTPUT_PIXELS = 250_000_000;
 const WEBP_MAX_SIDE = 16383;
 const WEBP_MAX_PIXELS = 100_000_000;
 const MAX_INPUT_PIXELS = 200_000_000;
-const MAX_PARALLEL_IMAGES = Number(process.env.MAX_PARALLEL_IMAGES ?? 2);
 const MAP_IMAGE_FORMATS = new Set(['png', 'jpeg', 'webp']);
 
 const LOGO_LIMITS = {

@@ -4,6 +4,13 @@ import sharp from 'sharp';
 import { serializeDd2vtt, type LoadedMap, type MapImage } from './dd2vtt.ts';
 import { MAX_INPUT_PIXELS, readMapImageSize } from './convert.ts';
 import { bakeLighting, hasBakedLighting, stackLevels } from './lighting.ts';
+import {
+  readRawLights,
+  readResolution,
+  type Point,
+  type RawLight,
+  type Resolution,
+} from './metadata.ts';
 
 const COVERED_ALPHA = 128;
 const FOUNDRY_COMPRESSION_LEVEL = 6;
@@ -13,65 +20,10 @@ class LevelMismatchError extends Error {
   name = 'LevelMismatchError';
 }
 
-interface Point {
-  x: number;
-  y: number;
-}
-
-interface Light {
-  position: Point;
-  [key: string]: unknown;
-}
-
-interface Resolution {
-  origin: Point;
-  size: Point | undefined;
-  pixelsPerGrid: number | undefined;
-}
-
 interface MergedLevels {
   map: LoadedMap;
   dd2vtt: AsyncIterable<Buffer>;
   lights: { main: number; added: number; dropped: number };
-}
-
-function isPoint(value: unknown): value is Point {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-  const { x, y } = value as Record<string, unknown>;
-  return (
-    typeof x === 'number' &&
-    typeof y === 'number' &&
-    Number.isFinite(x) &&
-    Number.isFinite(y)
-  );
-}
-
-function readResolution(level: LoadedMap): Resolution {
-  const resolution = level.metadata.resolution;
-  const fields =
-    typeof resolution === 'object' && resolution !== null
-      ? (resolution as Record<string, unknown>)
-      : {};
-  return {
-    origin: isPoint(fields.map_origin) ? fields.map_origin : { x: 0, y: 0 },
-    size: isPoint(fields.map_size) ? fields.map_size : undefined,
-    pixelsPerGrid: level.pixelsPerGrid,
-  };
-}
-
-function readLights(level: LoadedMap): Light[] {
-  const lights = level.metadata.lights;
-  if (!Array.isArray(lights)) {
-    return [];
-  }
-  return lights.filter(
-    (light): light is Light =>
-      typeof light === 'object' &&
-      light !== null &&
-      isPoint((light as Record<string, unknown>).position),
-  );
 }
 
 function sameResolution(a: Resolution, b: Resolution): boolean {
@@ -137,10 +89,10 @@ async function mergeLights(
   levels: readonly LoadedMap[],
   width: number,
   height: number,
-): Promise<{ lights: Light[]; added: number; dropped: number }> {
+): Promise<{ lights: RawLight[]; added: number; dropped: number }> {
   const resolution = readResolution(levels[0]);
   const candidates = levels.map((level) =>
-    readLights(level).map((light) => ({
+    readRawLights(level).map((light) => ({
       light,
       pixel: toPixel(light.position, resolution, width, height),
       covered: false,
@@ -170,7 +122,7 @@ async function mergeLights(
   const totalBelow = candidates.slice(1).flat().length;
 
   return {
-    lights: [...readLights(levels[0]), ...visibleBelow.map((c) => c.light)],
+    lights: [...readRawLights(levels[0]), ...visibleBelow.map((c) => c.light)],
     added: visibleBelow.length,
     dropped: totalBelow - visibleBelow.length,
   };

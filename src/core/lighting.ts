@@ -1,6 +1,13 @@
 import fs from 'fs/promises';
 import sharp, { type Sharp } from 'sharp';
 import { newImagePath, type LoadedMap, type MapImage } from './dd2vtt.ts';
+import {
+  readPoint,
+  readRawLights,
+  readResolution,
+  record,
+  type Point,
+} from './metadata.ts';
 
 const MAX_FIELD_PIXELS = 8_000_000;
 const MIN_AMBIENT = 0.05;
@@ -9,11 +16,6 @@ const EDGE_EPSILON = 1e-4;
 const LIGHT_BLUR = 0.1;
 
 type Rgb = [number, number, number];
-
-interface Point {
-  x: number;
-  y: number;
-}
 
 type Segment = [Point, Point];
 
@@ -32,22 +34,6 @@ interface FieldGrid {
   pixelsPerSquare: number;
 }
 
-function record(value: unknown): Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-    ? (value as Record<string, unknown>)
-    : {};
-}
-
-function readPoint(value: unknown): Point | undefined {
-  const { x, y } = record(value);
-  return typeof x === 'number' &&
-    typeof y === 'number' &&
-    Number.isFinite(x) &&
-    Number.isFinite(y)
-    ? { x, y }
-    : undefined;
-}
-
 function parseColor(value: unknown, fallback: Rgb): Rgb {
   if (
     typeof value !== 'string' ||
@@ -60,15 +46,9 @@ function parseColor(value: unknown, fallback: Rgb): Rgb {
 }
 
 function readLights(level: LoadedMap): Light[] {
-  const lights = level.metadata.lights;
-  if (!Array.isArray(lights)) {
-    return [];
-  }
-  return lights.flatMap((raw) => {
-    const light = record(raw);
-    const position = readPoint(light.position);
-    const range = light.range;
-    if (!position || typeof range !== 'number' || !(range > 0)) {
+  return readRawLights(level).flatMap((light) => {
+    const { position, range } = light;
+    if (typeof range !== 'number' || !(range > 0)) {
       return [];
     }
     const intensity =
@@ -356,7 +336,7 @@ async function bakeLighting(
     const grid = fieldGrid(
       width,
       height,
-      readPoint(record(level.metadata.resolution).map_origin) ?? { x: 0, y: 0 },
+      readResolution(level).origin,
       pixelsPerGrid,
     );
     const field = await renderLightField(level, grid);
@@ -401,16 +381,10 @@ async function stackLevels(
   compressionLevel: number,
 ): Promise<MapImage> {
   const stack = [...levels].reverse();
-  const resolution = record(levels[0].metadata.resolution);
-  const pixelsPerGrid = levels[0].pixelsPerGrid;
+  const { origin, pixelsPerGrid } = readResolution(levels[0]);
   const grid =
     pixelsPerGrid && levels.every(hasBakedLighting)
-      ? fieldGrid(
-          width,
-          height,
-          readPoint(resolution.map_origin) ?? { x: 0, y: 0 },
-          pixelsPerGrid,
-        )
+      ? fieldGrid(width, height, origin, pixelsPerGrid)
       : undefined;
 
   let image = stack[0].image;

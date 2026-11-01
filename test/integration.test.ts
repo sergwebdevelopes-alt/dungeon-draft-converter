@@ -4,8 +4,12 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import sharp from 'sharp';
-import { convertMap, FORMAT_PRESETS, type OutputFile } from '../src/convert.ts';
-import type { LoadedMap } from '../src/dd2vtt.ts';
+import {
+  convertMap,
+  FORMAT_PRESETS,
+  type OutputFile,
+} from '../src/core/convert.ts';
+import type { LoadedMap } from '../src/core/dd2vtt.ts';
 
 async function makeTinyPng(file: string): Promise<void> {
   await sharp({

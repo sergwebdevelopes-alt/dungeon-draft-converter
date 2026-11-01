@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { createGridSvg, GRID_STROKE } from '../src/grid.ts';
+import { createGridSvg, GRID_STROKE } from '../src/core/grid.ts';
 
 function countLines(svg: string): number {
   return svg.match(/<line /g)?.length ?? 0;

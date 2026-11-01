@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
-import { readDd2vttStream, type LoadedMap } from '../src/dd2vtt.ts';
+import { readDd2vttStream, type LoadedMap } from '../src/core/dd2vtt.ts';
 
 const IMAGE_BYTES = Buffer.from('fake png data');
 
