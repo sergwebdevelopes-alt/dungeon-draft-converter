@@ -5,7 +5,7 @@ import {
   MAX_TOTAL_UPLOAD_BYTES,
   MAX_UPLOAD_BYTES,
 } from '../../config.ts';
-import { FORMAT_PRESETS, LOGO_LIMITS, VARIANTS } from '../../core/convert.ts';
+import { FORMAT_PRESETS, LOGO_LIMITS, VARIANTS } from '../../core/images.ts';
 
 function configRouter(): Router {
   const router = Router();

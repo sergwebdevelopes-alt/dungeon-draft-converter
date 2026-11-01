@@ -5,10 +5,10 @@ import os from 'node:os';
 import path from 'node:path';
 import sharp from 'sharp';
 import {
-  convertMap,
+  makeImages,
   FORMAT_PRESETS,
   type OutputFile,
-} from '../src/core/convert.ts';
+} from '../src/core/images.ts';
 import type { LoadedMap } from '../src/core/dd2vtt.ts';
 
 async function makeTinyPng(file: string): Promise<void> {
@@ -39,7 +39,7 @@ function makeMap(
 }
 
 async function convertAll(map: LoadedMap, workDir: string) {
-  const { files } = await convertMap(map, workDir);
+  const { files } = await makeImages(map, workDir);
   const result = new Map<string, OutputFile>();
   for await (const file of files) {
     result.set(file.path, file);
@@ -47,7 +47,7 @@ async function convertAll(map: LoadedMap, workDir: string) {
   return result;
 }
 
-describe('convertMap (integration)', () => {
+describe('makeImages (integration)', () => {
   let workDir: string;
   let gridded: Map<string, OutputFile>;
   let gridless: Map<string, OutputFile>;

@@ -3,7 +3,7 @@ import type {
   LOGO_LIMITS,
   LogoSetting,
   Variant,
-} from '../../src/core/convert.ts';
+} from '../../src/core/images.ts';
 import type { QueuePosition } from '../../src/queue/conversion-queue.ts';
 
 type LogoLimits = typeof LOGO_LIMITS;

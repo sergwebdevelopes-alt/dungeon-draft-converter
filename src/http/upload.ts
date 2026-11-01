@@ -18,6 +18,7 @@ import {
   type LoadedMap,
 } from '../core/dd2vtt.ts';
 import { HttpError } from './errors.ts';
+import { formatMegabytes } from '../utils/format.ts';
 
 const UPLOAD_DIR_PREFIX = 'dd2vtt-';
 const MAP_FIELD = 'maps';
@@ -173,7 +174,7 @@ const limitTotalUpload: RequestHandler = (req, _res, next) => {
   if (length > MAX_TOTAL_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES) {
     throw new HttpError(
       413,
-      `All files together can be at most ${MAX_TOTAL_UPLOAD_BYTES / 1024 / 1024} MB.`,
+      `All files together can be at most ${formatMegabytes(MAX_TOTAL_UPLOAD_BYTES)}.`,
     );
   }
   next();
@@ -192,7 +193,7 @@ function uploadError(error: MulterError): HttpError {
   if (error.code === 'LIMIT_FILE_SIZE') {
     return new HttpError(
       413,
-      `Each file can be at most ${MAX_UPLOAD_BYTES / 1024 / 1024} MB.`,
+      `Each file can be at most ${formatMegabytes(MAX_UPLOAD_BYTES)}.`,
     );
   }
   if (

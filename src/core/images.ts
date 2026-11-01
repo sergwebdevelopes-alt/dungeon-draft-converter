@@ -5,8 +5,7 @@ import { newImagePath, type LoadedMap, type MapImage } from './dd2vtt.ts';
 import { bakeLighting } from './lighting.ts';
 import { InvalidInputError, UnprocessableError } from './errors.ts';
 import { MAX_PARALLEL_IMAGES } from '../config.ts';
-
-const FOUNDRY_DIR = 'FOUNDRY_VTT_DD2VTT';
+import { formatMegapixels } from '../utils/format.ts';
 
 const JPEG_QUALITY = 80;
 const JPEG_OPTIMISE_CODING = false;
@@ -60,7 +59,7 @@ interface LogoOptions {
   margin: number;
 }
 
-interface ConvertOptions {
+interface ImageOptions {
   presets?: readonly FormatPreset[];
   variants?: readonly Variant[];
   logo?: LogoOptions;
@@ -71,7 +70,7 @@ interface OutputFile {
   data: Buffer;
 }
 
-interface Conversion {
+interface MapImages {
   count: number;
   files: AsyncGenerator<OutputFile>;
 }
@@ -115,7 +114,7 @@ async function readMapImageSize(map: LoadedMap): Promise<Size> {
   }
   if (width * height > MAX_INPUT_PIXELS) {
     throw new InvalidMapImageError(
-      `The image in "${map.fileNameWithExt}" is ${width}×${height} px, which exceeds the ${MAX_INPUT_PIXELS / 1_000_000} megapixel limit.`,
+      `The image in "${map.fileNameWithExt}" is ${width}×${height} px, which exceeds the limit of ${formatMegapixels(MAX_INPUT_PIXELS)}.`,
     );
   }
 
@@ -147,7 +146,7 @@ function getOutputSize(
 
   if (width * height > MAX_OUTPUT_PIXELS) {
     throw new MapTooLargeError(
-      `"${map.fileNameWithExt}" would be ${width}×${height} px in ${preset.name}, which exceeds the ${MAX_OUTPUT_PIXELS / 1_000_000} megapixel limit. Try unselecting the larger formats.`,
+      `"${map.fileNameWithExt}" would be ${width}×${height} px in ${preset.name}, which exceeds the limit of ${formatMegapixels(MAX_OUTPUT_PIXELS)}. Try unselecting the larger formats.`,
     );
   }
 
@@ -272,11 +271,11 @@ function groupJobs<T extends { size: Size }>(jobs: readonly T[]): T[][] {
   return groups;
 }
 
-async function convertMap(
+async function makeImages(
   map: LoadedMap,
   workDir: string,
-  { presets = FORMAT_PRESETS, variants = VARIANTS, logo }: ConvertOptions = {},
-): Promise<Conversion> {
+  { presets = FORMAT_PRESETS, variants = VARIANTS, logo }: ImageOptions = {},
+): Promise<MapImages> {
   if (logo) {
     checkLogoPercent('size', logo.size);
     checkLogoPercent('margin', logo.margin);
@@ -362,7 +361,6 @@ async function convertMap(
 }
 
 export {
-  FOUNDRY_DIR,
   JPEG_QUALITY,
   WEBP_QUALITY,
   MAX_OUTPUT_PIXELS,
@@ -376,14 +374,14 @@ export {
   VARIANTS,
   readMapImageSize,
   convertImage,
-  convertMap,
+  makeImages,
 };
 export type {
   FormatPreset,
   Variant,
   LogoSetting,
   LogoOptions,
-  ConvertOptions,
-  Conversion,
+  ImageOptions,
+  MapImages,
   OutputFile,
 };

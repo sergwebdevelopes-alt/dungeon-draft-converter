@@ -11,10 +11,11 @@ import {
   type LogoOptions,
   type LogoSetting,
   type Variant,
-} from '../../core/convert.ts';
+} from '../../core/images.ts';
 import { MAP_EXTENSION, type LoadedMap } from '../../core/dd2vtt.ts';
 import type { ConversionQueue } from '../../queue/conversion-queue.ts';
 import { HttpError } from '../errors.ts';
+import { formatMegabytes, formatMegapixels } from '../../utils/format.ts';
 import { MAP_FIELD, type UploadedFile } from '../upload.ts';
 
 const MAX_MAP_NAME_LENGTH = 100;
@@ -139,7 +140,7 @@ async function validateLogo(
   if (file.size > MAX_LOGO_BYTES) {
     throw new HttpError(
       413,
-      `Logo is too large (max ${MAX_LOGO_BYTES / 1024 / 1024} MB).`,
+      `Logo is too large (max ${formatMegabytes(MAX_LOGO_BYTES)}).`,
     );
   }
 
@@ -159,7 +160,7 @@ async function validateLogo(
   if (metadata.width * metadata.height > MAX_LOGO_PIXELS) {
     throw new HttpError(
       400,
-      `Logo dimensions are too large (max ${MAX_LOGO_PIXELS / 1_000_000} megapixels).`,
+      `Logo dimensions are too large (max ${formatMegapixels(MAX_LOGO_PIXELS)}).`,
     );
   }
 
@@ -199,9 +200,5 @@ async function parseConvertRequest(
   return { presets, variants, ticket, levels, original, logo };
 }
 
-function mergedFileName(mainFileName: string): string {
-  return `${path.parse(mainFileName).name}_merged${MAP_EXTENSION}`;
-}
-
-export { mergedFileName, parseConvertRequest };
+export { parseConvertRequest };
 export type { ConvertRequest };

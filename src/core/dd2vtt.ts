@@ -3,6 +3,7 @@ import { createReadStream, createWriteStream, type WriteStream } from 'fs';
 import { once } from 'events';
 import path from 'path';
 import { InvalidInputError } from './errors.ts';
+import { formatMegabytes } from '../utils/format.ts';
 
 const QUOTE = 0x22;
 const BACKSLASH = 0x5c;
@@ -258,7 +259,7 @@ class Dd2vttScanner {
     this.metadataBytes += bytes.length;
     if (this.metadataBytes > this.maxMetadataBytes) {
       throw new InvalidMapFileError(
-        `"${this.fileName}" has more than ${this.maxMetadataBytes / 1024 / 1024} MB of walls, lights and other data besides the image.`,
+        `"${this.fileName}" has more than ${formatMegabytes(this.maxMetadataBytes)} of walls, lights and other data besides the image.`,
       );
     }
     this.metadata.push(Buffer.from(bytes));
