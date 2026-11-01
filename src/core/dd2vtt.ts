@@ -9,6 +9,7 @@ const BACKSLASH = 0x5c;
 const SLASH = 0x2f;
 const BASE64_CHUNK_BYTES = 3 * 64 * 1024;
 const MAX_METADATA_BYTES = 8 * 1024 * 1024;
+const MAP_EXTENSION = '.dd2vtt';
 
 interface Dd2vttData {
   format?: number;
@@ -334,5 +335,11 @@ async function* serializeDd2vtt(
   yield Buffer.from(`${carry.toString('base64')}"}`);
 }
 
-export { InvalidMapFileError, newImagePath, readDd2vttStream, serializeDd2vtt };
+export {
+  InvalidMapFileError,
+  MAP_EXTENSION,
+  newImagePath,
+  readDd2vttStream,
+  serializeDd2vtt,
+};
 export type { LoadedMap, MapImage };

@@ -86,6 +86,8 @@ The Docker image also uses jemalloc with `MALLOC_CONF` set to return freed memor
 
 On `SIGTERM` (for example `docker compose down` or a redeploy), the server stops accepting new connections, finishes the conversions that are running or waiting, and then exits. `compose.yml` gives it 330 seconds (`stop_grace_period`) before Docker kills it; keep that above `SHUTDOWN_TIMEOUT_SECONDS`. `Ctrl+C` still stops it immediately.
 
+If the server is killed before it can clean up (out of memory, a forced stop), its temporary folders are left behind. They're removed automatically once they're more than 2 hours old: at startup and then every hour.
+
 ## Development
 
 ```sh

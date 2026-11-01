@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto';
 import fs from 'fs/promises';
-import os from 'os';
 import path from 'path';
 import type { Request, RequestHandler } from 'express';
 import multer, { MulterError, type StorageEngine } from 'multer';
@@ -9,9 +8,12 @@ import {
   MAX_TOTAL_UPLOAD_BYTES,
   MAX_UPLOAD_BYTES,
   MULTIPART_OVERHEAD_BYTES,
+  STALE_UPLOAD_DIR_MS,
+  UPLOAD_ROOT,
 } from '../config.ts';
 import {
   InvalidMapFileError,
+  MAP_EXTENSION,
   readDd2vttStream,
   type LoadedMap,
 } from '../core/dd2vtt.ts';
@@ -19,7 +21,6 @@ import { HttpError } from './errors.ts';
 
 const UPLOAD_DIR_PREFIX = 'dd2vtt-';
 const MAP_FIELD = 'maps';
-const MAP_EXTENSION = '.dd2vtt';
 
 type UploadedFile = Express.Multer.File & { map?: LoadedMap };
 
@@ -30,18 +31,68 @@ interface UploadDir {
 
 const uploadDirs = new WeakMap<Request, UploadDir>();
 
-const createUploadDir: RequestHandler = (req, res, next) => {
-  fs.mkdtemp(path.join(os.tmpdir(), UPLOAD_DIR_PREFIX)).then((dir) => {
-    const uploadDir: UploadDir = { path: dir, work: Promise.resolve() };
-    uploadDirs.set(req, uploadDir);
-    res.once('close', () => {
-      void uploadDir.work
-        .catch(() => undefined)
-        .then(() => fs.rm(dir, { recursive: true, force: true }));
-    });
-    next();
-  }, next);
+function removeDir(dir: string): Promise<void> {
+  return fs.rm(dir, { recursive: true, force: true });
+}
+
+async function removeDirLogged(dir: string): Promise<boolean> {
+  try {
+    await removeDir(dir);
+    return true;
+  } catch (error) {
+    console.error(`Could not remove ${dir}:`, error);
+    return false;
+  }
+}
+
+async function removeWhenFinished(uploadDir: UploadDir): Promise<void> {
+  await uploadDir.work.catch(() => undefined);
+  await removeDirLogged(uploadDir.path);
+}
+
+async function makeUploadDir(): Promise<string> {
+  try {
+    return await fs.mkdtemp(path.join(UPLOAD_ROOT, UPLOAD_DIR_PREFIX));
+  } catch (error) {
+    console.error('Could not create upload folder:', error);
+    throw new HttpError(
+      503,
+      "The server can't accept uploads right now. Please try again later.",
+    );
+  }
+}
+
+const createUploadDir: RequestHandler = async (req, res, next) => {
+  const dir = await makeUploadDir();
+  const uploadDir: UploadDir = { path: dir, work: Promise.resolve() };
+  uploadDirs.set(req, uploadDir);
+  res.once('close', () => void removeWhenFinished(uploadDir));
+  next();
 };
+
+async function isStale(dir: string): Promise<boolean> {
+  try {
+    const { mtimeMs } = await fs.stat(dir);
+    return Date.now() - mtimeMs > STALE_UPLOAD_DIR_MS;
+  } catch {
+    return false;
+  }
+}
+
+async function removeStaleUploadDirs(): Promise<number> {
+  const entries = await fs.readdir(UPLOAD_ROOT, { withFileTypes: true });
+  const uploadDirPaths = entries
+    .filter((e) => e.isDirectory() && e.name.startsWith(UPLOAD_DIR_PREFIX))
+    .map((e) => path.join(UPLOAD_ROOT, e.name));
+
+  let removed = 0;
+  for (const dir of uploadDirPaths) {
+    if ((await isStale(dir)) && (await removeDirLogged(dir))) {
+      removed++;
+    }
+  }
+  return removed;
+}
 
 function uploadDirOf(req: Request): string {
   const uploadDir = uploadDirs.get(req);
@@ -163,6 +214,8 @@ export {
   createUploadDir,
   keepUploadsDuring,
   limitTotalUpload,
+  MAP_FIELD,
+  removeStaleUploadDirs,
   uploadDirOf,
   uploadFiles,
 };

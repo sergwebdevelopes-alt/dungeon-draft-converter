@@ -6,14 +6,32 @@ import {
   PORT,
   SHARP_CONCURRENCY,
   SHUTDOWN_TIMEOUT_MS,
+  STALE_CLEANUP_INTERVAL_MS,
 } from './config.ts';
+import { removeStaleUploadDirs } from './http/upload.ts';
 
 if (SHARP_CONCURRENCY > 0) {
   sharp.concurrency(SHARP_CONCURRENCY);
 }
 
-let shuttingDown = false;
+async function cleanUpStaleUploads(): Promise<void> {
+  try {
+    const removed = await removeStaleUploadDirs();
+    if (removed > 0) {
+      console.log(`Removed ${removed} leftover upload folder(s).`);
+    }
+  } catch (error) {
+    console.error('Upload folder cleanup failed:', error);
+  }
+}
 
+void cleanUpStaleUploads();
+setInterval(
+  () => void cleanUpStaleUploads(),
+  STALE_CLEANUP_INTERVAL_MS,
+).unref();
+
+let shuttingDown = false;
 const server = http.createServer();
 
 server.on(

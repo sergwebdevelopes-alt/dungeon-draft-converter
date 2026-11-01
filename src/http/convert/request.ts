@@ -12,12 +12,11 @@ import {
   type LogoSetting,
   type Variant,
 } from '../../core/convert.ts';
-import type { LoadedMap } from '../../core/dd2vtt.ts';
+import { MAP_EXTENSION, type LoadedMap } from '../../core/dd2vtt.ts';
 import type { ConversionQueue } from '../../queue/conversion-queue.ts';
 import { HttpError } from '../errors.ts';
-import type { UploadedFile } from '../upload.ts';
+import { MAP_FIELD, type UploadedFile } from '../upload.ts';
 
-const MAP_EXTENSION = '.dd2vtt';
 const MAX_MAP_NAME_LENGTH = 100;
 const LOGO_FORMATS = new Set(['png', 'jpeg', 'webp']);
 const TICKET_PATTERN = /^[0-9a-f]{32}$/;
@@ -98,7 +97,7 @@ function safeMapFileName(raw: string | undefined): string {
 
 function takeUploadedFiles(
   req: Request,
-  field: 'maps' | 'logo',
+  field: typeof MAP_FIELD | 'logo',
 ): UploadedFile[] {
   const files = req.files;
   if (!files || Array.isArray(files)) {
@@ -186,7 +185,7 @@ async function parseConvertRequest(
   const logoMargin = parseLogoPercent(req.query.logoMargin, 'margin');
   const ticket = parseTicket(req.query.ticket, queue);
 
-  const mapFiles = takeUploadedFiles(req, 'maps');
+  const mapFiles = takeUploadedFiles(req, MAP_FIELD);
   const levels = parseLevels(mapFiles, queryString(req.query.name));
   const original = levels.length === 1 ? mapFiles[0].path : undefined;
 

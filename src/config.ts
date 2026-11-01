@@ -1,7 +1,9 @@
+import os from 'node:os';
 import path from 'node:path';
 
 const ROOT_DIR = path.join(import.meta.dirname, '..');
 const WEB_DIST_DIR = path.join(ROOT_DIR, 'web/dist');
+const UPLOAD_ROOT = os.tmpdir();
 
 const PORT = Number(process.env.PORT ?? 3000);
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -12,6 +14,8 @@ const MULTIPART_OVERHEAD_BYTES = 1024 * 1024;
 const MAX_LEVELS = 10;
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 const MAX_LOGO_PIXELS = 25_000_000;
+const STALE_UPLOAD_DIR_MS = 2 * 60 * 60 * 1000;
+const STALE_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
 
 const MAX_PENDING_CONVERSIONS = 10;
 const CONVERSION_TIMEOUT_MS =
@@ -36,5 +40,8 @@ export {
   ROOT_DIR,
   SHARP_CONCURRENCY,
   SHUTDOWN_TIMEOUT_MS,
+  STALE_CLEANUP_INTERVAL_MS,
+  STALE_UPLOAD_DIR_MS,
+  UPLOAD_ROOT,
   WEB_DIST_DIR,
 };
