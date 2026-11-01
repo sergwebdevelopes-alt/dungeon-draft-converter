@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import type { Request, RequestHandler } from 'express';
-import multer, { type StorageEngine } from 'multer';
+import multer, { MulterError, type StorageEngine } from 'multer';
 import {
   MAX_LEVELS,
   MAX_TOTAL_UPLOAD_BYTES,
@@ -128,7 +128,7 @@ const limitTotalUpload: RequestHandler = (req, _res, next) => {
   next();
 };
 
-const uploadFiles = multer({
+const receiveFiles = multer({
   storage: uploadStorage,
   defParamCharset: 'utf8',
   limits: { fileSize: MAX_UPLOAD_BYTES, files: MAX_LEVELS + 1 },
@@ -136,6 +136,28 @@ const uploadFiles = multer({
   { name: MAP_FIELD, maxCount: MAX_LEVELS },
   { name: 'logo', maxCount: 1 },
 ]);
+
+function uploadError(error: MulterError): HttpError {
+  if (error.code === 'LIMIT_FILE_SIZE') {
+    return new HttpError(
+      413,
+      `Each file can be at most ${MAX_UPLOAD_BYTES / 1024 / 1024} MB.`,
+    );
+  }
+  if (
+    error.code === 'LIMIT_FILE_COUNT' ||
+    (error.code === 'LIMIT_UNEXPECTED_FILE' && error.field === MAP_FIELD)
+  ) {
+    return new HttpError(400, `At most ${MAX_LEVELS} maps can be combined.`);
+  }
+  return new HttpError(400, `Invalid upload: ${error.message}.`);
+}
+
+const uploadFiles: RequestHandler = (req, res, next) => {
+  receiveFiles(req, res, (error?: unknown) => {
+    next(error instanceof MulterError ? uploadError(error) : error);
+  });
+};
 
 export {
   createUploadDir,

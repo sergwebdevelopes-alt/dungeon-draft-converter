@@ -3,6 +3,7 @@ import sharp, { type OverlayOptions, type Sharp } from 'sharp';
 import { createGridSvg, gridTileSquares } from './grid.ts';
 import { newImagePath, type LoadedMap, type MapImage } from './dd2vtt.ts';
 import { bakeLighting } from './lighting.ts';
+import { InvalidInputError, UnprocessableError } from './errors.ts';
 import { MAX_PARALLEL_IMAGES } from '../config.ts';
 
 const FOUNDRY_DIR = 'FOUNDRY_VTT_DD2VTT';
@@ -24,15 +25,15 @@ const LOGO_LIMITS = {
 
 type LogoSetting = keyof typeof LOGO_LIMITS;
 
-class MapTooLargeError extends Error {
+class MapTooLargeError extends UnprocessableError {
   name = 'MapTooLargeError';
 }
 
-class InvalidLogoPlacementError extends Error {
+class InvalidLogoPlacementError extends InvalidInputError {
   name = 'InvalidLogoPlacementError';
 }
 
-class InvalidMapImageError extends Error {
+class InvalidMapImageError extends InvalidInputError {
   name = 'InvalidMapImageError';
 }
 
@@ -146,7 +147,7 @@ function getOutputSize(
 
   if (width * height > MAX_OUTPUT_PIXELS) {
     throw new MapTooLargeError(
-      `"${map.fileNameWithExt}" would be ${width}×${height} px in ${preset.name}, which exceeds the ${MAX_OUTPUT_PIXELS / 1_000_000} megapixel limit.`,
+      `"${map.fileNameWithExt}" would be ${width}×${height} px in ${preset.name}, which exceeds the ${MAX_OUTPUT_PIXELS / 1_000_000} megapixel limit. Try unselecting the larger formats.`,
     );
   }
 

@@ -4,6 +4,7 @@ import sharp from 'sharp';
 import { serializeDd2vtt, type LoadedMap, type MapImage } from './dd2vtt.ts';
 import { MAX_INPUT_PIXELS, readMapImageSize } from './convert.ts';
 import { bakeLighting, hasBakedLighting, stackLevels } from './lighting.ts';
+import { UnprocessableError } from './errors.ts';
 import {
   readRawLights,
   readResolution,
@@ -16,7 +17,7 @@ const COVERED_ALPHA = 128;
 const FOUNDRY_COMPRESSION_LEVEL = 6;
 const LIT_COMPRESSION_LEVEL = 1;
 
-class LevelMismatchError extends Error {
+class LevelMismatchError extends UnprocessableError {
   name = 'LevelMismatchError';
 }
 

@@ -1,16 +1,8 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
-import { MulterError } from 'multer';
-import { MAX_LEVELS, MAX_UPLOAD_BYTES } from '../config.ts';
-import {
-  InvalidLogoPlacementError,
-  InvalidMapImageError,
-  MapTooLargeError,
-} from '../core/convert.ts';
-import { InvalidMapFileError } from '../core/dd2vtt.ts';
-import { LevelMismatchError } from '../core/merge.ts';
+import { InvalidInputError, UnprocessableError } from '../core/errors.ts';
 
 class HttpError extends Error {
-  status: number;
+  readonly status: number;
 
   constructor(status: number, message: string) {
     super(message);
@@ -18,45 +10,15 @@ class HttpError extends Error {
   }
 }
 
-const ERROR_STATUSES: [abstract new (...args: never[]) => Error, number][] = [
-  [InvalidMapFileError, 400],
-  [InvalidMapImageError, 400],
-  [InvalidLogoPlacementError, 400],
-  [LevelMismatchError, 422],
-];
-
-function uploadError(error: MulterError): HttpError {
-  if (error.code === 'LIMIT_FILE_SIZE') {
-    return new HttpError(
-      413,
-      `Each file can be at most ${MAX_UPLOAD_BYTES / 1024 / 1024} MB.`,
-    );
-  }
-  if (
-    error.code === 'LIMIT_FILE_COUNT' ||
-    (error.code === 'LIMIT_UNEXPECTED_FILE' && error.field === 'maps')
-  ) {
-    return new HttpError(400, `At most ${MAX_LEVELS} maps can be combined.`);
-  }
-  return new HttpError(400, `Invalid upload: ${error.message}.`);
-}
-
 function toHttpError(error: unknown): HttpError {
   if (error instanceof HttpError) {
     return error;
   }
-  if (error instanceof MapTooLargeError) {
-    return new HttpError(
-      422,
-      `${error.message} Try unselecting the larger formats.`,
-    );
+  if (error instanceof InvalidInputError) {
+    return new HttpError(400, error.message);
   }
-  if (error instanceof MulterError) {
-    return uploadError(error);
-  }
-  const match = ERROR_STATUSES.find(([type]) => error instanceof type);
-  if (match && error instanceof Error) {
-    return new HttpError(match[1], error.message);
+  if (error instanceof UnprocessableError) {
+    return new HttpError(422, error.message);
   }
   console.error(error);
   return new HttpError(500, 'Conversion failed.');

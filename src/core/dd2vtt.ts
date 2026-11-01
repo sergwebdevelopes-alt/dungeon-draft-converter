@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { createReadStream, createWriteStream, type WriteStream } from 'fs';
 import { once } from 'events';
 import path from 'path';
+import { InvalidInputError } from './errors.ts';
 
 const QUOTE = 0x22;
 const BACKSLASH = 0x5c;
@@ -27,7 +28,7 @@ interface LoadedMap {
   metadata: Record<string, unknown>;
 }
 
-class InvalidMapFileError extends Error {
+class InvalidMapFileError extends InvalidInputError {
   name = 'InvalidMapFileError';
 }
 
