@@ -45,6 +45,10 @@ function makeRequest(
   return { query, files } as unknown as Request;
 }
 
+function parse(request: Request, queue = new ConversionQueue(10)) {
+  return parseConvertRequest(request, queue);
+}
+
 describe('parseConvertRequest', () => {
   let logoPng: Buffer;
 
@@ -55,10 +59,6 @@ describe('parseConvertRequest', () => {
       .png()
       .toBuffer();
   });
-
-  function parse(request: Request, queue = new ConversionQueue(10)) {
-    return parseConvertRequest(request, queue);
-  }
 
   describe('defaults', () => {
     it('uses every preset and variant, no logo and no ticket', async () => {

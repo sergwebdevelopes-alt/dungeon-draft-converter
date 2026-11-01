@@ -7,7 +7,10 @@ import { keepUploadsDuring, uploadDirOf } from '../upload.ts';
 import { parseConvertRequest } from './request.ts';
 import { streamZip } from './zip.ts';
 
-function convertHandler(queue: ConversionQueue) {
+function convertHandler(
+  queue: ConversionQueue,
+  timeoutMs = CONVERSION_TIMEOUT_MS,
+) {
   return async (req: Request, res: Response): Promise<void> => {
     let clientGone = false;
     let ticket: string | undefined = undefined;
@@ -39,9 +42,9 @@ function convertHandler(queue: ConversionQueue) {
         }
 
         res.status(503).json({
-          error: `The conversion took longer than ${formatDuration(CONVERSION_TIMEOUT_MS)} and was stopped. Try fewer formats or a smaller map.`,
+          error: `The conversion took longer than ${formatDuration(timeoutMs)} and was stopped. Try fewer formats or a smaller map.`,
         });
-      }, CONVERSION_TIMEOUT_MS);
+      }, timeoutMs);
 
       try {
         const { name, files } = await convertLevels(request, workDir);
