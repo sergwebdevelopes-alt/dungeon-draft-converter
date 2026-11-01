@@ -12,14 +12,26 @@ import { configRouter } from './http/routes/config.ts';
 import { convertRouter } from './http/routes/convert.ts';
 import { queueRouter } from './http/routes/queue.ts';
 import { blockCrossSiteRequests, securityHeaders } from './http/security.ts';
+import { refuseNewWorkDuringShutdown } from './http/shutdown.ts';
 import { ConversionQueue } from './queue/conversion-queue.ts';
 
-async function createApp(server: http.Server): Promise<express.Express> {
+interface AppOptions {
+  isShuttingDown: () => boolean;
+}
+
+async function createApp(
+  server: http.Server,
+  { isShuttingDown }: AppOptions,
+): Promise<express.Express> {
   const queue = new ConversionQueue(MAX_PENDING_CONVERSIONS);
 
   const app = express();
   app.disable('x-powered-by');
-  app.use(securityHeaders, blockCrossSiteRequests);
+  app.use(
+    securityHeaders,
+    blockCrossSiteRequests,
+    refuseNewWorkDuringShutdown(isShuttingDown),
+  );
 
   app.use(
     '/api',

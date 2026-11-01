@@ -80,8 +80,11 @@ Environment variables, all optional:
 | `CONVERSION_TIMEOUT_SECONDS` | `300`     | Stop a conversion that takes longer                                              |
 | `MAX_PARALLEL_IMAGES`        | `2`       | Images of one map made at the same time; more is not faster and uses more memory |
 | `SHARP_CONCURRENCY`          | all cores | Threads per image; fewer uses less memory but is slower                          |
+| `SHUTDOWN_TIMEOUT_SECONDS`   | `300`     | On stop, how long to wait for running and waiting conversions to finish          |
 
 The Docker image also uses jemalloc with `MALLOC_CONF` set to return freed memory to the system quickly.
+
+On `SIGTERM` (for example `docker compose down` or a redeploy), the server stops accepting new connections, finishes the conversions that are running or waiting, and then exits. `compose.yml` gives it 330 seconds (`stop_grace_period`) before Docker kills it; keep that above `SHUTDOWN_TIMEOUT_SECONDS`. `Ctrl+C` still stops it immediately.
 
 ## Development
 
