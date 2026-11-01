@@ -1,11 +1,15 @@
 import type { RequestHandler } from 'express';
 import { IS_PRODUCTION } from '../config.ts';
+import { HttpError } from './errors.ts';
+
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const ALLOWED_FETCH_SITES = new Set(['same-origin', 'none']);
 
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self'",
-  "img-src 'self' blob: data:",
+  "img-src 'self' blob:",
   "connect-src 'self'",
   "object-src 'none'",
   "base-uri 'none'",
@@ -31,4 +35,16 @@ const securityHeaders: RequestHandler = (_req, res, next) => {
   next();
 };
 
-export { securityHeaders };
+const blockCrossSiteRequests: RequestHandler = (req, _res, next) => {
+  const site = req.get('Sec-Fetch-Site');
+  if (
+    !SAFE_METHODS.has(req.method) &&
+    site !== undefined &&
+    !ALLOWED_FETCH_SITES.has(site)
+  ) {
+    throw new HttpError(403, 'Requests from other websites are not allowed.');
+  }
+  next();
+};
+
+export { blockCrossSiteRequests, securityHeaders };

@@ -11,7 +11,7 @@ import { errorHandler, notFound } from './http/errors.ts';
 import { configRouter } from './http/routes/config.ts';
 import { convertRouter } from './http/routes/convert.ts';
 import { queueRouter } from './http/routes/queue.ts';
-import { securityHeaders } from './http/security.ts';
+import { blockCrossSiteRequests, securityHeaders } from './http/security.ts';
 import { ConversionQueue } from './queue/conversion-queue.ts';
 
 async function createApp(server: http.Server): Promise<express.Express> {
@@ -19,7 +19,7 @@ async function createApp(server: http.Server): Promise<express.Express> {
 
   const app = express();
   app.disable('x-powered-by');
-  app.use(securityHeaders);
+  app.use(securityHeaders, blockCrossSiteRequests);
 
   app.use(
     '/api',
