@@ -3,11 +3,30 @@ import { Container } from '../../../shared/ui/Container.tsx';
 import { GridOverlay } from '../../../shared/ui/GridOverlay.tsx';
 import { mapImages, type MapEntry } from '../../gallery/index.ts';
 
-const FACTS = [
-  { value: '70 · 140 · 300', label: 'px per square' },
-  { value: '10', label: 'levels merged into one' },
-  { value: '1 inch', label: 'per square in print' },
+const STATS = [
+  { value: 'JPG · WebP', label: 'Formats', accent: true },
+  { value: '70 · 140 · 300', label: 'Px per square', accent: false },
+  { value: '10', label: 'Levels merged', accent: false },
 ];
+
+function Stats() {
+  return (
+    <dl className="grid grid-cols-[repeat(3,auto)] justify-start gap-x-5 sm:grid-cols-3 sm:gap-x-6">
+      {STATS.map((stat) => (
+        <div key={stat.label} className="grid content-start gap-2">
+          <dt
+            className={`order-2 border-t pt-2 text-xs text-muted sm:text-sm ${stat.accent ? 'border-gold' : 'border-line'}`}
+          >
+            {stat.label}
+          </dt>
+          <dd className="order-1 text-lg font-bold whitespace-nowrap tabular-nums sm:text-2xl">
+            {stat.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
 
 function GridWipe({ map }: { map: MapEntry }) {
   return (
@@ -61,16 +80,7 @@ function ConverterTeaser({ map }: { map: MapEntry | null }) {
             virtual tabletop or the print shop, with or without the grid and
             with your logo in the corner.
           </p>
-          <dl className="grid grid-cols-3 gap-4">
-            {FACTS.map((fact) => (
-              <div key={fact.label} className="grid gap-1">
-                <dt className="order-2 text-sm text-muted">{fact.label}</dt>
-                <dd className="order-1 font-display text-xl font-bold sm:text-2xl">
-                  {fact.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          <Stats />
           <ButtonLink to="/converter" className="w-fit">
             Open the converter
           </ButtonLink>

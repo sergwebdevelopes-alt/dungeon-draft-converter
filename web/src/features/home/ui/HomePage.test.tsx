@@ -128,6 +128,17 @@ describe('HomePage', () => {
     ).toHaveAttribute('href', '/converter');
   });
 
+  it('names the image formats the converter makes', async () => {
+    await renderHome();
+
+    const teaser = screen.getByRole('region', {
+      name: 'Your Dungeondraft maps, ready for any table',
+    });
+    const formats = within(teaser).getByText('Formats');
+    expect(formats.nextElementSibling).toHaveTextContent('JPG · WebP');
+    expect(teaser).not.toHaveTextContent('1 inch');
+  });
+
   it('lists every membership plan from the site config', async () => {
     await renderHome();
 
