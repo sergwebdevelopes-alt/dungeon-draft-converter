@@ -14,7 +14,7 @@ import { convertRouter } from './http/routes/convert.ts';
 import { queueRouter } from './http/routes/queue.ts';
 import { blockCrossSiteRequests, securityHeaders } from './http/security.ts';
 import { refuseNewWorkDuringShutdown } from './http/shutdown.ts';
-import { spaFallback } from './http/spa-fallback.ts';
+import { serveWebApp } from './http/spa-fallback.ts';
 import { ConversionQueue, PendingLimit } from './queue/index.ts';
 
 interface AppOptions {
@@ -45,8 +45,7 @@ async function createApp(
   );
 
   if (IS_PRODUCTION) {
-    app.use(express.static(WEB_DIST_DIR));
-    app.use(spaFallback(path.join(WEB_DIST_DIR, 'index.html')));
+    app.use(serveWebApp(WEB_DIST_DIR));
   } else {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({

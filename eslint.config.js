@@ -31,7 +31,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/**/*.test.ts'],
+    files: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
     rules: {
       '@typescript-eslint/no-floating-promises': [
         'error',

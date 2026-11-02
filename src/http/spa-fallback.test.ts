@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import express from 'express';
-import { spaFallback } from './spa-fallback.ts';
+import { serveWebApp } from './spa-fallback.ts';
 
 const INDEX_HTML = '<!doctype html><div id="root"></div>';
 
@@ -23,10 +23,11 @@ describe('spaFallback', () => {
   before(async () => {
     dir = await fs.mkdtemp(path.join(os.tmpdir(), 'spa-'));
     await fs.writeFile(path.join(dir, 'index.html'), INDEX_HTML);
+    await fs.mkdir(path.join(dir, 'maps', 'cave'), { recursive: true });
+    await fs.writeFile(path.join(dir, 'maps', 'cave', 'card.webp'), 'image');
 
     const app = express();
-    app.use(express.static(dir));
-    app.use(spaFallback(path.join(dir, 'index.html')));
+    app.use(serveWebApp(dir));
     app.use((_req, res) => {
       res.status(404).json({ error: 'Not found.' });
     });
@@ -55,6 +56,20 @@ describe('spaFallback', () => {
       assert.match(res.headers.get('content-type') ?? '', /text\/html/);
       assert.equal(await res.text(), INDEX_HTML);
     }
+  });
+
+  it('serves the page for a route that shares its name with a folder', async () => {
+    const res = await fetch(`${base}/maps`, { redirect: 'manual' });
+
+    assert.equal(res.status, 200);
+    assert.equal(await res.text(), INDEX_HTML);
+  });
+
+  it('still serves files from that folder', async () => {
+    const res = await fetch(`${base}/maps/cave/card.webp`);
+
+    assert.equal(res.status, 200);
+    assert.equal(await res.text(), 'image');
   });
 
   it('leaves API paths alone', async () => {

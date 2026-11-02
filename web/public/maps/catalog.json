@@ -1,0 +1,148 @@
+{
+  "maps": [
+    {
+      "slug": "submerged-library",
+      "title": "The Submerged Library",
+      "subtitle": "Sunken archive",
+      "squares": {
+        "x": 56,
+        "y": 73
+      },
+      "tags": [
+        "Underground"
+      ],
+      "patreonUrl": "https://www.patreon.com/LairofArtificer/posts/submerged-122058272"
+    },
+    {
+      "slug": "yawning-portal",
+      "title": "The Yawning Portal",
+      "subtitle": "First floor",
+      "squares": {
+        "x": 40,
+        "y": 40
+      },
+      "tags": [
+        "Interior"
+      ],
+      "patreonUrl": "https://www.patreon.com/LairofArtificer/posts/yawning-portal-1-111485033"
+    },
+    {
+      "slug": "frozen-cavern",
+      "title": "Frozen Cavern",
+      "subtitle": "Ice cave",
+      "squares": {
+        "x": 40,
+        "y": 30
+      },
+      "tags": [
+        "Underground"
+      ],
+      "patreonUrl": "https://www.patreon.com/LairofArtificer/posts/frozen-cavern-142913427"
+    },
+    {
+      "slug": "elite-brothel",
+      "title": "Elite Brothel",
+      "subtitle": "First floor",
+      "squares": {
+        "x": 44,
+        "y": 49
+      },
+      "tags": [
+        "Interior"
+      ],
+      "patreonUrl": "https://www.patreon.com/LairofArtificer/posts/elite-brothel-123726461"
+    },
+    {
+      "slug": "field-of-triumph",
+      "title": "Field of Triumph",
+      "subtitle": "Theater",
+      "squares": {
+        "x": 150,
+        "y": 115
+      },
+      "tags": [
+        "Outdoor"
+      ],
+      "patreonUrl": "https://www.patreon.com/LairofArtificer/posts/field-of-triumph-118876516"
+    },
+    {
+      "slug": "shrine-of-shar",
+      "title": "The Underground Shrine of Shar",
+      "subtitle": "Hidden sanctuary",
+      "squares": {
+        "x": 28,
+        "y": 28
+      },
+      "tags": [
+        "Underground"
+      ],
+      "patreonUrl": "https://www.patreon.com/LairofArtificer/posts/underground-of-125599536"
+    },
+    {
+      "slug": "gates-of-barovia",
+      "title": "The Gates of Barovia",
+      "subtitle": "Gates open",
+      "squares": {
+        "x": 40,
+        "y": 30
+      },
+      "tags": [
+        "Outdoor",
+        "Curse of Strahd"
+      ],
+      "patreonUrl": "https://www.patreon.com/LairofArtificer/posts/curse-of-strahd-165813175"
+    },
+    {
+      "slug": "hunting-cabin",
+      "title": "Hunting Cabin",
+      "subtitle": "Ground floor",
+      "squares": {
+        "x": 24,
+        "y": 24
+      },
+      "tags": [
+        "Outdoor"
+      ],
+      "patreonUrl": "https://www.patreon.com/LairofArtificer/posts/hunting-cabin-150047063"
+    },
+    {
+      "slug": "execution-square",
+      "title": "The Execution Square",
+      "subtitle": "City square",
+      "squares": {
+        "x": 32,
+        "y": 24
+      },
+      "tags": [
+        "Outdoor"
+      ],
+      "patreonUrl": "https://www.patreon.com/LairofArtificer/posts/execution-square-152391499"
+    },
+    {
+      "slug": "city-sauna",
+      "title": "City Sauna",
+      "subtitle": "Bathhouse",
+      "squares": {
+        "x": 22,
+        "y": 24
+      },
+      "tags": [
+        "Interior"
+      ],
+      "patreonUrl": "https://www.patreon.com/LairofArtificer/posts/city-sauna-128294257"
+    },
+    {
+      "slug": "zhentarim-sanctuary",
+      "title": "Zhentarim Sanctuary",
+      "subtitle": "Spring · first floor",
+      "squares": {
+        "x": 18,
+        "y": 28
+      },
+      "tags": [
+        "Interior"
+      ],
+      "patreonUrl": "https://www.patreon.com/LairofArtificer/posts/zhentarim-119504654"
+    }
+  ]
+}

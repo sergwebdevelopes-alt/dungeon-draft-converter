@@ -13,12 +13,20 @@ function HomePage() {
         turns your own <code>.dd2vtt</code> exports into images for any virtual
         tabletop or printer.
       </p>
-      <Link
-        to="/converter"
-        className="inline-flex min-h-11 w-fit items-center rounded-lg bg-gold px-5 font-bold text-on-gold hover:brightness-105"
-      >
-        Open the converter
-      </Link>
+      <div className="flex flex-wrap gap-3">
+        <Link
+          to="/maps"
+          className="inline-flex min-h-11 w-fit items-center rounded-lg bg-gold px-5 font-bold text-on-gold hover:brightness-105"
+        >
+          Browse the maps
+        </Link>
+        <Link
+          to="/converter"
+          className="inline-flex min-h-11 w-fit items-center rounded-lg border border-line px-5 font-bold hover:border-gold"
+        >
+          Open the converter
+        </Link>
+      </div>
     </section>
   );
 }

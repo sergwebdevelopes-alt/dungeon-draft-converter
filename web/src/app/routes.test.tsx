@@ -30,7 +30,11 @@ describe('AppRoutes', () => {
   beforeEach(() => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(() => Promise.resolve(Response.json(CONFIG))),
+      vi.fn((url: string) =>
+        Promise.resolve(
+          Response.json(url === '/maps/catalog.json' ? { maps: [] } : CONFIG),
+        ),
+      ),
     );
   });
 
@@ -71,6 +75,15 @@ describe('AppRoutes', () => {
       'aria-current',
       'page',
     );
+  });
+
+  it('shows the gallery at /maps', async () => {
+    renderAt('/maps');
+
+    expect(
+      await screen.findByRole('heading', { name: 'Maps from the Lair' }),
+    ).toBeInTheDocument();
+    expect(document.title).toBe('Maps · Lair of Artificer');
   });
 
   it('shows a not-found page for unknown paths', async () => {

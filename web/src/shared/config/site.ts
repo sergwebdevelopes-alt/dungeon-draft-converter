@@ -16,6 +16,7 @@ const SITE: SiteConfig = {
   name: 'Lair of Artificer',
   nav: [
     { label: 'Home', href: '/' },
+    { label: 'Maps', href: '/maps' },
     { label: 'Converter', href: '/converter' },
   ],
   links: {

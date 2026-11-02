@@ -1,5 +1,5 @@
 import path from 'node:path';
-import type { RequestHandler } from 'express';
+import express, { type RequestHandler } from 'express';
 
 function isPageRequest(method: string, urlPath: string): boolean {
   const isRead = method === 'GET' || method === 'HEAD';
@@ -22,4 +22,11 @@ function spaFallback(indexFile: string): RequestHandler {
   };
 }
 
-export { spaFallback };
+function serveWebApp(distDir: string): RequestHandler[] {
+  return [
+    express.static(distDir, { redirect: false }),
+    spaFallback(path.join(distDir, 'index.html')),
+  ];
+}
+
+export { serveWebApp };

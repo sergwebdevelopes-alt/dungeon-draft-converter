@@ -13,11 +13,16 @@ const ConverterPage = lazy(async () => ({
     .ConverterPage,
 }));
 
+const GalleryPage = lazy(async () => ({
+  default: (await import('../features/gallery/ui/GalleryPage.tsx')).GalleryPage,
+}));
+
 function AppRoutes({ site }: { site: SiteConfig }) {
   return (
     <Routes>
       <Route element={<PageShell site={site} />}>
         <Route index element={<HomePage />} />
+        <Route path="maps" element={<GalleryPage />} />
         <Route path="converter" element={<ConverterPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>

@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "tsx --test \"src/**/*.test.ts\" && vitest run",
+    "test": "tsx --test \"src/**/*.test.ts\" \"scripts/**/*.test.ts\" && vitest run",
     "typecheck": "tsc",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -12,7 +12,8 @@
     "start": "NODE_ENV=production node src/server.ts",
     "dev": "node --watch-path=src src/server.ts",
     "build": "vite build",
-    "bench": "node scripts/bench.ts"
+    "bench": "node scripts/bench.ts",
+    "gallery": "node scripts/build-gallery.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -44,6 +45,7 @@
   "dependencies": {
     "express": "^5.2.1",
     "fflate": "^0.8.3",
+    "motion": "^14.9.0",
     "multer": "^2.5.0",
     "react-router": "^8.5.1",
     "sharp": "^0.35.5"
