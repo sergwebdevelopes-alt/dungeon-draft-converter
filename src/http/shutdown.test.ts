@@ -64,10 +64,10 @@ describe('refuseNewWorkDuringShutdown', () => {
     assert.equal(res.status, 503);
   });
 
-  it('still serves GET and HEAD during shutdown but closes the connection', async () => {
+  it('still serves GET, HEAD and OPTIONS during shutdown but closes the connection', async () => {
     shuttingDown = true;
 
-    for (const method of ['GET', 'HEAD']) {
+    for (const method of ['GET', 'HEAD', 'OPTIONS']) {
       const res = await fetch(base, { method });
 
       assert.equal(res.status, 200, method);

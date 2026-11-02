@@ -1,7 +1,6 @@
 import type { RequestHandler } from 'express';
 import { HttpError } from './errors.ts';
-
-const READ_METHODS = new Set(['GET', 'HEAD']);
+import { isSafeMethod } from './methods.ts';
 
 function refuseNewWorkDuringShutdown(
   isShuttingDown: () => boolean,
@@ -9,7 +8,7 @@ function refuseNewWorkDuringShutdown(
   return (req, res, next) => {
     if (isShuttingDown()) {
       res.set('Connection', 'close');
-      if (!READ_METHODS.has(req.method)) {
+      if (!isSafeMethod(req.method)) {
         throw new HttpError(
           503,
           'The server is restarting. Please try again in a minute.',

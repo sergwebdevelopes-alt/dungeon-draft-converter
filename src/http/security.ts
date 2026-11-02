@@ -1,8 +1,8 @@
 import type { RequestHandler } from 'express';
 import { IS_PRODUCTION } from '../config.ts';
 import { HttpError } from './errors.ts';
+import { isSafeMethod } from './methods.ts';
 
-const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const ALLOWED_FETCH_SITES = new Set(['same-origin', 'none']);
 
 const CONTENT_SECURITY_POLICY = [
@@ -38,7 +38,7 @@ const securityHeaders: RequestHandler = (_req, res, next) => {
 const blockCrossSiteRequests: RequestHandler = (req, _res, next) => {
   const site = req.get('Sec-Fetch-Site');
   if (
-    !SAFE_METHODS.has(req.method) &&
+    !isSafeMethod(req.method) &&
     site !== undefined &&
     !ALLOWED_FETCH_SITES.has(site)
   ) {
