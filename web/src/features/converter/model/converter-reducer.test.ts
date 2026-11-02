@@ -86,11 +86,11 @@ describe('converterReducer', () => {
     ).toEqual(['B.dd2vtt']);
   });
 
-  it('toggles formats and grid options', () => {
+  it('toggles formats and sets grid options', () => {
     const state = run(
       loaded,
       { type: 'presetToggled', name: 'JPG_70' },
-      { type: 'variantToggled', variant: 'Grid' },
+      { type: 'variantsChosen', variants: ['NoGrid'] },
     );
 
     expect(state.presets).toEqual(['WEBP_140']);
@@ -102,6 +102,16 @@ describe('converterReducer', () => {
         { type: 'presetToggled', name: 'JPG_70' },
       ).presets,
     ).toEqual(['WEBP_140', 'JPG_70']);
+  });
+
+  it('sets the grid variants in one step', () => {
+    const state = run(loaded, withMap, submitted, done, {
+      type: 'variantsChosen',
+      variants: ['Grid'],
+    });
+
+    expect(state.variants).toEqual(['Grid']);
+    expect(state.status).toEqual({ kind: 'idle' });
   });
 
   it('checks the logo before using it', () => {
@@ -211,14 +221,7 @@ describe('canSubmit', () => {
       ),
     ).toBe(false);
     expect(
-      canSubmit(
-        run(
-          loaded,
-          withMap,
-          { type: 'variantToggled', variant: 'Grid' },
-          { type: 'variantToggled', variant: 'NoGrid' },
-        ),
-      ),
+      canSubmit(run(loaded, withMap, { type: 'variantsChosen', variants: [] })),
     ).toBe(false);
     expect(canSubmit(run(loaded, withMap, submitted))).toBe(false);
   });

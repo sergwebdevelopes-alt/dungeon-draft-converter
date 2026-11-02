@@ -17,7 +17,6 @@ function renderPanel(status: Status, canSubmit = true) {
         elapsedMs={65_000}
         canSubmit={canSubmit}
         mapCount={2}
-        formats={['JPG · 70 px', 'WEBP · 140 px']}
         imageCount={4}
         {...handlers}
       />
@@ -30,9 +29,9 @@ describe('ConvertPanel', () => {
   it('summarises the download', () => {
     renderPanel({ kind: 'idle' });
 
-    const panel = screen.getByRole('complementary', { name: 'Conversion' });
-    expect(panel).toHaveTextContent('JPG · 70 px, WEBP · 140 px');
-    expect(panel).toHaveTextContent('2 maps · 4 images');
+    expect(
+      screen.getByRole('complementary', { name: 'Conversion' }),
+    ).toHaveTextContent('2 maps · 4 images');
   });
 
   it('disables Convert until the form is ready', () => {

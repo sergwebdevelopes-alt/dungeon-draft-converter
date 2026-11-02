@@ -13,6 +13,7 @@ interface DropZoneProps {
   multiple?: boolean;
   onFiles: (files: File[]) => void;
   onClear?: () => void;
+  className?: string;
 }
 
 function zoneClassName({
@@ -53,6 +54,7 @@ function DropZone({
   compact = false,
   preview = false,
   multiple = false,
+  className = '',
 }: DropZoneProps) {
   const [over, setOver] = useState(false);
   const previewUrl = useObjectUrl(preview ? file : null);
@@ -97,7 +99,7 @@ function DropZone({
 
   return (
     <label
-      className={zoneClassName({ compact, over, hasFile: !!file, disabled })}
+      className={`${zoneClassName({ compact, over, hasFile: !!file, disabled })} ${className}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

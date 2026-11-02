@@ -71,6 +71,16 @@
 
   --animate-progress: progress 1.4s ease-in-out infinite;
   --animate-wipe: wipe 7s ease-in-out infinite alternate;
+  --animate-sweep: sweep 1.6s linear infinite;
+
+  @keyframes sweep {
+    from {
+      background-position: 120% 0;
+    }
+    to {
+      background-position: -120% 0;
+    }
+  }
   --animate-wipe-line: wipe-line 7s ease-in-out infinite alternate;
 
   @keyframes wipe-line {

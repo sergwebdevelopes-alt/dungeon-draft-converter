@@ -46,7 +46,7 @@ function mapFile(name = 'Cave.dd2vtt', size = 10): File {
 
 async function renderPage() {
   render(<ConverterPage />);
-  await screen.findByRole('checkbox', { name: /JPG · 70 px/ });
+  await screen.findByRole('button', { name: /JPG · 70 px/ });
 }
 
 function mapInput(): HTMLInputElement {
@@ -88,11 +88,9 @@ describe('ConverterPage', () => {
     await renderPage();
     await userEvent.upload(mapInput(), mapFile());
 
+    await userEvent.click(screen.getByRole('button', { name: /JPG · 70 px/ }));
     await userEvent.click(
-      screen.getByRole('checkbox', { name: /JPG · 70 px/ }),
-    );
-    await userEvent.click(
-      screen.getByRole('checkbox', { name: /WEBP · 140 px/ }),
+      screen.getByRole('button', { name: /WEBP · 140 px/ }),
     );
 
     expect(
@@ -168,6 +166,45 @@ describe('ConverterPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Map is broken.',
     );
+  });
+
+  it('previews the main map as soon as it is added', async () => {
+    mockServer();
+    await renderPage();
+    const map = new File(
+      [
+        JSON.stringify({
+          resolution: { map_size: { x: 20, y: 25 }, pixels_per_grid: 100 },
+          image: 'iVBORw0KGgoAAAANSUhEUg==',
+        }),
+      ],
+      'Cave.dd2vtt',
+    );
+
+    await userEvent.upload(mapInput(), map);
+
+    expect(
+      await screen.findByRole('img', { name: 'Preview of the main map' }),
+    ).toHaveAttribute('src', 'blob:zip');
+  });
+
+  it('exports only the grid version when the grid is chosen', async () => {
+    const fetchMock = mockServer();
+    await renderPage();
+    await userEvent.upload(mapInput(), mapFile());
+
+    await userEvent.click(screen.getByRole('button', { name: 'With' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Convert & download' }),
+    );
+    await screen.findByRole('button', { name: 'Download again' });
+
+    const convertUrl = fetchMock.mock.calls
+      .map(([url]) => url)
+      .find((url) => url.startsWith('/api/convert'));
+    expect(
+      new URL(convertUrl!, 'http://test').searchParams.get('variants'),
+    ).toBe('Grid');
   });
 
   it('does not show the old storage footnote', async () => {

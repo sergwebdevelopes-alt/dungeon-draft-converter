@@ -24,7 +24,7 @@ type ConverterAction =
   | { type: 'logoSelected'; file: File }
   | { type: 'logoCleared' }
   | { type: 'presetToggled'; name: string }
-  | { type: 'variantToggled'; variant: Variant }
+  | { type: 'variantsChosen'; variants: Variant[] }
   | { type: 'placementChanged'; placement: LogoPlacement }
   | { type: 'placementReset' }
   | { type: 'submitted'; ticket: string; startedAt: number }
@@ -118,10 +118,8 @@ function converterReducer(
     case 'presetToggled':
       return edited(state, { presets: toggle(state.presets, action.name) });
 
-    case 'variantToggled':
-      return edited(state, {
-        variants: toggle(state.variants, action.variant),
-      });
+    case 'variantsChosen':
+      return edited(state, { variants: action.variants });
 
     case 'placementChanged':
       return edited(state, { placement: action.placement });

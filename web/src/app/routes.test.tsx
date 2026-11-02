@@ -62,7 +62,7 @@ describe('AppRoutes', () => {
       await screen.findByRole('heading', { name: 'Dungeondraft Converter' }),
     ).toBeInTheDocument();
     expect(
-      await screen.findByRole('checkbox', { name: /JPG · 70 px/ }),
+      await screen.findByRole('button', { name: /JPG · 70 px/ }),
     ).toBeInTheDocument();
   });
 

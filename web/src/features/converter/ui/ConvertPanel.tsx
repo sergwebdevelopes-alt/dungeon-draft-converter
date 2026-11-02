@@ -1,19 +1,17 @@
-import type { ReactNode } from 'react';
 import { formatDuration } from '../../../shared/lib/format.ts';
 import { progressLabel, type Status } from '../model/progress.ts';
 
 const PRIMARY_BUTTON =
-  'inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-gold px-4 font-bold text-on-gold transition-[filter] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:brightness-100';
+  'inline-flex min-h-12 w-full items-center justify-center rounded-full bg-gold px-5 font-bold text-on-gold shadow-[0_10px_30px_-10px_var(--gold)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:hover:brightness-100';
 
 const SECONDARY_BUTTON =
-  'inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-line px-4 font-bold hover:border-gold';
+  'inline-flex min-h-12 w-full items-center justify-center rounded-full px-5 font-bold ring-1 ring-line hover:ring-gold';
 
 interface ConvertPanelProps {
   status: Status;
   elapsedMs: number;
   canSubmit: boolean;
   mapCount: number;
-  formats: string[];
   imageCount: number;
   onCancel: () => void;
   onDownloadAgain: () => void;
@@ -29,7 +27,6 @@ function ConvertPanel({
   elapsedMs,
   canSubmit,
   mapCount,
-  formats,
   imageCount,
   onCancel,
   onDownloadAgain,
@@ -38,23 +35,9 @@ function ConvertPanel({
   return (
     <aside
       aria-label="Conversion"
-      className="fixed inset-x-0 bottom-0 z-20 grid gap-3 border-t border-line bg-surface pt-3 pr-[max(1rem,env(safe-area-inset-right))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] shadow-[0_-8px_24px_rgb(0_0_0/0.25)] lg:sticky lg:inset-auto lg:top-6 lg:gap-3 lg:rounded-xl lg:border lg:p-4 lg:shadow-none"
+      className="fixed inset-x-0 bottom-0 z-20 grid gap-3 border-t border-line bg-surface/95 pt-3 pr-[max(1rem,env(safe-area-inset-right))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] shadow-[0_-8px_24px_rgb(0_0_0/0.25)] backdrop-blur-xl lg:static lg:border-t lg:bg-transparent lg:px-0 lg:pt-5 lg:pb-0 lg:shadow-none lg:backdrop-blur-none"
     >
-      <h2 className="hidden font-display text-lg font-bold tracking-wide lg:block">
-        Your download
-      </h2>
-
-      <dl className="hidden grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 lg:grid">
-        <SummaryRow label="Maps">
-          {mapCount === 0 ? 'None yet' : mapCount}
-        </SummaryRow>
-        <SummaryRow label="Formats">
-          {formats.length === 0 ? 'None' : formats.join(', ')}
-        </SummaryRow>
-        <SummaryRow label="Images">{imageCount}</SummaryRow>
-      </dl>
-
-      <p className="text-center text-sm text-muted lg:hidden">
+      <p className="text-center text-sm text-muted lg:text-left">
         {mapCount === 0
           ? 'Add a map to start'
           : `${plural(mapCount, 'map')} · ${plural(imageCount, 'image')}`}
@@ -70,21 +53,6 @@ function ConvertPanel({
         onReset={onReset}
       />
     </aside>
-  );
-}
-
-function SummaryRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
-  return (
-    <>
-      <dt className="text-muted">{label}</dt>
-      <dd className="m-0 text-right tabular-nums">{children}</dd>
-    </>
   );
 }
 
