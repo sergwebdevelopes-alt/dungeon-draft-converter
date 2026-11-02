@@ -37,7 +37,7 @@ web/src/
 │   ├── storage/   KeyValueStore port + localStorage adapter; index.ts exports `storage`
 │   ├── lib/       format.ts, save-file.ts, useObjectUrl.ts
 │   ├── ui/        shared presentational components
-│   └── config/    site.ts (site name, nav, Patreon link)
+│   └── config/    site.ts (site name, nav, links, membership plans)
 └── features/<feature>/
     ├── api.ts     the feature's contract over HttpClient, plus a ready instance
     ├── model/     pure TypeScript (no React, no fetch, no storage): types, rules, reducer
@@ -49,6 +49,7 @@ web/src/
 - A feature reaches the network only through its `api.ts`, and storage only through `shared/storage`.
 - No DI container: modules export ready instances (`http`, `storage`, `converterApi`); hooks take them as default parameters so tests can pass fakes.
 - The ports rule covers runtime libraries (HTTP, storage, animation). UI frameworks and build tools (React, Tailwind, Vite, Vitest) are used directly.
+- Membership plans live in `web/src/shared/config/site.ts` (`membership.plans`); adding a Patreon tier means adding one entry there. Pages use `Container` for width and padding; sections may run full width.
 - Motion is imported only in `web/src/shared/ui/motion/`; features use its wrappers (`MotionProvider`, `Reveal`, `SharedFrame`, `Swipeable`).
 - Maps live in `content/maps.json` (title, tags, Patreon link, source images). `npm run gallery` renders `web/public/maps/` from it, including the public `catalog.json` the gallery loads at runtime; never edit those files by hand. Adding a map needs no code change. The script never reads `Tych Maps` (client work).
 - Styling uses Tailwind with colour and font tokens in `web/src/styles.css`.

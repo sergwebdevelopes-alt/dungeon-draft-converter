@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { MotionProvider, Reveal } from '../../../shared/ui/motion/index.ts';
+import { SITE, type SiteConfig } from '../../../shared/config/site.ts';
+import { Container } from '../../../shared/ui/Container.tsx';
+import { Reveal } from '../../../shared/ui/motion/index.ts';
 import { PageTitle } from '../../../shared/ui/PageTitle.tsx';
+import { MembershipSection } from '../../membership/index.ts';
 import type { GalleryApi } from '../api.ts';
 import {
   filterMaps,
@@ -16,6 +19,8 @@ import { MapModal } from './MapModal.tsx';
 import { TagFilter } from './TagFilter.tsx';
 
 const SKELETON_CARDS = 8;
+
+const GRID = 'grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4';
 
 function useOpenedSlug(slug: string | null): string | null {
   const [opened, setOpened] = useState(slug);
@@ -59,9 +64,14 @@ function useCardFocus(openSlug: string | null) {
 
 function CardSkeletons() {
   return Array.from({ length: SKELETON_CARDS }, (_, i) => (
-    <li key={i} aria-hidden="true" className="grid gap-3">
-      <span className="block aspect-[4/5] rounded-xl bg-sunken motion-safe:animate-pulse" />
-      <span className="h-5 w-3/4 rounded bg-sunken" />
+    <li
+      key={i}
+      aria-hidden="true"
+      className={i === 0 ? 'col-span-2 row-span-2' : undefined}
+    >
+      <span
+        className={`block rounded-2xl bg-sunken motion-safe:animate-pulse ${i === 0 ? 'h-full min-h-80' : 'aspect-[4/5]'}`}
+      />
     </li>
   ));
 }
@@ -91,12 +101,16 @@ function Gallery({ maps }: { maps: MapEntry[] }) {
     <>
       <TagFilter tags={tagsOf(maps)} active={tag} onChange={setTag} />
 
-      <ul className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-6">
+      <ul className={GRID}>
         {visible.map((map, index) => (
-          <li key={map.slug}>
-            <Reveal index={index}>
+          <li
+            key={map.slug}
+            className={index === 0 ? 'col-span-2 row-span-2' : undefined}
+          >
+            <Reveal index={index} className="h-full">
               <MapCard
                 map={map}
+                featured={index === 0}
                 isOpen={map.slug === openedSlug}
                 buttonRef={registerCard(map.slug)}
                 onOpen={() => open(map.slug)}
@@ -127,18 +141,26 @@ function Gallery({ maps }: { maps: MapEntry[] }) {
   );
 }
 
-function GalleryPage({ api }: { api?: GalleryApi }) {
+interface GalleryPageProps {
+  api?: GalleryApi;
+  site?: SiteConfig;
+}
+
+function GalleryPage({ api, site = SITE }: GalleryPageProps) {
   const catalog = useMapCatalog(api);
 
   return (
-    <MotionProvider>
+    <>
       <PageTitle title="Maps" />
-      <div className="grid gap-8 pb-10">
-        <header className="grid max-w-2xl gap-3">
-          <h1 className="font-display text-3xl font-bold tracking-wide sm:text-5xl">
+      <Container className="grid gap-8 pt-12 pb-4 sm:pt-16">
+        <header className="grid gap-4">
+          <p className="text-sm font-bold tracking-[0.2em] text-gold uppercase">
+            Gallery
+          </p>
+          <h1 className="font-display text-4xl font-bold tracking-tight sm:text-6xl">
             Maps from the Lair
           </h1>
-          <p className="text-lg text-muted">
+          <p className="max-w-2xl text-lg text-muted">
             Battle maps drawn in Dungeondraft. Open one to see it up close, with
             or without the grid.
           </p>
@@ -147,10 +169,7 @@ function GalleryPage({ api }: { api?: GalleryApi }) {
         {catalog.status === 'ready' && <Gallery maps={catalog.maps} />}
 
         {catalog.status === 'loading' && (
-          <ul
-            aria-label="Loading maps"
-            className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-6"
-          >
+          <ul aria-label="Loading maps" className={GRID}>
             <CardSkeletons />
           </ul>
         )}
@@ -163,8 +182,13 @@ function GalleryPage({ api }: { api?: GalleryApi }) {
             The maps could not be loaded. Reload the page to try again.
           </p>
         )}
-      </div>
-    </MotionProvider>
+      </Container>
+
+      <MembershipSection
+        plans={site.membership.plans}
+        followUrl={site.links.patreon}
+      />
+    </>
   );
 }
 

@@ -10,7 +10,7 @@ import {
 import { ExternalLink } from '../../../shared/ui/ExternalLink.tsx';
 import { Reveal, Swipeable } from '../../../shared/ui/motion/index.ts';
 import { mapImages, type MapEntry } from '../model/catalog.ts';
-import { squaresLabel } from './MapCard.tsx';
+import { squaresLabel } from './MapTile.tsx';
 import { MapViewer } from './MapViewer.tsx';
 
 interface MapModalProps {

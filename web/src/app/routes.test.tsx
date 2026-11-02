@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -46,7 +46,12 @@ describe('AppRoutes', () => {
     renderAt('/');
 
     expect(
-      await screen.findByRole('heading', { name: 'Battle maps from the Lair' }),
+      await screen.findByRole('heading', {
+        name: 'Battle maps for epic adventures',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Join the Lair' }),
     ).toBeInTheDocument();
   });
 
@@ -71,10 +76,14 @@ describe('AppRoutes', () => {
     expect(
       await screen.findByRole('heading', { name: 'Dungeondraft Converter' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Converter' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
+    expect(
+      within(screen.getByRole('navigation', { name: 'Site' })).getByRole(
+        'link',
+        {
+          name: 'Converter',
+        },
+      ),
+    ).toHaveAttribute('aria-current', 'page');
   });
 
   it('shows the gallery at /maps', async () => {

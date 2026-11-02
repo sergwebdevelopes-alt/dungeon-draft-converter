@@ -250,6 +250,14 @@ describe('GalleryPage', () => {
     );
   });
 
+  it('invites visitors to become members', async () => {
+    await renderGallery();
+
+    expect(
+      screen.getByRole('region', { name: 'Join the Lair' }),
+    ).toBeInTheDocument();
+  });
+
   it('builds the filter from the tags the maps use', async () => {
     await renderGallery();
 

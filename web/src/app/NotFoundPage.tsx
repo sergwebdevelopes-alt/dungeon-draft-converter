@@ -1,9 +1,10 @@
 import { Link } from 'react-router';
+import { Container } from '../shared/ui/Container.tsx';
 import { PageTitle } from '../shared/ui/PageTitle.tsx';
 
 function NotFoundPage() {
   return (
-    <section className="grid max-w-xl gap-4 py-10">
+    <Container className="grid max-w-xl gap-4 py-16">
       <PageTitle title="Page not found" />
       <h1 className="font-display text-3xl font-bold tracking-wide">
         This passage leads nowhere
@@ -14,7 +15,7 @@ function NotFoundPage() {
       <Link to="/" className="w-fit font-bold text-brand-text hover:underline">
         Back to the home page
       </Link>
-    </section>
+    </Container>
   );
 }
 

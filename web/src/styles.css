@@ -70,6 +70,26 @@
   --color-success-soft: var(--success-soft);
 
   --animate-progress: progress 1.4s ease-in-out infinite;
+  --animate-wipe: wipe 7s ease-in-out infinite alternate;
+  --animate-wipe-line: wipe-line 7s ease-in-out infinite alternate;
+
+  @keyframes wipe-line {
+    from {
+      left: 88%;
+    }
+    to {
+      left: 12%;
+    }
+  }
+
+  @keyframes wipe {
+    from {
+      clip-path: inset(0 0 0 88%);
+    }
+    to {
+      clip-path: inset(0 0 0 12%);
+    }
+  }
 
   @keyframes progress {
     0% {

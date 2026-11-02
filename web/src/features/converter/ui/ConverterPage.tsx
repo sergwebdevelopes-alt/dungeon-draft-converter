@@ -5,6 +5,7 @@ import {
   selectedPresets,
 } from '../model/converter-reducer.ts';
 import { imageCount, presetLabel } from '../model/summary.ts';
+import { Container } from '../../../shared/ui/Container.tsx';
 import { PageTitle } from '../../../shared/ui/PageTitle.tsx';
 import { useConverter } from '../useConverter.ts';
 import { ConvertPanel } from './ConvertPanel.tsx';
@@ -25,7 +26,7 @@ function ConverterPage() {
   }
 
   return (
-    <div className="grid gap-6">
+    <Container className="grid gap-6 pt-6 pb-36 lg:pb-8">
       <PageTitle title="Converter" />
       <header className="grid gap-1">
         <h1 className="font-display text-2xl font-bold tracking-wide sm:text-3xl">
@@ -92,7 +93,7 @@ function ConverterPage() {
           onReset={() => dispatch({ type: 'reset' })}
         />
       </form>
-    </div>
+    </Container>
   );
 }
 

@@ -12,6 +12,7 @@ const SITE: SiteConfig = {
     { label: 'Maps', href: '/maps' },
   ],
   links: { patreon: 'https://example.com/patreon' },
+  membership: { plans: [] },
 };
 
 function renderShell(path = '/') {

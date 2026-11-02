@@ -1,33 +1,42 @@
-import { Link } from 'react-router';
+import { SITE, type SiteConfig } from '../../../shared/config/site.ts';
 import { PageTitle } from '../../../shared/ui/PageTitle.tsx';
+import {
+  useMapCatalog,
+  type GalleryApi,
+  type MapEntry,
+} from '../../gallery/index.ts';
+import { MembershipSection } from '../../membership/index.ts';
+import { ConverterTeaser } from './ConverterTeaser.tsx';
+import { Hero } from './Hero.tsx';
+import { LatestMaps } from './LatestMaps.tsx';
 
-function HomePage() {
+const BACKDROP_MAPS = 5;
+const LATEST_MAPS = 4;
+
+function teaserMap(maps: MapEntry[]): MapEntry | null {
+  return maps.find((map) => map.squares.x > map.squares.y) ?? maps[0] ?? null;
+}
+
+interface HomePageProps {
+  api?: GalleryApi;
+  site?: SiteConfig;
+}
+
+function HomePage({ api, site = SITE }: HomePageProps) {
+  const catalog = useMapCatalog(api);
+  const maps = catalog.status === 'ready' ? catalog.maps : [];
+
   return (
-    <section className="grid max-w-2xl gap-5 py-10">
+    <>
       <PageTitle />
-      <h1 className="font-display text-3xl font-bold tracking-wide sm:text-5xl">
-        Battle maps from the Lair
-      </h1>
-      <p className="text-lg text-muted">
-        Hand-made Dungeondraft maps for your table, and a free converter that
-        turns your own <code>.dd2vtt</code> exports into images for any virtual
-        tabletop or printer.
-      </p>
-      <div className="flex flex-wrap gap-3">
-        <Link
-          to="/maps"
-          className="inline-flex min-h-11 w-fit items-center rounded-lg bg-gold px-5 font-bold text-on-gold hover:brightness-105"
-        >
-          Browse the maps
-        </Link>
-        <Link
-          to="/converter"
-          className="inline-flex min-h-11 w-fit items-center rounded-lg border border-line px-5 font-bold hover:border-gold"
-        >
-          Open the converter
-        </Link>
-      </div>
-    </section>
+      <Hero maps={maps.slice(0, BACKDROP_MAPS)} />
+      <LatestMaps maps={maps.slice(0, LATEST_MAPS)} total={maps.length} />
+      <ConverterTeaser map={teaserMap(maps)} />
+      <MembershipSection
+        plans={site.membership.plans}
+        followUrl={site.links.patreon}
+      />
+    </>
   );
 }
 
