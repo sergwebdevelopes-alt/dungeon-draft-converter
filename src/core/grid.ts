@@ -1,10 +1,4 @@
-const GRID_STROKE = {
-  color: 'black',
-  opacity: 0.8,
-  referenceGridSize: 140,
-  width: 2.4,
-  dashArray: [4.8, 3.2],
-} as const;
+import { GRID_STROKE } from './grid-stroke.ts';
 
 const MAX_TILE_SQUARES = 10;
 const DASH_ALIGNMENT_PX = 0.05;

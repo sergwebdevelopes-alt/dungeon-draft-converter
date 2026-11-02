@@ -28,6 +28,24 @@ export default tseslint.config(
     },
   },
   {
+    files: ['web/src/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^(\\.\\./)+src/(?!core/grid-stroke\\.ts$)',
+              allowTypeImports: true,
+              message:
+                'The web app may only import types from the server, plus src/core/grid-stroke.ts.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['web/src/test-setup.ts'],
     rules: {
       '@typescript-eslint/no-empty-object-type': [

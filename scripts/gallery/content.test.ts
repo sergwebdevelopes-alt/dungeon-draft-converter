@@ -16,7 +16,7 @@ describe('content/maps.json', () => {
 
     assert.ok(entries.length > 0);
     for (const { sources } of entries) {
-      assert.doesNotMatch(sources.noGrid + sources.grid, /Tych Maps/);
+      assert.doesNotMatch(sources.noGrid, /Tych Maps/);
     }
   });
 

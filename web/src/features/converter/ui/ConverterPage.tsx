@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react';
 import { usePreventPageDrop } from '../../../shared/lib/useFileDrop.ts';
+import { Alert } from '../../../shared/ui/Alert.tsx';
 import { Container } from '../../../shared/ui/Container.tsx';
 import { PageTitle } from '../../../shared/ui/PageTitle.tsx';
 import {
@@ -87,12 +88,9 @@ function ConverterPage() {
 
         <div className="grid content-start gap-5 lg:sticky lg:top-20 lg:self-start lg:rounded-3xl lg:bg-surface/80 lg:p-6 lg:shadow-[0_30px_80px_-30px_rgb(0_0_0/0.6)] lg:ring-1 lg:ring-line lg:backdrop-blur-xl">
           {state.configError ? (
-            <p
-              role="alert"
-              className="rounded-lg border-l-[3px] border-danger bg-danger-soft px-3 py-2 text-sm"
-            >
+            <Alert tone="error" className="text-sm">
               {state.configError}
-            </p>
+            </Alert>
           ) : (
             <>
               <FormatChips

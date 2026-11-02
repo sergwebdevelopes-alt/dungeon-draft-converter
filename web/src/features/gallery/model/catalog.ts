@@ -10,7 +10,6 @@ interface MapEntry {
 interface MapImages {
   card: string;
   view: string;
-  viewGrid: string;
   backdrop: string;
 }
 
@@ -20,7 +19,6 @@ function mapImages(slug: string): MapImages {
   return {
     card: `${base}/card.webp`,
     view: `${base}/view.webp`,
-    viewGrid: `${base}/view-grid.webp`,
     backdrop: `${base}/backdrop.webp`,
   };
 }

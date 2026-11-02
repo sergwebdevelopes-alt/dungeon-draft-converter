@@ -1,16 +1,15 @@
 import { formatDuration } from '../../../shared/lib/format.ts';
 import { useElapsed } from '../../../shared/lib/useElapsed.ts';
+import { Alert } from '../../../shared/ui/Alert.tsx';
+import { Button } from '../../../shared/ui/Button.tsx';
 import {
   progressLabel,
   type Progress,
   type Status,
 } from '../model/progress.ts';
 
-const PRIMARY_BUTTON =
-  'inline-flex min-h-12 w-full items-center justify-center rounded-full bg-gold px-5 font-bold text-on-gold shadow-[0_10px_30px_-10px_var(--gold)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:hover:brightness-100';
-
-const SECONDARY_BUTTON =
-  'inline-flex min-h-12 w-full items-center justify-center rounded-full px-5 font-bold ring-1 ring-line hover:ring-gold';
+const PRIMARY_GLOW =
+  'w-full shadow-[0_10px_30px_-10px_var(--gold)] disabled:shadow-none';
 
 interface ConvertPanelProps {
   status: Status;
@@ -86,12 +85,9 @@ function ConvertingStatus({
 function PanelStatus({ status }: { status: Status }) {
   if (status.kind === 'error') {
     return (
-      <p
-        role="alert"
-        className="rounded-lg border-l-[3px] border-danger bg-danger-soft px-3 py-2 text-sm"
-      >
+      <Alert tone="error" className="text-sm">
         {status.message}
-      </p>
+      </Alert>
     );
   }
 
@@ -106,12 +102,9 @@ function PanelStatus({ status }: { status: Status }) {
 
   if (status.kind === 'done') {
     return (
-      <p
-        role="status"
-        className="rounded-lg border-l-[3px] border-success bg-success-soft px-3 py-2 text-sm"
-      >
+      <Alert tone="success" className="text-sm">
         <strong className="break-all">{status.fileName}</strong> is ready.
-      </p>
+      </Alert>
     );
   }
 
@@ -134,32 +127,28 @@ function PanelActions({
   if (status.kind === 'done') {
     return (
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-1">
-        <button
-          type="button"
-          className={PRIMARY_BUTTON}
-          onClick={onDownloadAgain}
-        >
+        <Button className={PRIMARY_GLOW} onClick={onDownloadAgain}>
           Download again
-        </button>
-        <button type="button" className={SECONDARY_BUTTON} onClick={onReset}>
+        </Button>
+        <Button variant="secondary" className="w-full" onClick={onReset}>
           Convert another map
-        </button>
+        </Button>
       </div>
     );
   }
 
   if (status.kind === 'converting') {
     return (
-      <button type="button" className={SECONDARY_BUTTON} onClick={onCancel}>
+      <Button variant="secondary" className="w-full" onClick={onCancel}>
         Cancel
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button type="submit" className={PRIMARY_BUTTON} disabled={!canSubmit}>
+    <Button type="submit" className={PRIMARY_GLOW} disabled={!canSubmit}>
       Convert &amp; download
-    </button>
+    </Button>
   );
 }
 

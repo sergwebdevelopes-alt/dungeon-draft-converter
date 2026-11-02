@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { FadeImage } from '../../../shared/ui/FadeImage.tsx';
+import { GridOverlay } from '../../../shared/ui/GridOverlay.tsx';
 import { SharedFrame } from '../../../shared/ui/motion/index.ts';
 import { mapImages, type MapEntry } from '../model/catalog.ts';
 
@@ -64,12 +65,7 @@ function MapViewer({ map, showGrid, morph }: MapViewerProps) {
           className="size-full object-cover"
         />
         {showGrid && (
-          <FadeImage
-            key={images.viewGrid}
-            src={images.viewGrid}
-            alt=""
-            className="absolute inset-0 size-full object-cover"
-          />
+          <GridOverlay columns={map.squares.x} rows={map.squares.y} />
         )}
       </Frame>
     </div>

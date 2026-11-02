@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { SITE, type SiteConfig } from '../../../shared/config/site.ts';
+import { Alert } from '../../../shared/ui/Alert.tsx';
 import { Container } from '../../../shared/ui/Container.tsx';
 import { Reveal } from '../../../shared/ui/motion/index.ts';
 import { PageTitle } from '../../../shared/ui/PageTitle.tsx';
@@ -175,12 +176,9 @@ function GalleryPage({ api, site = SITE }: GalleryPageProps) {
         )}
 
         {catalog.status === 'error' && (
-          <p
-            role="alert"
-            className="rounded-lg border-l-[3px] border-danger bg-danger-soft px-3 py-2"
-          >
+          <Alert tone="error">
             The maps could not be loaded. Reload the page to try again.
-          </p>
+          </Alert>
         )}
       </Container>
 

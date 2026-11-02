@@ -3,7 +3,7 @@ import logoUrl from '../../assets/logo.webp';
 import type { SiteConfig } from '../../shared/config/site.ts';
 import { Container } from '../../shared/ui/Container.tsx';
 import { ThemeToggle, useTheme } from '../../shared/theme/index.ts';
-import { ExternalLink } from '../../shared/ui/ExternalLink.tsx';
+import { ButtonLink } from '../../shared/ui/Button.tsx';
 
 function SiteHeader({ site }: { site: SiteConfig }) {
   const { theme, toggle } = useTheme();
@@ -48,12 +48,11 @@ function SiteHeader({ site }: { site: SiteConfig }) {
 
         <ThemeToggle theme={theme} onToggle={toggle} />
 
-        <ExternalLink
-          href={site.links.patreon}
-          className="hidden min-h-10 shrink-0 items-center rounded-full bg-gold px-4 text-[15px] font-bold text-on-gold transition hover:brightness-105 sm:inline-flex"
-        >
-          Patreon
-        </ExternalLink>
+        <div className="hidden shrink-0 sm:block">
+          <ButtonLink href={site.links.patreon} size="sm">
+            Patreon
+          </ButtonLink>
+        </div>
       </Container>
     </header>
   );

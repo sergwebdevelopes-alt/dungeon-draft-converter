@@ -93,14 +93,12 @@ async function writeView(file: string, out: string) {
 
 async function buildMap(entry: ManifestEntry, { srcDir, outDir }: Options) {
   const noGrid = sourcePath(srcDir, entry.sources.noGrid);
-  const grid = sourcePath(srcDir, entry.sources.grid);
   const dir = path.join(outDir, entry.slug);
   await fs.mkdir(dir, { recursive: true });
 
   await writeCrop(noGrid, path.join(dir, 'card.webp'), CARD);
   await writeCrop(noGrid, path.join(dir, 'backdrop.webp'), BACKDROP);
   await writeView(noGrid, path.join(dir, 'view.webp'));
-  await writeView(grid, path.join(dir, 'view-grid.webp'));
 }
 
 async function writeCatalog(entries: ManifestEntry[], outDir: string) {

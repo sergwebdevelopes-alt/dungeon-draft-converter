@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import { ButtonLink } from '../../../shared/ui/Button.tsx';
 import { Container } from '../../../shared/ui/Container.tsx';
 import { GridOverlay } from '../../../shared/ui/GridOverlay.tsx';
 import { mapImages, type MapEntry } from '../../gallery/index.ts';
@@ -71,12 +71,9 @@ function ConverterTeaser({ map }: { map: MapEntry | null }) {
               </div>
             ))}
           </dl>
-          <Link
-            to="/converter"
-            className="inline-flex min-h-12 w-fit items-center rounded-full bg-gold px-6 font-bold text-on-gold transition hover:brightness-105"
-          >
+          <ButtonLink to="/converter" className="w-fit">
             Open the converter
-          </Link>
+          </ButtonLink>
         </div>
 
         {map && <GridWipe map={map} />}

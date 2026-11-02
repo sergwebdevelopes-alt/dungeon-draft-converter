@@ -7,7 +7,8 @@ import {
   type MouseEvent,
   type SyntheticEvent,
 } from 'react';
-import { ExternalLink } from '../../../shared/ui/ExternalLink.tsx';
+import { ButtonLink } from '../../../shared/ui/Button.tsx';
+import { Segmented } from '../../../shared/ui/Segmented.tsx';
 import { Reveal, Swipeable } from '../../../shared/ui/motion/index.ts';
 import { mapImages, type MapEntry } from '../model/catalog.ts';
 import { squaresLabel } from './MapTile.tsx';
@@ -23,11 +24,13 @@ interface MapModalProps {
   onNext: () => void;
 }
 
+const GRID_OPTIONS = [
+  { value: 'without', label: 'Without grid' },
+  { value: 'with', label: 'With grid' },
+] as const satisfies { value: string; label: string }[];
+
 const ROUND_BUTTON =
   'grid size-11 place-items-center rounded-full bg-black/55 text-xl text-white ring-1 ring-white/15 backdrop-blur transition hover:bg-black/75';
-
-const SEGMENT =
-  'min-h-11 rounded-lg px-3 text-sm font-bold text-muted transition-colors aria-pressed:bg-surface aria-pressed:text-text aria-pressed:shadow';
 
 function useModalDialog() {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -178,35 +181,14 @@ function MapModal({
             ))}
           </ul>
 
-          <div
-            role="group"
-            aria-label="Grid"
-            className="grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1"
-          >
-            <button
-              type="button"
-              className={SEGMENT}
-              aria-pressed={!showGrid}
-              onClick={() => setShowGrid(false)}
-            >
-              Without grid
-            </button>
-            <button
-              type="button"
-              className={SEGMENT}
-              aria-pressed={showGrid}
-              onClick={() => setShowGrid(true)}
-            >
-              With grid
-            </button>
-          </div>
+          <Segmented
+            label="Grid"
+            options={GRID_OPTIONS}
+            value={showGrid ? 'with' : 'without'}
+            onChange={(choice) => setShowGrid(choice === 'with')}
+          />
 
-          <ExternalLink
-            href={map.patreonUrl}
-            className="inline-flex min-h-12 items-center justify-center rounded-xl bg-gold px-5 font-bold text-on-gold hover:brightness-105"
-          >
-            Get it on Patreon
-          </ExternalLink>
+          <ButtonLink href={map.patreonUrl}>Get it on Patreon</ButtonLink>
         </div>
 
         <button

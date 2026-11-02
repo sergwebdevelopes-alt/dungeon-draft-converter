@@ -1,7 +1,7 @@
 import type { MapEntry } from '../../web/src/features/gallery/model/catalog.ts';
 
 interface ManifestEntry extends MapEntry {
-  sources: { noGrid: string; grid: string };
+  sources: { noGrid: string };
 }
 
 interface Catalog {
@@ -60,12 +60,11 @@ function tags(fields: Fields, where: string): string[] {
 function sources(fields: Fields, where: string): ManifestEntry['sources'] {
   const value = fields.sources;
   if (!isObject(value)) {
-    fail(where, 'needs "sources" with "noGrid" and "grid" paths');
+    fail(where, 'needs "sources" with a "noGrid" path');
   }
 
   return {
     noGrid: text(value, 'noGrid', `${where} sources`),
-    grid: text(value, 'grid', `${where} sources`),
   };
 }
 

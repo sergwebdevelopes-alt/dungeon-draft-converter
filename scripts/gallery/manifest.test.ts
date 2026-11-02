@@ -10,7 +10,7 @@ function entry(overrides: Record<string, unknown> = {}) {
     squares: { x: 40, y: 30 },
     tags: ['Underground'],
     patreonUrl: 'https://www.patreon.com/LairofArtificer/posts/frozen',
-    sources: { noGrid: 'Ice/NoGrid.png', grid: 'Ice/Grid.png' },
+    sources: { noGrid: 'Ice/NoGrid.png' },
     ...overrides,
   };
 }
@@ -43,8 +43,8 @@ describe('parseManifest', () => {
       /starting with https/,
     );
     assert.throws(
-      () => parseManifest({ maps: [entry({ sources: { noGrid: 'a.png' } })] }),
-      /sources needs a "grid" text/,
+      () => parseManifest({ maps: [entry({ sources: {} })] }),
+      /sources needs a "noGrid" text/,
     );
   });
 

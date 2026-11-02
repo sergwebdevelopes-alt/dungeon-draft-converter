@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 import { mapImages, type MapEntry } from '../model/catalog.ts';
 
 const TILE =
@@ -49,4 +50,15 @@ function TileFrame({ children }: { children: ReactNode }) {
   return <span className="absolute inset-0 block">{children}</span>;
 }
 
-export { TILE, TileCaption, TileFrame, TileImage, squaresLabel };
+function MapTileLink({ map }: { map: MapEntry }) {
+  return (
+    <Link to={`/maps?map=${map.slug}`} className={`${TILE} aspect-[4/5]`}>
+      <TileFrame>
+        <TileImage map={map} />
+      </TileFrame>
+      <TileCaption map={map} />
+    </Link>
+  );
+}
+
+export { MapTileLink, TILE, TileCaption, TileFrame, TileImage, squaresLabel };

@@ -220,17 +220,13 @@ describe('GalleryPage', () => {
     await renderGallery('/maps?map=cave');
     const modal = dialog()!;
 
-    expect(
-      modal.querySelector('img[src="/maps/cave/view-grid.webp"]'),
-    ).toBeNull();
+    expect(modal.querySelector('svg line')).toBeNull();
 
     await userEvent.click(
       within(modal).getByRole('button', { name: 'With grid' }),
     );
 
-    expect(
-      modal.querySelector('img[src="/maps/cave/view-grid.webp"]'),
-    ).not.toBeNull();
+    expect(modal.querySelectorAll('svg line')).toHaveLength(21 + 31);
     expect(
       within(modal).getByRole('button', { name: 'With grid' }),
     ).toHaveAttribute('aria-pressed', 'true');

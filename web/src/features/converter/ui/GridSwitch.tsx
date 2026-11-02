@@ -1,3 +1,4 @@
+import { Segmented } from '../../../shared/ui/Segmented.tsx';
 import type { GridChoice } from '../model/grid-choice.ts';
 import { PanelSection } from './PanelSection.tsx';
 
@@ -16,24 +17,13 @@ interface GridSwitchProps {
 function GridSwitch({ value, disabled, onChange }: GridSwitchProps) {
   return (
     <PanelSection title="Grid">
-      <div
-        role="group"
-        aria-label="Grid"
-        className="grid grid-cols-3 gap-1 rounded-xl bg-sunken p-1"
-      >
-        {CHOICES.map((choice) => (
-          <button
-            key={choice.value}
-            type="button"
-            aria-pressed={value === choice.value}
-            disabled={disabled}
-            onClick={() => onChange(choice.value)}
-            className="min-h-11 rounded-lg text-sm font-bold text-muted transition-colors hover:text-text disabled:cursor-not-allowed disabled:opacity-50 aria-pressed:bg-surface aria-pressed:text-text aria-pressed:shadow"
-          >
-            {choice.label}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        label="Grid"
+        options={CHOICES}
+        value={value}
+        disabled={disabled}
+        onChange={onChange}
+      />
     </PanelSection>
   );
 }

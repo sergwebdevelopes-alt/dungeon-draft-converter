@@ -1,5 +1,5 @@
 import type { MembershipPlan } from '../../../shared/config/site.ts';
-import { ExternalLink } from '../../../shared/ui/ExternalLink.tsx';
+import { ButtonLink } from '../../../shared/ui/Button.tsx';
 import { formatPrice, periodLabel } from '../model/price.ts';
 
 function PlanCard({ plan }: { plan: MembershipPlan }) {
@@ -47,12 +47,7 @@ function PlanCard({ plan }: { plan: MembershipPlan }) {
         </ul>
       )}
 
-      <ExternalLink
-        href={plan.joinUrl}
-        className="inline-flex min-h-12 items-center justify-center rounded-full bg-gold px-6 font-bold text-on-gold transition hover:brightness-105"
-      >
-        Join on Patreon
-      </ExternalLink>
+      <ButtonLink href={plan.joinUrl}>Join on Patreon</ButtonLink>
     </article>
   );
 }

@@ -37,7 +37,7 @@ web/src/
 │   ├── storage/   KeyValueStore port + localStorage adapter; index.ts exports `storage`
 │   ├── lib/       small helpers and hooks: format, save-file, abortable, useObjectUrl, useFileDrop, useElapsed, useRotation
 │   ├── theme/     light/dark choice (storage port) + toggle; web/public/theme.js applies a saved choice before React starts
-│   ├── ui/        shared presentational components
+│   ├── ui/        shared presentational components (Button/ButtonLink, Alert, Segmented, GridOverlay, …)
 │   └── config/    site.ts (site name, nav, links, membership plans)
 └── features/<feature>/
     ├── api.ts     the feature's contract over HttpClient, plus a ready instance
@@ -52,8 +52,10 @@ web/src/
 - No DI container: modules export ready instances (`http`, `storage`, `converterApi`); hooks take them as default parameters so tests can pass fakes.
 - The ports rule covers runtime libraries (HTTP, storage, animation). UI frameworks and build tools (React, Tailwind, Vite, Vitest) are used directly.
 - Membership plans live in `web/src/shared/config/site.ts` (`membership.plans`); adding a Patreon tier means adding one entry there. Pages use `Container` for width and padding; sections may run full width.
+- The web app imports only types from the server's `src/`, plus `src/core/grid-stroke.ts` (the export grid style); ESLint enforces this.
+- Use the shared `Button`/`ButtonLink`, `Alert` and `Segmented` instead of repeating their classes.
 - Motion is imported only in `web/src/shared/ui/motion/`; features use its wrappers (`MotionProvider`, `Reveal`, `SharedFrame`, `Swipeable`).
-- Maps live in `content/maps.json` (title, tags, Patreon link, source images). `npm run gallery` renders `web/public/maps/` from it, including the public `catalog.json` the gallery loads at runtime; never edit those files by hand. Adding a map needs no code change. The script never reads `Tych Maps` (client work).
+- Maps live in `content/maps.json` (title, tags, Patreon link, the ungridded source image). The modal draws its grid with `GridOverlay`, so no gridded image is needed. `npm run gallery` renders `web/public/maps/` from it, including the public `catalog.json` the gallery loads at runtime; never edit those files by hand. Adding a map needs no code change. The script never reads `Tych Maps` (client work).
 - Styling uses Tailwind with colour and font tokens in `web/src/styles.css`.
 
 ## Code style

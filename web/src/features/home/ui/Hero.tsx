@@ -1,7 +1,7 @@
 import { useState, type FocusEvent } from 'react';
-import { Link } from 'react-router';
 import { useRotation } from '../../../shared/lib/useRotation.ts';
 import { Backdrop } from '../../../shared/ui/Backdrop.tsx';
+import { ButtonLink, buttonClass } from '../../../shared/ui/Button.tsx';
 import { Container } from '../../../shared/ui/Container.tsx';
 import { Reveal } from '../../../shared/ui/motion/index.ts';
 import { mapImages, type MapEntry } from '../../gallery/index.ts';
@@ -91,16 +91,8 @@ function Hero({ maps }: { maps: MapEntry[] }) {
           </p>
         </Reveal>
         <Reveal index={3} className="flex flex-wrap gap-3">
-          <Link
-            to="/maps"
-            className="inline-flex min-h-12 items-center rounded-full bg-gold px-6 font-bold text-on-gold transition hover:brightness-105"
-          >
-            Browse the maps
-          </Link>
-          <a
-            href="#membership"
-            className="inline-flex min-h-12 items-center rounded-full bg-text/10 px-6 font-bold ring-1 ring-text/20 backdrop-blur transition hover:bg-text/15"
-          >
+          <ButtonLink to="/maps">Browse the maps</ButtonLink>
+          <a href="#membership" className={buttonClass({ variant: 'glass' })}>
             Become a member
           </a>
         </Reveal>

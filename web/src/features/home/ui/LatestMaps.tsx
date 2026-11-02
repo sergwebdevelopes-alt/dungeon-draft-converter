@@ -1,12 +1,6 @@
 import { Link } from 'react-router';
 import { Container } from '../../../shared/ui/Container.tsx';
-import {
-  TILE,
-  TileCaption,
-  TileFrame,
-  TileImage,
-  type MapEntry,
-} from '../../gallery/index.ts';
+import { MapTileLink, type MapEntry } from '../../gallery/index.ts';
 
 function LatestMaps({ maps, total }: { maps: MapEntry[]; total: number }) {
   if (maps.length === 0) {
@@ -34,15 +28,7 @@ function LatestMaps({ maps, total }: { maps: MapEntry[]; total: number }) {
         <ul className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {maps.map((map) => (
             <li key={map.slug}>
-              <Link
-                to={`/maps?map=${map.slug}`}
-                className={`${TILE} aspect-[4/5]`}
-              >
-                <TileFrame>
-                  <TileImage map={map} />
-                </TileFrame>
-                <TileCaption map={map} />
-              </Link>
+              <MapTileLink map={map} />
             </li>
           ))}
         </ul>

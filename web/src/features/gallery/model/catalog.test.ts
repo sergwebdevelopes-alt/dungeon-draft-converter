@@ -65,7 +65,6 @@ describe('mapImages', () => {
     expect(mapImages('frozen-cavern')).toEqual({
       card: '/maps/frozen-cavern/card.webp',
       view: '/maps/frozen-cavern/view.webp',
-      viewGrid: '/maps/frozen-cavern/view-grid.webp',
       backdrop: '/maps/frozen-cavern/backdrop.webp',
     });
   });
