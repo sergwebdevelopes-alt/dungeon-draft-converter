@@ -74,16 +74,20 @@ describe('converterReducer', () => {
       files: [file('A.dd2vtt'), file('B.dd2vtt')],
     };
 
+    expect(run(loaded, two).maps.map((m) => m.name)).toEqual([
+      'B.dd2vtt',
+      'A.dd2vtt',
+    ]);
     expect(
       run(loaded, two, { type: 'mapMoved', from: 1, to: 0 }).maps.map(
         (m) => m.name,
       ),
-    ).toEqual(['B.dd2vtt', 'A.dd2vtt']);
+    ).toEqual(['A.dd2vtt', 'B.dd2vtt']);
     expect(
       run(loaded, two, { type: 'mapRemoved', index: 0 }).maps.map(
         (m) => m.name,
       ),
-    ).toEqual(['B.dd2vtt']);
+    ).toEqual(['A.dd2vtt']);
   });
 
   it('toggles formats and sets grid options', () => {

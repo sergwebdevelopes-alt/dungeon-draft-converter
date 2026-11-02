@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Config } from '../model/types.ts';
@@ -166,6 +166,26 @@ describe('ConverterPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Map is broken.',
     );
+  });
+
+  it('offers more levels above the list and puts each new one on top', async () => {
+    mockServer();
+    await renderPage();
+    await userEvent.upload(mapInput(), mapFile('Ground.dd2vtt'));
+
+    const addMore = screen.getByText('Add more levels');
+    const levels = screen.getByRole('list', { name: /Map levels/ });
+    expect(
+      addMore.compareDocumentPosition(levels) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    await userEvent.upload(mapInput(), mapFile('Upper.dd2vtt'));
+
+    const names = within(levels)
+      .getAllByRole('listitem')
+      .map((item) => item.querySelector('strong')?.textContent);
+    expect(names).toEqual(['Upper.dd2vtt', 'Ground.dd2vtt']);
   });
 
   it('previews the main map as soon as it is added', async () => {

@@ -10,8 +10,22 @@ describe('addMaps', () => {
 
     expect(result.error).toBeNull();
     expect(result.maps.map((m) => m.name)).toEqual([
-      'Cave.dd2vtt',
       'Tower.dd2vtt',
+      'Cave.dd2vtt',
+    ]);
+  });
+
+  it('puts each new map on top, above the ones before it', () => {
+    const result = addMaps(
+      [file('Cellar.dd2vtt')],
+      [file('Ground.dd2vtt'), file('Attic.dd2vtt')],
+      TEST_CONFIG,
+    );
+
+    expect(result.maps.map((m) => m.name)).toEqual([
+      'Attic.dd2vtt',
+      'Ground.dd2vtt',
+      'Cellar.dd2vtt',
     ]);
   });
 

@@ -69,18 +69,18 @@ function ConverterPage() {
 
           {maps.length > 0 && (
             <div className="grid gap-2">
-              <LevelList
-                levels={maps}
-                disabled={converting}
-                onMove={(from, to) => dispatch({ type: 'mapMoved', from, to })}
-                onRemove={(index) => dispatch({ type: 'mapRemoved', index })}
-              />
               <DropZone
                 disabled={converting}
                 onFiles={addMaps}
                 accept=".dd2vtt"
                 title="Add more levels"
                 compact
+              />
+              <LevelList
+                levels={maps}
+                disabled={converting}
+                onMove={(from, to) => dispatch({ type: 'mapMoved', from, to })}
+                onRemove={(index) => dispatch({ type: 'mapRemoved', index })}
               />
             </div>
           )}

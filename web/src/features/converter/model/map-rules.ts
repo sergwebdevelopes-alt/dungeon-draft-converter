@@ -58,7 +58,7 @@ function addMaps(
       return { maps, error };
     }
 
-    maps.push(file);
+    maps.unshift(file);
     keys.add(levelKey(file));
     total += file.size;
   }
