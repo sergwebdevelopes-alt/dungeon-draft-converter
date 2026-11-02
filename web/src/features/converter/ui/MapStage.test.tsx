@@ -70,11 +70,20 @@ describe('MapStage', () => {
     const slider = screen.getByRole('slider', {
       name: 'Compare without and with the grid',
     });
-    expect(gridLayer()).toHaveStyle({ clipPath: 'inset(0 0 0 50%)' });
+    expect(gridLayer()).toHaveStyle({ transform: 'translateX(50%)' });
+    expect(screen.getByTestId('grid-lines')).toHaveStyle({
+      transform: 'translateX(-50%)',
+    });
 
     fireEvent.change(slider, { target: { value: '20' } });
 
-    expect(gridLayer()).toHaveStyle({ clipPath: 'inset(0 0 0 20%)' });
+    expect(gridLayer()).toHaveStyle({ transform: 'translateX(20%)' });
+    expect(screen.getByTestId('grid-lines')).toHaveStyle({
+      transform: 'translateX(-20%)',
+    });
+    expect(screen.getByTestId('grid-divider')).toHaveStyle({
+      transform: 'translateX(20%)',
+    });
   });
 
   it('places the logo like the export does', async () => {

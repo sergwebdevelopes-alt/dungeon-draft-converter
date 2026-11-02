@@ -28,6 +28,10 @@ function frameStyle(columns: number, rows: number): CSSProperties {
   };
 }
 
+function slide(percent: number): CSSProperties {
+  return { transform: `translateX(${percent}%)` };
+}
+
 function logoStyle({ size, margin }: LogoPlacement): CSSProperties {
   const shorter = 'min(100cqw, 100cqh)';
 
@@ -82,10 +86,16 @@ function GridLayer({
     <>
       <div
         data-testid="grid-layer"
-        className="pointer-events-none absolute inset-0"
-        style={compare ? { clipPath: `inset(0 0 0 ${split}%)` } : undefined}
+        className="pointer-events-none absolute inset-0 overflow-hidden will-change-transform"
+        style={compare ? slide(split) : undefined}
       >
-        <GridOverlay columns={columns} rows={rows} />
+        <div
+          data-testid="grid-lines"
+          className="absolute inset-0 will-change-transform"
+          style={compare ? slide(-split) : undefined}
+        >
+          <GridOverlay columns={columns} rows={rows} />
+        </div>
       </div>
       {compare && (
         <>
@@ -93,12 +103,15 @@ function GridLayer({
           <span className={`${LABEL} right-3`}>Grid</span>
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 w-0.5 -translate-x-1/2 bg-gold shadow-[0_0_14px_var(--gold)]"
-            style={{ left: `${split}%` }}
+            data-testid="grid-divider"
+            className="pointer-events-none absolute inset-0 will-change-transform"
+            style={slide(split)}
           >
-            <span className="absolute top-1/2 left-1/2 grid size-8 -translate-1/2 place-items-center rounded-full bg-gold text-sm font-bold text-on-gold shadow-lg">
-              ⇔
-            </span>
+            <div className="absolute inset-y-0 left-0 w-0.5 -translate-x-1/2 bg-gold shadow-[0_0_14px_var(--gold)]">
+              <span className="absolute top-1/2 left-1/2 grid size-8 -translate-1/2 place-items-center rounded-full bg-gold text-sm font-bold text-on-gold shadow-lg">
+                ⇔
+              </span>
+            </div>
           </div>
           <input
             type="range"
