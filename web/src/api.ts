@@ -4,7 +4,7 @@ import type {
   LogoSetting,
   Variant,
 } from '../../src/core/images.ts';
-import type { QueuePosition } from '../../src/queue/conversion-queue.ts';
+import type { QueuePosition } from '../../src/queue/index.ts';
 
 type LogoLimits = typeof LOGO_LIMITS;
 

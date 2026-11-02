@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import type { ConversionQueue } from '../../queue/conversion-queue.ts';
+import type { ConversionQueue } from '../../queue/index.ts';
 
 function queueRouter(queue: ConversionQueue): Router {
   const router = Router();

@@ -1,5 +1,5 @@
 import { Router, type RequestHandler } from 'express';
-import type { ConversionQueue } from '../../queue/conversion-queue.ts';
+import type { ConversionQueue, PendingLimit } from '../../queue/index.ts';
 import { convertHandler } from '../convert/handler.ts';
 import { HttpError } from '../errors.ts';
 import {
@@ -8,25 +8,31 @@ import {
   uploadFiles,
 } from '../upload/index.ts';
 
-function limitPendingConversions(queue: ConversionQueue): RequestHandler {
+function limitPendingConversions(pendingLimit: PendingLimit): RequestHandler {
   return (_req, res, next) => {
-    if (!queue.reserve()) {
+    const release = pendingLimit.reserve();
+
+    if (!release) {
       res.set({ 'Retry-After': '30', Connection: 'close' });
       throw new HttpError(
         503,
         'The server is busy converting other maps. Please try again in a minute.',
       );
     }
-    res.once('close', () => queue.release());
+
+    res.once('close', release);
     next();
   };
 }
 
-function convertRouter(queue: ConversionQueue): Router {
+function convertRouter(
+  queue: ConversionQueue,
+  pendingLimit: PendingLimit,
+): Router {
   const router = Router();
   router.post(
     '/convert',
-    limitPendingConversions(queue),
+    limitPendingConversions(pendingLimit),
     limitTotalUpload,
     createUploadDir,
     uploadFiles,

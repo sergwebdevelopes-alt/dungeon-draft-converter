@@ -1,73 +1,124 @@
-type TicketState = 'waiting' | 'converting';
+import { checkLimit } from './check-limit.ts';
 
 type QueuePosition =
   | { state: 'waiting'; ahead: number }
   | { state: 'converting' }
   | { state: 'unknown' };
 
+interface QueueOptions {
+  maxParallel: number;
+}
+
 interface RunOptions {
   ticket?: string;
-  stopped: () => boolean;
+  signal: AbortSignal;
+}
+
+interface Entry {
+  ticket?: string;
+  signal: AbortSignal;
+  converting: boolean;
 }
 
 class ConversionQueue {
-  private tail: Promise<unknown> = Promise.resolve();
-  private pending = 0;
-  private readonly tickets = new Map<string, TicketState>();
-  private readonly maxPending: number;
+  private running = 0;
+  private readonly waiting: (() => void)[] = [];
+  private readonly line: Entry[] = [];
+  private readonly maxParallel: number;
 
-  constructor(maxPending: number) {
-    this.maxPending = maxPending;
+  constructor({ maxParallel }: QueueOptions) {
+    this.maxParallel = checkLimit('maxParallel', maxParallel);
   }
 
-  reserve(): boolean {
-    if (this.pending >= this.maxPending) {
-      return false;
+  async run(
+    task: () => Promise<void>,
+    { ticket, signal }: RunOptions,
+  ): Promise<void> {
+    if (signal.aborted) {
+      return;
     }
-    this.pending++;
-    return true;
-  }
 
-  release(): void {
-    this.pending--;
-  }
+    const entry: Entry = { ticket, signal, converting: false };
+    this.line.push(entry);
 
-  run(task: () => Promise<void>, { ticket, stopped }: RunOptions) {
-    if (ticket && !stopped()) {
-      this.tickets.set(ticket, 'waiting');
-    }
-    const result = this.tail.then(async () => {
-      if (stopped()) {
+    try {
+      const gotSlot = await this.takeSlot(signal);
+
+      if (!gotSlot) {
         return;
       }
-      if (ticket && this.tickets.has(ticket)) {
-        this.tickets.set(ticket, 'converting');
+
+      try {
+        if (signal.aborted) {
+          return;
+        }
+
+        entry.converting = true;
+        await task();
+      } finally {
+        this.giveBackSlot();
       }
-      await task();
-    });
-    this.tail = result.catch(() => undefined);
-    return result;
+    } finally {
+      this.line.splice(this.line.indexOf(entry), 1);
+    }
   }
 
   hasTicket(ticket: string): boolean {
-    return this.tickets.has(ticket);
-  }
-
-  forget(ticket: string): void {
-    this.tickets.delete(ticket);
+    return this.activeEntries().some((entry) => entry.ticket === ticket);
   }
 
   position(ticket: string): QueuePosition {
-    const state = this.tickets.get(ticket);
-    if (state === undefined) {
+    const active = this.activeEntries();
+    const index = active.findIndex((entry) => entry.ticket === ticket);
+
+    if (index === -1) {
       return { state: 'unknown' };
     }
-    if (state === 'converting') {
-      return { state };
+
+    if (active[index].converting) {
+      return { state: 'converting' };
     }
-    return { state, ahead: [...this.tickets.keys()].indexOf(ticket) };
+
+    return { state: 'waiting', ahead: index };
+  }
+
+  private activeEntries(): Entry[] {
+    return this.line.filter((entry) => !entry.signal.aborted);
+  }
+
+  private takeSlot(signal: AbortSignal): Promise<boolean> {
+    if (this.running < this.maxParallel) {
+      this.running++;
+      return Promise.resolve(true);
+    }
+
+    return new Promise((resolve) => {
+      const start = () => {
+        signal.removeEventListener('abort', leave);
+        resolve(true);
+      };
+
+      const leave = () => {
+        this.waiting.splice(this.waiting.indexOf(start), 1);
+        resolve(false);
+      };
+
+      this.waiting.push(start);
+      signal.addEventListener('abort', leave, { once: true });
+    });
+  }
+
+  private giveBackSlot(): void {
+    const next = this.waiting.shift();
+
+    if (next) {
+      next();
+      return;
+    }
+
+    this.running--;
   }
 }
 
 export { ConversionQueue };
-export type { QueuePosition };
+export type { QueueOptions, QueuePosition, RunOptions };

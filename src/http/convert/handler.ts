@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { CONVERSION_TIMEOUT_MS } from '../../config.ts';
 import { convertLevels } from '../../core/conversion.ts';
-import type { ConversionQueue } from '../../queue/conversion-queue.ts';
+import type { ConversionQueue } from '../../queue/index.ts';
 import { formatDuration } from '../../utils/format.ts';
 import { keepUploadsDuring, uploadDirOf, uploadsOf } from '../upload/index.ts';
 import { parseConvertRequest } from './request.ts';
@@ -12,14 +12,11 @@ function convertHandler(
   timeoutMs = CONVERSION_TIMEOUT_MS,
 ) {
   return async (req: Request, res: Response): Promise<void> => {
-    let clientGone = false;
-    let ticket: string | undefined = undefined;
+    const stop = new AbortController();
 
     res.on('close', () => {
-      clientGone = !res.writableFinished;
-
-      if (ticket) {
-        queue.forget(ticket);
+      if (!res.writableFinished) {
+        stop.abort();
       }
     });
 
@@ -29,15 +26,14 @@ function convertHandler(
     );
     const workDir = uploadDirOf(req);
 
-    ticket = request.ticket;
-
     let timedOut = false;
 
-    const stopped = () => clientGone || timedOut;
+    const stopped = () => stop.signal.aborted;
 
     const task = async () => {
       const timer = setTimeout(() => {
         timedOut = true;
+        stop.abort();
 
         if (res.headersSent) {
           res.destroy();
@@ -60,7 +56,10 @@ function convertHandler(
       }
     };
 
-    const work = queue.run(task, { ticket, stopped });
+    const work = queue.run(task, {
+      ticket: request.ticket,
+      signal: stop.signal,
+    });
 
     keepUploadsDuring(req, work);
 

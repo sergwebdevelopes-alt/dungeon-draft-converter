@@ -4,7 +4,7 @@ import { after, before, describe, it } from 'node:test';
 import express from 'express';
 import { unzipSync } from 'fflate';
 import sharp from 'sharp';
-import { ConversionQueue } from '../../queue/conversion-queue.ts';
+import { ConversionQueue } from '../../queue/index.ts';
 import { errorHandler } from '../errors.ts';
 import { createUploadDir, uploadFiles } from '../upload/index.ts';
 import { convertHandler } from './handler.ts';
@@ -62,7 +62,7 @@ async function makeMap({
 }
 
 async function startServer(timeoutMs?: number): Promise<TestServer> {
-  const queue = new ConversionQueue(10);
+  const queue = new ConversionQueue({ maxParallel: 1 });
   const app = express();
 
   app.post(

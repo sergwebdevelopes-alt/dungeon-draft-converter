@@ -16,7 +16,7 @@ src/
 ├── config.ts      every process.env read and every limit
 ├── http/          Express only: routes, request parsing, errors, zip streaming
 │   └── upload/    upload rules, per-request temp folder, multipart port + multer adapter
-├── queue/         ConversionQueue: pending limit, FIFO, tickets
+├── queue/         PendingLimit (busy limit) and ConversionQueue (parallel slots, FIFO line, positions; cancel via AbortSignal)
 ├── zip/           zip port + fflate adapter
 ├── core/          image work: dd2vtt format, conversion, images, lighting, merge
 └── utils/         small shared helpers (format.ts)

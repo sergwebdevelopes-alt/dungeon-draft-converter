@@ -13,7 +13,7 @@ import {
   type LogoSetting,
   type Variant,
 } from '../../core/images.ts';
-import type { ConversionQueue } from '../../queue/conversion-queue.ts';
+import type { ConversionQueue } from '../../queue/index.ts';
 import { formatMegabytes } from '../../utils/format.ts';
 import { HttpError } from '../errors.ts';
 import {

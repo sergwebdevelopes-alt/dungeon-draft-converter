@@ -4,7 +4,7 @@ import sharp from 'sharp';
 import { FORMAT_PRESETS, VARIANTS } from '../../core/images.ts';
 import { parseConvertRequest } from './request.ts';
 import type { UploadedFile, Uploads } from '../upload/index.ts';
-import { ConversionQueue } from '../../queue/conversion-queue.ts';
+import { ConversionQueue } from '../../queue/index.ts';
 
 const TICKET = '0123456789abcdef0123456789abcdef';
 
@@ -38,7 +38,10 @@ function makeRequest(
   return { query, files };
 }
 
-function parse(request: ConvertInput, queue = new ConversionQueue(10)) {
+function parse(
+  request: ConvertInput,
+  queue = new ConversionQueue({ maxParallel: 1 }),
+) {
   return parseConvertRequest(request, queue);
 }
 
@@ -117,10 +120,10 @@ describe('parseConvertRequest', () => {
     });
 
     it('rejects a ticket that is already in the queue', async () => {
-      const queue = new ConversionQueue(10);
+      const queue = new ConversionQueue({ maxParallel: 1 });
       void queue.run(() => new Promise(() => undefined), {
         ticket: TICKET,
-        stopped: () => false,
+        signal: new AbortController().signal,
       });
 
       await assert.rejects(parse(makeRequest({ ticket: TICKET }), queue), {

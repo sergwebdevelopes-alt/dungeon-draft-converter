@@ -3,6 +3,7 @@ import path from 'node:path';
 import express from 'express';
 import {
   IS_PRODUCTION,
+  MAX_PARALLEL_CONVERSIONS,
   MAX_PENDING_CONVERSIONS,
   ROOT_DIR,
   WEB_DIST_DIR,
@@ -13,7 +14,7 @@ import { convertRouter } from './http/routes/convert.ts';
 import { queueRouter } from './http/routes/queue.ts';
 import { blockCrossSiteRequests, securityHeaders } from './http/security.ts';
 import { refuseNewWorkDuringShutdown } from './http/shutdown.ts';
-import { ConversionQueue } from './queue/conversion-queue.ts';
+import { ConversionQueue, PendingLimit } from './queue/index.ts';
 
 interface AppOptions {
   isShuttingDown: () => boolean;
@@ -23,7 +24,8 @@ async function createApp(
   server: http.Server,
   { isShuttingDown }: AppOptions,
 ): Promise<express.Express> {
-  const queue = new ConversionQueue(MAX_PENDING_CONVERSIONS);
+  const queue = new ConversionQueue({ maxParallel: MAX_PARALLEL_CONVERSIONS });
+  const pendingLimit = new PendingLimit(MAX_PENDING_CONVERSIONS);
 
   const app = express();
   app.disable('x-powered-by');
@@ -37,7 +39,7 @@ async function createApp(
     '/api',
     configRouter(),
     queueRouter(queue),
-    convertRouter(queue),
+    convertRouter(queue, pendingLimit),
     notFound,
   );
 
