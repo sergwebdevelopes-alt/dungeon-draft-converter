@@ -1,5 +1,10 @@
 import { formatDuration } from '../../../shared/lib/format.ts';
-import { progressLabel, type Status } from '../model/progress.ts';
+import { useElapsed } from '../../../shared/lib/useElapsed.ts';
+import {
+  progressLabel,
+  type Progress,
+  type Status,
+} from '../model/progress.ts';
 
 const PRIMARY_BUTTON =
   'inline-flex min-h-12 w-full items-center justify-center rounded-full bg-gold px-5 font-bold text-on-gold shadow-[0_10px_30px_-10px_var(--gold)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none disabled:hover:brightness-100';
@@ -9,7 +14,6 @@ const SECONDARY_BUTTON =
 
 interface ConvertPanelProps {
   status: Status;
-  elapsedMs: number;
   canSubmit: boolean;
   mapCount: number;
   imageCount: number;
@@ -24,7 +28,6 @@ function plural(count: number, word: string): string {
 
 function ConvertPanel({
   status,
-  elapsedMs,
   canSubmit,
   mapCount,
   imageCount,
@@ -43,7 +46,7 @@ function ConvertPanel({
         </p>
       )}
 
-      <PanelStatus status={status} elapsedMs={elapsedMs} />
+      <PanelStatus status={status} />
 
       <PanelActions
         status={status}
@@ -56,13 +59,31 @@ function ConvertPanel({
   );
 }
 
-function PanelStatus({
-  status,
-  elapsedMs,
+function ConvertingStatus({
+  startedAt,
+  progress,
 }: {
-  status: Status;
-  elapsedMs: number;
+  startedAt: number;
+  progress: Progress;
 }) {
+  const elapsedMs = useElapsed(startedAt);
+
+  return (
+    <div role="status" className="grid gap-2">
+      <div className="h-1.5 overflow-hidden rounded-full bg-sunken">
+        <div className="h-full w-2/5 rounded-full bg-gold motion-safe:animate-progress motion-reduce:w-full motion-reduce:opacity-60" />
+      </div>
+      <div className="flex justify-between gap-3 text-sm">
+        <span>{progressLabel(progress)}</span>
+        <span className="shrink-0 text-muted tabular-nums">
+          {formatDuration(elapsedMs)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function PanelStatus({ status }: { status: Status }) {
   if (status.kind === 'error') {
     return (
       <p
@@ -76,17 +97,10 @@ function PanelStatus({
 
   if (status.kind === 'converting') {
     return (
-      <div role="status" className="grid gap-2">
-        <div className="h-1.5 overflow-hidden rounded-full bg-sunken">
-          <div className="h-full w-2/5 rounded-full bg-gold motion-safe:animate-progress motion-reduce:w-full motion-reduce:opacity-60" />
-        </div>
-        <div className="flex justify-between gap-3 text-sm">
-          <span>{progressLabel(status.progress)}</span>
-          <span className="shrink-0 text-muted tabular-nums">
-            {formatDuration(elapsedMs)}
-          </span>
-        </div>
-      </div>
+      <ConvertingStatus
+        startedAt={status.startedAt}
+        progress={status.progress}
+      />
     );
   }
 

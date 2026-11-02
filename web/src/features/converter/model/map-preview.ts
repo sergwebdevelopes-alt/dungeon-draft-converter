@@ -4,6 +4,15 @@ interface MapPreview {
   rows: number;
 }
 
+type PreviewState =
+  | { status: 'empty' }
+  | { status: 'loading' }
+  | { status: 'ready'; layers: string[]; columns: number; rows: number }
+  | { status: 'error'; message: string };
+
+type PreviewReply =
+  { ok: true; preview: MapPreview } | { ok: false; message: string };
+
 const UNREADABLE = 'This file could not be read as a Dungeondraft map.';
 
 type Fields = Record<string, unknown>;
@@ -74,5 +83,16 @@ async function readMapPreview(file: File): Promise<MapPreview> {
   };
 }
 
-export { readMapPreview };
-export type { MapPreview };
+async function previewReply(file: File): Promise<PreviewReply> {
+  try {
+    return { ok: true, preview: await readMapPreview(file) };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : UNREADABLE,
+    };
+  }
+}
+
+export { UNREADABLE, previewReply, readMapPreview };
+export type { MapPreview, PreviewReply, PreviewState };

@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 import { isAbortError } from '../../shared/http/index.ts';
 import { saveFile } from '../../shared/lib/save-file.ts';
 import { storage, type KeyValueStore } from '../../shared/storage/index.ts';
@@ -22,14 +22,12 @@ function useConverter(
   store: KeyValueStore = storage,
 ) {
   const [state, dispatch] = useReducer(converterReducer, initialState);
-  const [now, setNow] = useState(() => Date.now());
   const abortRef = useRef<AbortController | null>(null);
   const { status, presets, variants, placement } = state;
 
   useLoadConfig(api, store, dispatch);
   useSaveSettings(store, presets, variants, placement);
   useAbortOnUnmount(abortRef);
-  useClock(status.kind === 'converting', setNow);
   useQueuePolling(api, state, dispatch);
   useRevokeResultUrl(status);
 
@@ -43,9 +41,7 @@ function useConverter(
     abortRef.current = controller;
 
     const ticket = newTicket();
-    const startedAt = Date.now();
-    setNow(startedAt);
-    dispatch({ type: 'submitted', ticket, startedAt });
+    dispatch({ type: 'submitted', ticket, startedAt: Date.now() });
 
     try {
       const blob = await api.convert(
@@ -88,9 +84,7 @@ function useConverter(
     }
   }
 
-  const elapsedMs = status.kind === 'converting' ? now - status.startedAt : 0;
-
-  return { state, dispatch, elapsedMs, submit, cancel, downloadAgain };
+  return { state, dispatch, submit, cancel, downloadAgain };
 }
 
 function useLoadConfig(
@@ -136,16 +130,6 @@ function useSaveSettings(
 
 function useAbortOnUnmount(abortRef: { current: AbortController | null }) {
   useEffect(() => () => abortRef.current?.abort(), [abortRef]);
-}
-
-function useClock(running: boolean, setNow: (now: number) => void) {
-  useEffect(() => {
-    if (!running) {
-      return;
-    }
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, [running, setNow]);
 }
 
 function useQueuePolling(

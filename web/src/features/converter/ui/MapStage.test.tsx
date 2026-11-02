@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { PreviewState } from '../useMapPreview.ts';
+import type { PreviewState } from '../model/map-preview.ts';
 import { MapStage } from './MapStage.tsx';
 
 const READY: PreviewState = {

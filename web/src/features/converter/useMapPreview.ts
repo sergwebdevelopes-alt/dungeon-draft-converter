@@ -1,15 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { readMapPreview, type MapPreview } from './model/map-preview.ts';
+import type { MapPreview, PreviewState } from './model/map-preview.ts';
+import { readPreviewInWorker } from './preview-worker.ts';
 
 type LevelPreview =
   | { status: 'loading' }
   | { status: 'ready'; url: string; columns: number; rows: number }
-  | { status: 'error'; message: string };
-
-type PreviewState =
-  | { status: 'empty' }
-  | { status: 'loading' }
-  | { status: 'ready'; layers: string[]; columns: number; rows: number }
   | { status: 'error'; message: string };
 
 type ReadPreview = (file: File) => Promise<MapPreview>;
@@ -39,7 +34,7 @@ function revoke(level: LevelPreview | undefined) {
 
 function useMapPreview(
   files: File[],
-  read: ReadPreview = readMapPreview,
+  read: ReadPreview = readPreviewInWorker,
 ): PreviewState {
   const [levels, setLevels] = useState(() => new Map<File, LevelPreview>());
   const started = useRef(new Set<File>());
@@ -113,4 +108,3 @@ function useMapPreview(
 }
 
 export { useMapPreview };
-export type { PreviewState };

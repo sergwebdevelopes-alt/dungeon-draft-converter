@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readMapPreview } from './map-preview.ts';
+import { previewReply, readMapPreview } from './map-preview.ts';
 
 const PNG_HEADER = 'iVBORw0KGgoAAAANSUhEUg==';
 
@@ -60,5 +60,25 @@ describe('readMapPreview', () => {
         dd2vtt(valid({ resolution: { map_size: { x: 0, y: 5 } } })),
       ),
     ).rejects.toThrow(message);
+  });
+});
+
+describe('previewReply', () => {
+  it('wraps a preview as a reply a worker can send', async () => {
+    const reply = await previewReply(dd2vtt(valid()));
+
+    expect(reply).toMatchObject({
+      ok: true,
+      preview: { columns: 20, rows: 25 },
+    });
+  });
+
+  it('turns a failure into a message instead of throwing', async () => {
+    await expect(
+      previewReply(new File(['{not json'], 'a.dd2vtt')),
+    ).resolves.toEqual({
+      ok: false,
+      message: 'This file could not be read as a Dungeondraft map.',
+    });
   });
 });

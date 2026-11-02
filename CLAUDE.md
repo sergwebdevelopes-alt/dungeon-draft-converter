@@ -35,7 +35,7 @@ web/src/
 ├── shared/
 │   ├── http/      HttpClient port + fetch adapter (only file using fetch); index.ts exports the `http` instance
 │   ├── storage/   KeyValueStore port + localStorage adapter; index.ts exports `storage`
-│   ├── lib/       format.ts, save-file.ts, useObjectUrl.ts
+│   ├── lib/       small helpers and hooks: format, save-file, abortable, useObjectUrl, useFileDrop, useElapsed, useRotation
 │   ├── theme/     light/dark choice (storage port) + toggle; web/public/theme.js applies a saved choice before React starts
 │   ├── ui/        shared presentational components
 │   └── config/    site.ts (site name, nav, links, membership plans)
@@ -43,6 +43,7 @@ web/src/
     ├── api.ts     the feature's contract over HttpClient, plus a ready instance
     ├── model/     pure TypeScript (no React, no fetch, no storage): types, rules, reducer
     ├── use*.ts    the hook joining model and api (effects only)
+    ├── *.worker.ts  Web Worker entries for heavy work (converter: reading a .dd2vtt preview), each with an adapter that falls back to the page where workers are missing
     └── ui/        presentational components: data and callbacks through props
 ```
 

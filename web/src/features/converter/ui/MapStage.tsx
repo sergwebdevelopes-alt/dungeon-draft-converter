@@ -1,9 +1,10 @@
-import { useState, type CSSProperties, type DragEvent } from 'react';
+import { useState, type CSSProperties } from 'react';
+import { useFileDrop } from '../../../shared/lib/useFileDrop.ts';
 import { useObjectUrl } from '../../../shared/lib/useObjectUrl.ts';
 import { GridOverlay } from '../../../shared/ui/GridOverlay.tsx';
 import type { GridChoice } from '../model/grid-choice.ts';
 import type { LogoPlacement } from '../model/types.ts';
-import type { PreviewState } from '../useMapPreview.ts';
+import type { PreviewState } from '../model/map-preview.ts';
 import { DropZone } from './DropZone.tsx';
 
 interface MapStageProps {
@@ -114,33 +115,6 @@ function GridLayer({
   );
 }
 
-function useStageDrop(disabled: boolean, onFiles: (files: File[]) => void) {
-  const [over, setOver] = useState(false);
-
-  return {
-    over,
-    handlers: {
-      onDragOver(event: DragEvent) {
-        event.preventDefault();
-        setOver(!disabled);
-      },
-      onDragLeave(event: DragEvent) {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          setOver(false);
-        }
-      },
-      onDrop(event: DragEvent) {
-        event.preventDefault();
-        setOver(false);
-        const files = [...event.dataTransfer.files];
-        if (!disabled && files.length > 0) {
-          onFiles(files);
-        }
-      },
-    },
-  };
-}
-
 function MapFrame({
   preview,
   grid,
@@ -199,18 +173,16 @@ function MapStage({
   disabled,
   onAddMaps,
 }: MapStageProps) {
-  const drop = useStageDrop(disabled, onAddMaps);
+  const drop = useFileDrop(disabled, onAddMaps);
 
   if (preview.status === 'empty') {
     return (
       <DropZone
-        file={null}
         disabled={disabled}
         onFiles={onAddMaps}
         accept=".dd2vtt"
         title="Drop your .dd2vtt files here"
         hint="One map, or up to 10 levels to merge · or click to browse"
-        multiple
         className="size-full rounded-2xl"
       />
     );

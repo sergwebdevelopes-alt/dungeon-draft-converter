@@ -14,7 +14,6 @@ function renderPanel(status: Status, canSubmit = true) {
     <form>
       <ConvertPanel
         status={status}
-        elapsedMs={65_000}
         canSubmit={canSubmit}
         mapCount={2}
         imageCount={4}
@@ -38,7 +37,6 @@ describe('ConvertPanel', () => {
     render(
       <ConvertPanel
         status={{ kind: 'idle' }}
-        elapsedMs={0}
         canSubmit={false}
         mapCount={0}
         imageCount={0}
@@ -72,7 +70,7 @@ describe('ConvertPanel', () => {
   it('shows progress and lets the user cancel', async () => {
     const { onCancel } = renderPanel({
       kind: 'converting',
-      startedAt: 0,
+      startedAt: Date.now() - 65_000,
       ticket: 'a',
       progress: { state: 'waiting', ahead: 2 },
     });
@@ -80,6 +78,7 @@ describe('ConvertPanel', () => {
     expect(screen.getByRole('status')).toHaveTextContent(
       'Waiting in line: 2 maps ahead of yours',
     );
+    expect(screen.getByRole('status')).toHaveTextContent('1:05');
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onCancel).toHaveBeenCalledOnce();
   });

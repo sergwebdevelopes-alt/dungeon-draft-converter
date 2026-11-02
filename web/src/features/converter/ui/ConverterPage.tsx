@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react';
+import { usePreventPageDrop } from '../../../shared/lib/useFileDrop.ts';
 import { Container } from '../../../shared/ui/Container.tsx';
 import { PageTitle } from '../../../shared/ui/PageTitle.tsx';
 import {
@@ -19,12 +20,12 @@ import { LogoControls } from './LogoControls.tsx';
 import { MapStage } from './MapStage.tsx';
 
 function ConverterPage() {
-  const { state, dispatch, elapsedMs, submit, cancel, downloadAgain } =
-    useConverter();
+  const { state, dispatch, submit, cancel, downloadAgain } = useConverter();
   const { config, maps, status } = state;
   const converting = isConverting(state);
   const formats = selectedPresets(state);
   const preview = useMapPreview(maps);
+  usePreventPageDrop();
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -74,14 +75,11 @@ function ConverterPage() {
                 onRemove={(index) => dispatch({ type: 'mapRemoved', index })}
               />
               <DropZone
-                file={null}
                 disabled={converting}
                 onFiles={addMaps}
                 accept=".dd2vtt"
                 title="Add more levels"
-                hint=""
                 compact
-                multiple
               />
             </div>
           )}
@@ -130,7 +128,6 @@ function ConverterPage() {
 
           <ConvertPanel
             status={status}
-            elapsedMs={elapsedMs}
             canSubmit={canSubmit(state)}
             mapCount={maps.length}
             imageCount={imageCount(

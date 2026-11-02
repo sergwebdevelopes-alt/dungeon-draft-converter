@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { MapPreview } from './model/map-preview.ts';
-import { useMapPreview, type PreviewState } from './useMapPreview.ts';
+import type { MapPreview, PreviewState } from './model/map-preview.ts';
+import { useMapPreview } from './useMapPreview.ts';
 
 function preview(name: string): MapPreview {
   return { image: new Blob([name]), columns: 20, rows: 25 };
