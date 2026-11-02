@@ -106,6 +106,21 @@ describe('convertLevels', () => {
     assert.deepEqual({ format, width }, { format: 'jpeg', width: 140 });
   });
 
+  it('converts a single map without an original file, leaving out the Foundry copy', async () => {
+    const result = await convertLevels(
+      { levels: [makeLevel('Tavern', PIXELS_PER_GRID)], presets: JPG_70 },
+      workDir,
+    );
+
+    const files = await collect(result.files);
+
+    assert.equal(result.name, 'Tavern');
+    assert.deepEqual(
+      files.map((file) => file.path),
+      ['JPG_70/Tavern_70px_NoGrid.jpg', 'JPG_70/Tavern_70px_Grid.jpg'],
+    );
+  });
+
   it('merges several levels into "<main>_merged"', async () => {
     const result = await convertLevels(
       {

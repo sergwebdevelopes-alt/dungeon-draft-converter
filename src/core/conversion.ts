@@ -31,7 +31,7 @@ async function convertLevels(
   workDir: string,
 ): Promise<ConversionResult> {
   const merged =
-    original === undefined
+    levels.length > 1
       ? await mergeLevels(
           levels,
           mergedFileName(levels[0].fileNameWithExt),
