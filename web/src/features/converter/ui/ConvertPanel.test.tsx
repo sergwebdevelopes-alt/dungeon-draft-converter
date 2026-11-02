@@ -34,6 +34,25 @@ describe('ConvertPanel', () => {
     ).toHaveTextContent('2 maps · 4 images');
   });
 
+  it('shows no summary before maps are added', () => {
+    render(
+      <ConvertPanel
+        status={{ kind: 'idle' }}
+        elapsedMs={0}
+        canSubmit={false}
+        mapCount={0}
+        imageCount={0}
+        onCancel={vi.fn()}
+        onDownloadAgain={vi.fn()}
+        onReset={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole('complementary', { name: 'Conversion' }),
+    ).not.toHaveTextContent(/map/);
+  });
+
   it('disables Convert until the form is ready', () => {
     renderPanel({ kind: 'idle' }, false);
 

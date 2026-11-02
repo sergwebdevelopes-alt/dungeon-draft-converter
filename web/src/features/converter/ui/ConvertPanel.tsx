@@ -35,13 +35,13 @@ function ConvertPanel({
   return (
     <aside
       aria-label="Conversion"
-      className="fixed inset-x-0 bottom-0 z-20 grid gap-3 border-t border-line bg-surface/95 pt-3 pr-[max(1rem,env(safe-area-inset-right))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] shadow-[0_-8px_24px_rgb(0_0_0/0.25)] backdrop-blur-xl lg:static lg:border-t lg:bg-transparent lg:px-0 lg:pt-5 lg:pb-0 lg:shadow-none lg:backdrop-blur-none"
+      className="fixed inset-x-0 bottom-0 z-20 grid gap-3 border-t border-line bg-surface/95 pt-3 pr-[max(1rem,env(safe-area-inset-right))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] shadow-[0_-8px_24px_rgb(0_0_0/0.25)] backdrop-blur-xl lg:static lg:border-t lg:border-line lg:bg-transparent lg:px-0 lg:pt-5 lg:pb-0 lg:shadow-none lg:backdrop-blur-none"
     >
-      <p className="text-center text-sm text-muted lg:text-left">
-        {mapCount === 0
-          ? 'Add a map to start'
-          : `${plural(mapCount, 'map')} · ${plural(imageCount, 'image')}`}
-      </p>
+      {mapCount > 0 && (
+        <p className="text-center text-sm text-muted lg:text-left">
+          {plural(mapCount, 'map')} · {plural(imageCount, 'image')}
+        </p>
+      )}
 
       <PanelStatus status={status} elapsedMs={elapsedMs} />
 

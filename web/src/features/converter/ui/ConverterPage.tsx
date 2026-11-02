@@ -24,7 +24,7 @@ function ConverterPage() {
   const { config, maps, status } = state;
   const converting = isConverting(state);
   const formats = selectedPresets(state);
-  const preview = useMapPreview(maps[0] ?? null);
+  const preview = useMapPreview(maps);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -38,7 +38,7 @@ function ConverterPage() {
   return (
     <Container className="grid gap-5 pt-6 pb-40 sm:pt-8 lg:pb-12">
       <PageTitle title="Converter" />
-      <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+      <header className="grid gap-1">
         <h1 className="font-display text-3xl font-bold tracking-wide sm:text-4xl">
           Dungeondraft Converter
         </h1>
@@ -49,11 +49,11 @@ function ConverterPage() {
       </header>
 
       <form
-        className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_400px]"
+        className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px]"
         onSubmit={handleSubmit}
       >
-        <div className="grid min-w-0 gap-3 lg:h-[clamp(460px,calc(100svh-11rem),820px)] lg:grid-rows-[minmax(0,1fr)_auto]">
-          <div className="h-[min(62svh,560px)] lg:h-auto lg:min-h-0">
+        <div className="grid min-w-0 content-start gap-3">
+          <div className="h-[min(62svh,560px)] lg:h-[clamp(460px,calc(100svh-13rem),820px)]">
             <MapStage
               preview={preview}
               grid={choiceOf(state.variants)}
@@ -66,7 +66,7 @@ function ConverterPage() {
           </div>
 
           {maps.length > 0 && (
-            <div className="grid gap-2 lg:max-h-44 lg:overflow-y-auto">
+            <div className="grid gap-2">
               <LevelList
                 levels={maps}
                 disabled={converting}
@@ -87,7 +87,7 @@ function ConverterPage() {
           )}
         </div>
 
-        <div className="grid gap-5 lg:sticky lg:top-20 lg:gap-4 lg:rounded-3xl lg:bg-surface/80 lg:p-5 lg:shadow-[0_30px_80px_-30px_rgb(0_0_0/0.6)] lg:ring-1 lg:ring-line lg:backdrop-blur-xl">
+        <div className="grid content-start gap-5 lg:sticky lg:top-20 lg:self-start lg:rounded-3xl lg:bg-surface/80 lg:p-6 lg:shadow-[0_30px_80px_-30px_rgb(0_0_0/0.6)] lg:ring-1 lg:ring-line lg:backdrop-blur-xl">
           {state.configError ? (
             <p
               role="alert"

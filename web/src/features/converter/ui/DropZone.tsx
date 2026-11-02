@@ -28,9 +28,9 @@ function zoneClassName({
   disabled: boolean;
 }): string {
   return [
-    'flex items-center gap-3 rounded-lg border-[1.5px] text-left transition-colors',
+    'flex items-center gap-3 rounded-lg border-[1.5px] transition-colors',
     compact
-      ? 'min-h-14 px-3 py-2.5'
+      ? 'min-h-14 px-3 py-2.5 text-left'
       : 'flex-col justify-center px-4 py-6 text-center sm:py-8',
     hasFile
       ? 'border-solid border-line bg-sunken'

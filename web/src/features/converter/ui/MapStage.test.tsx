@@ -5,7 +5,7 @@ import { MapStage } from './MapStage.tsx';
 
 const READY: PreviewState = {
   status: 'ready',
-  url: 'blob:map',
+  layers: ['blob:map'],
   columns: 4,
   rows: 3,
 };
@@ -60,7 +60,7 @@ describe('MapStage', () => {
     renderStage({ grid: 'with' });
 
     expect(gridLayer()).not.toBeNull();
-    expect(gridLayer()!.querySelectorAll('line')).toHaveLength(3 + 2);
+    expect(gridLayer()!.querySelectorAll('line')).toHaveLength(5 + 4);
     expect(screen.queryByRole('slider')).toBeNull();
   });
 
@@ -88,6 +88,25 @@ describe('MapStage', () => {
       width: 'calc(min(100cqw, 100cqh) * 0.1)',
       right: 'calc(min(100cqw, 100cqh) * 0.03)',
     });
+  });
+
+  it('stacks merged levels with the main map on top', () => {
+    renderStage({
+      preview: {
+        status: 'ready',
+        layers: ['blob:cellar', 'blob:tower'],
+        columns: 4,
+        rows: 3,
+      },
+    });
+
+    const images = [...document.querySelectorAll('img')].map((img) =>
+      img.getAttribute('src'),
+    );
+    expect(images).toEqual(['blob:cellar', 'blob:tower']);
+    expect(
+      screen.getByRole('img', { name: 'Preview of the main map' }),
+    ).toHaveAttribute('src', 'blob:tower');
   });
 
   it('explains when a map cannot be previewed', () => {

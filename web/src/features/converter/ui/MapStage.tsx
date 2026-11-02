@@ -84,7 +84,6 @@ function GridLayer({
         className="pointer-events-none absolute inset-0"
         style={compare ? { clipPath: `inset(0 0 0 ${split}%)` } : undefined}
       >
-        <div className="absolute inset-0 bg-black/10" />
         <GridOverlay columns={columns} rows={rows} />
       </div>
       {compare && (
@@ -142,6 +141,47 @@ function useStageDrop(disabled: boolean, onFiles: (files: File[]) => void) {
   };
 }
 
+function MapFrame({
+  preview,
+  grid,
+  logo,
+  placement,
+  busy,
+}: {
+  preview: Extract<PreviewState, { status: 'ready' }>;
+  grid: GridChoice | null;
+  logo: File | null;
+  placement: LogoPlacement | null;
+  busy: boolean;
+}) {
+  const [main] = preview.layers.slice(-1);
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-xl ring-1 ring-line"
+      style={frameStyle(preview.columns, preview.rows)}
+    >
+      {preview.layers.map((url) => (
+        <img
+          key={url}
+          src={url}
+          alt={url === main ? 'Preview of the main map' : ''}
+          draggable={false}
+          className="absolute inset-0 size-full object-cover"
+        />
+      ))}
+      <GridLayer columns={preview.columns} rows={preview.rows} grid={grid} />
+      {logo && placement && <LogoMark logo={logo} placement={placement} />}
+      {busy && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 animate-sweep bg-[linear-gradient(105deg,transparent_35%,rgb(241_214_119/0.28)_50%,transparent_65%)] bg-size-[250%_100%]"
+        />
+      )}
+    </div>
+  );
+}
+
 function StageMessage({ children }: { children: string }) {
   return (
     <div className="grid size-full place-items-center rounded-2xl bg-sunken p-6 text-center text-muted">
@@ -179,7 +219,7 @@ function MapStage({
   return (
     <div
       {...drop.handlers}
-      className={`relative grid size-full place-items-center rounded-2xl bg-sunken p-3 transition-shadow sm:p-5 ${drop.over ? 'ring-2 ring-gold' : ''}`}
+      className={`relative grid size-full place-items-center rounded-2xl transition-shadow ${drop.over ? 'ring-2 ring-gold ring-offset-4 ring-offset-bg' : ''}`}
       style={{ containerType: 'size' }}
     >
       {preview.status === 'loading' && (
@@ -189,29 +229,13 @@ function MapStage({
         <StageMessage>{`${preview.message} It can still be converted.`}</StageMessage>
       )}
       {preview.status === 'ready' && (
-        <div
-          className="relative overflow-hidden rounded-lg shadow-2xl"
-          style={frameStyle(preview.columns, preview.rows)}
-        >
-          <img
-            src={preview.url}
-            alt="Preview of the main map"
-            draggable={false}
-            className="size-full object-cover"
-          />
-          <GridLayer
-            columns={preview.columns}
-            rows={preview.rows}
-            grid={grid}
-          />
-          {logo && placement && <LogoMark logo={logo} placement={placement} />}
-          {busy && (
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 animate-sweep bg-[linear-gradient(105deg,transparent_35%,rgb(241_214_119/0.28)_50%,transparent_65%)] bg-size-[250%_100%]"
-            />
-          )}
-        </div>
+        <MapFrame
+          preview={preview}
+          grid={grid}
+          logo={logo}
+          placement={placement}
+          busy={busy}
+        />
       )}
     </div>
   );
