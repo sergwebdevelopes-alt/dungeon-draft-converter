@@ -11,6 +11,8 @@ const SLASH = 0x2f;
 const BASE64_CHUNK_BYTES = 3 * 64 * 1024;
 const MAX_METADATA_BYTES = 8 * 1024 * 1024;
 const MAP_EXTENSION = '.dd2vtt';
+const NOT_BASE64 = /[^A-Za-z0-9+/=]/;
+const NOT_PADDING = /[^=]/;
 
 interface Dd2vttData {
   format?: number;
@@ -70,7 +72,7 @@ function missingImageError(fileName: string): InvalidMapFileError {
   );
 }
 
-function emptyImageError(fileName: string): InvalidMapFileError {
+function invalidImageError(fileName: string): InvalidMapFileError {
   return new InvalidMapFileError(
     `The "image" field in "${fileName}" is not valid base64 image data.`,
   );
@@ -111,7 +113,8 @@ class Dd2vttScanner {
   private awaitingValue = false;
   private inImage = false;
   private imageFound = false;
-  private carry = Buffer.alloc(0);
+  private carry = '';
+  private paddingStarted = false;
 
   private readonly fileName: string;
   private readonly maxMetadataBytes: number;
@@ -197,7 +200,7 @@ class Dd2vttScanner {
       );
     }
     if (this.carry.length > 0) {
-      writeImage(Buffer.from(this.carry.toString('latin1'), 'base64'));
+      writeImage(Buffer.from(this.carry, 'base64'));
     }
     const json = parseJson(
       this.fileName,
@@ -217,9 +220,7 @@ class Dd2vttScanner {
     if (this.escaped) {
       this.escaped = false;
       if (chunk[from] !== SLASH) {
-        throw new InvalidMapFileError(
-          `The "image" field in "${this.fileName}" is not valid base64 image data.`,
-        );
+        throw invalidImageError(this.fileName);
       }
       this.decode(Buffer.from('/'), writeImage);
       return from + 1;
@@ -241,15 +242,31 @@ class Dd2vttScanner {
     return end + 1;
   }
 
-  private decode(base64: Buffer, writeImage: (data: Buffer) => void): void {
-    const text = Buffer.concat([this.carry, base64]);
-    const usable = text.length - (text.length % 4);
-    if (usable > 0) {
-      writeImage(
-        Buffer.from(text.subarray(0, usable).toString('latin1'), 'base64'),
-      );
+  private checkBase64(text: string): void {
+    const padding = this.paddingStarted ? 0 : text.indexOf('=');
+    const afterPadding = padding === -1 ? '' : text.slice(padding);
+
+    if (NOT_BASE64.test(text) || NOT_PADDING.test(afterPadding)) {
+      throw invalidImageError(this.fileName);
     }
-    this.carry = Buffer.from(text.subarray(usable));
+
+    if (padding !== -1) {
+      this.paddingStarted = true;
+    }
+  }
+
+  private decode(base64: Buffer, writeImage: (data: Buffer) => void): void {
+    const chunk = base64.toString('latin1');
+    this.checkBase64(chunk);
+
+    const text = this.carry + chunk;
+    const usable = text.length - (text.length % 4);
+
+    if (usable > 0) {
+      writeImage(Buffer.from(text.slice(0, usable), 'base64'));
+    }
+
+    this.carry = text.slice(usable);
   }
 
   private keepMetadata(bytes: Buffer): void {
@@ -309,7 +326,7 @@ async function readDd2vttStream(
       await write(image, data);
     }
     if (imageBytes === 0) {
-      throw emptyImageError(fileName);
+      throw invalidImageError(fileName);
     }
     return { ...toLoadedMap(fileName, metadata, paths.image), rawBytes };
   } finally {

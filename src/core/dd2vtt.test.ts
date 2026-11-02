@@ -109,6 +109,67 @@ describe('readDd2vttStream', () => {
       /Invalid JSON in "broken\.dd2vtt"/,
     );
   });
+
+  describe('image data', () => {
+    const INVALID_IMAGE =
+      'The "image" field in "a.dd2vtt" is not valid base64 image data.';
+
+    function parseChunks(chunks: string[]): Promise<LoadedMap> {
+      return readDd2vttStream(
+        'a.dd2vtt',
+        chunks.map((chunk) => Buffer.from(chunk, 'latin1')),
+        {
+          raw: path.join(workDir, 'chunks.dd2vtt'),
+          image: path.join(workDir, 'chunks.png'),
+        },
+      );
+    }
+
+    for (const [label, image] of [
+      ['a space', 'ZmFr ZSBw'],
+      ['a dash', 'ZmFr-ZSBw'],
+      ['a non-ASCII letter', 'ZmFré'],
+      ['padding in the middle', 'ZmE=ZmFr'],
+    ]) {
+      it(`rejects ${label}`, async () => {
+        await assert.rejects(
+          () => parseDd2vtt('a.dd2vtt', makeContent({ image })),
+          { name: 'InvalidMapFileError', message: INVALID_IMAGE },
+        );
+      });
+    }
+
+    it('accepts padding at the end', async () => {
+      const bytes = Buffer.from('ab');
+
+      const map = await parseDd2vtt(
+        'a.dd2vtt',
+        makeContent({ image: bytes.toString('base64') }),
+      );
+
+      assert.equal(bytes.toString('base64'), 'YWI=');
+      assert.deepEqual(await fs.readFile(map.image), bytes);
+    });
+
+    it('accepts padding split across two chunks', async () => {
+      const map = await parseChunks(['{"image":"YQ=', '="}']);
+
+      assert.deepEqual(await fs.readFile(map.image), Buffer.from('a'));
+    });
+
+    it('rejects data after padding in the next chunk', async () => {
+      await assert.rejects(() => parseChunks(['{"image":"YQ==', 'YQ=="}']), {
+        message: INVALID_IMAGE,
+      });
+    });
+
+    it('rejects a bad character in a later chunk', async () => {
+      await assert.rejects(
+        () => parseChunks(['{"image":"ZmFr', 'ZSBw', 'ZS!w"}']),
+        { message: INVALID_IMAGE },
+      );
+    });
+  });
 });
 
 function patternBytes(length: number): Buffer {
