@@ -10,6 +10,7 @@ import {
 } from './config.ts';
 import { errorHandler, notFound } from './http/errors.ts';
 import { configRouter } from './http/routes/config.ts';
+import { healthRouter } from './http/routes/health.ts';
 import { convertRouter } from './http/routes/convert.ts';
 import { queueRouter } from './http/routes/queue.ts';
 import { blockCrossSiteRequests, securityHeaders } from './http/security.ts';
@@ -38,6 +39,7 @@ async function createApp(
 
   app.use(
     '/api',
+    healthRouter(isShuttingDown),
     configRouter(),
     queueRouter(queue),
     convertRouter(queue, pendingLimit),

@@ -16,6 +16,8 @@ Open http://localhost:3000. To use a different port, run `HOST_PORT=8080 docker 
 
 `docker compose logs -f` follows the logs; `docker compose down` stops it.
 
+`GET /api/health` answers `{"ok":true}` (200) while the server is running and `{"ok":false}` (503) while it shuts down, for uptime monitors.
+
 ### Without Docker
 
 Requires Node.js 24.2 or newer.

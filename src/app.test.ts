@@ -41,6 +41,17 @@ describe('createApp', () => {
     assert.equal(body.maxUploadBytes, MAX_UPLOAD_BYTES);
   });
 
+  it('reports health under /api, and 503 while shutting down', async () => {
+    const up = await fetch(`${base}/api/health`);
+    assert.equal(up.status, 200);
+    assert.deepEqual(await up.json(), { ok: true });
+
+    shuttingDown = true;
+    const down = await fetch(`${base}/api/health`);
+    assert.equal(down.status, 503);
+    assert.deepEqual(await down.json(), { ok: false });
+  });
+
   it('answers unknown /api paths with a JSON 404', async () => {
     const res = await fetch(`${base}/api/nope`);
 
