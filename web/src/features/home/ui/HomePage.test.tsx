@@ -47,6 +47,7 @@ function api(maps: MapEntry[] | null = MAPS): GalleryApi {
   return {
     fetchMaps: () =>
       maps ? Promise.resolve(maps) : new Promise<MapEntry[]>(() => undefined),
+    prefetchMaps: () => Promise.resolve(),
   };
 }
 

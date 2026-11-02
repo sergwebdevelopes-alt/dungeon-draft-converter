@@ -1,12 +1,29 @@
+import { useState } from 'react';
+
 interface BackdropProps {
   images: string[];
   index: number;
 }
 
+function useShown(index: number): Set<number> {
+  const [shown, setShown] = useState(() => new Set([index]));
+  if (!shown.has(index)) {
+    setShown(new Set(shown).add(index));
+  }
+
+  return shown;
+}
+
 function Backdrop({ images, index }: BackdropProps) {
+  const shown = useShown(index);
+  const next = (index + 1) % Math.max(images.length, 1);
+
   return (
     <div aria-hidden="true" className="absolute inset-0 -z-10 overflow-hidden">
       {images.map((src, i) => {
+        if (!shown.has(i) && i !== next) {
+          return null;
+        }
         const active = i === index;
 
         return (
@@ -14,7 +31,7 @@ function Backdrop({ images, index }: BackdropProps) {
             key={src}
             src={src}
             alt=""
-            loading={i === 0 ? 'eager' : 'lazy'}
+            fetchPriority={i === 0 ? 'high' : 'low'}
             decoding="async"
             className={`absolute inset-0 size-full object-cover transition-[opacity,scale] ease-linear motion-reduce:transition-none ${
               active

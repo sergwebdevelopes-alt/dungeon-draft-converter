@@ -55,6 +55,7 @@ function fakeApi(maps: MapEntry[] | Error = MAPS): GalleryApi {
   return {
     fetchMaps: () =>
       maps instanceof Error ? Promise.reject(maps) : Promise.resolve(maps),
+    prefetchMaps: () => Promise.resolve(),
   };
 }
 
@@ -235,7 +236,9 @@ describe('GalleryPage', () => {
   it('shows placeholders while loading and a message when loading fails', async () => {
     render(
       <MemoryRouter initialEntries={['/maps']}>
-        <GalleryPage api={{ fetchMaps: () => new Promise(() => undefined) }} />
+        <GalleryPage
+          api={{ ...fakeApi(), fetchMaps: () => new Promise(() => undefined) }}
+        />
       </MemoryRouter>,
     );
     expect(

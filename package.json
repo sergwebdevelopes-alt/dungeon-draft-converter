@@ -11,7 +11,7 @@
     "format:check": "prettier --check .",
     "start": "NODE_ENV=production node src/server.ts",
     "dev": "node --watch-path=src src/server.ts",
-    "build": "vite build",
+    "build": "vite build && node scripts/precompress.ts",
     "bench": "node scripts/bench.ts",
     "gallery": "node scripts/build-gallery.ts"
   },

@@ -66,6 +66,7 @@ web/src/
 
 - `npm run dev`: dev server with hot reload on port 3000 (the user's own dev server usually runs there; use another port for test servers and stop them by PID, never with a pattern kill).
 - `npm test` · `npm run typecheck` · `npm run lint` · `npm run format` · `npm run build`
+- `npm run build` also writes `.br`/`.gz` copies of text files in `web/dist` (`scripts/precompress.ts`); `src/http/precompressed.ts` serves them, and `src/http/cache-control.ts` decides caching per path.
 - `npm run gallery -- --src ~/Desktop/Maps [--manifest content/maps.json] [--out web/public/maps]`: regenerates gallery images and `catalog.json` (about 25 s).
 - `npm run bench`: takes minutes; run it only when asked. `BENCH_TARGET=docker` measures the Docker image.
 - Docker: `docker compose up -d --build` (use `HOST_PORT=3001` when the dev server is on 3000).
