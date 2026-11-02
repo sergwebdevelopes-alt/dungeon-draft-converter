@@ -6,7 +6,7 @@ import { unzipSync } from 'fflate';
 import sharp from 'sharp';
 import { ConversionQueue } from '../../queue/conversion-queue.ts';
 import { errorHandler } from '../errors.ts';
-import { createUploadDir, uploadFiles } from '../upload.ts';
+import { createUploadDir, uploadFiles } from '../upload/index.ts';
 import { convertHandler } from './handler.ts';
 
 interface MapOptions {
@@ -330,8 +330,8 @@ describe('convertHandler', () => {
     });
 
     it('breaks off the download when the time runs out while it is being sent', async () => {
-      const server = await startServer(300);
-      const map = await makeMap({ size: 4000 });
+      const server = await startServer(1000);
+      const map = await makeMap({ size: 5000 });
 
       try {
         const res = await convert(

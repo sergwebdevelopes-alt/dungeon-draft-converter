@@ -3,7 +3,7 @@ import { CONVERSION_TIMEOUT_MS } from '../../config.ts';
 import { convertLevels } from '../../core/conversion.ts';
 import type { ConversionQueue } from '../../queue/conversion-queue.ts';
 import { formatDuration } from '../../utils/format.ts';
-import { keepUploadsDuring, uploadDirOf } from '../upload.ts';
+import { keepUploadsDuring, uploadDirOf, uploadsOf } from '../upload/index.ts';
 import { parseConvertRequest } from './request.ts';
 import { streamZip } from './zip.ts';
 
@@ -23,7 +23,10 @@ function convertHandler(
       }
     });
 
-    const request = await parseConvertRequest(req, queue);
+    const request = await parseConvertRequest(
+      { query: req.query, files: uploadsOf(req) },
+      queue,
+    );
     const workDir = uploadDirOf(req);
 
     ticket = request.ticket;

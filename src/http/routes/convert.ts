@@ -2,7 +2,11 @@ import { Router, type RequestHandler } from 'express';
 import type { ConversionQueue } from '../../queue/conversion-queue.ts';
 import { convertHandler } from '../convert/handler.ts';
 import { HttpError } from '../errors.ts';
-import { createUploadDir, limitTotalUpload, uploadFiles } from '../upload.ts';
+import {
+  createUploadDir,
+  limitTotalUpload,
+  uploadFiles,
+} from '../upload/index.ts';
 
 function limitPendingConversions(queue: ConversionQueue): RequestHandler {
   return (_req, res, next) => {

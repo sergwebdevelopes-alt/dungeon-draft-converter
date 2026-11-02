@@ -16,7 +16,12 @@ import {
 import type { ConversionQueue } from '../../queue/conversion-queue.ts';
 import { formatMegabytes } from '../../utils/format.ts';
 import { HttpError } from '../errors.ts';
-import { MAP_FIELD, type UploadedFile } from '../upload.ts';
+import {
+  LOGO_FIELD,
+  MAP_FIELD,
+  type UploadedFile,
+  type Uploads,
+} from '../upload/index.ts';
 
 const TICKET_PATTERN = /^[0-9a-f]{32}$/;
 
@@ -130,22 +135,6 @@ function safeMapFileName(raw: string | undefined): string {
   return `${stem || 'map'}${MAP_EXTENSION}`;
 }
 
-function takeUploadedFiles(
-  req: Request,
-  field: typeof MAP_FIELD | 'logo',
-): UploadedFile[] {
-  const files = req.files;
-
-  if (!files || Array.isArray(files)) {
-    return [];
-  }
-
-  const taken = files[field] ?? [];
-  delete files[field];
-
-  return taken;
-}
-
 function parseLevels(
   files: UploadedFile[],
   mainName: string | undefined,
@@ -156,7 +145,7 @@ function parseLevels(
 
   return files.map((file, index) => {
     const fileName = safeMapFileName(
-      index === 0 ? (mainName ?? file.originalname) : file.originalname,
+      index === 0 ? (mainName ?? file.name) : file.name,
     );
 
     if (!file.map) {
@@ -172,9 +161,9 @@ function parseLevels(
 }
 
 async function parseLogoImage(
-  file: Express.Multer.File | undefined,
+  file: UploadedFile | undefined,
 ): Promise<Buffer | undefined> {
-  if (!file) {
+  if (!file?.buffer) {
     return undefined;
   }
 
@@ -190,26 +179,26 @@ async function parseLogoImage(
   return file.buffer;
 }
 
-async function parseUploads(req: Request) {
-  const mapFiles = takeUploadedFiles(req, MAP_FIELD);
-  const levels = parseLevels(mapFiles, queryString(req.query.name));
+async function parseUploads(query: Query, files: Uploads) {
+  const mapFiles = files[MAP_FIELD] ?? [];
+  const levels = parseLevels(mapFiles, queryString(query.name));
 
   return {
     levels,
     original: levels.length === 1 ? mapFiles[0].path : undefined,
-    logoImage: await parseLogoImage(takeUploadedFiles(req, 'logo')[0]),
+    logoImage: await parseLogoImage(files[LOGO_FIELD]?.[0]),
   };
 }
 
 async function parseConvertRequest(
-  req: Request,
+  { query, files }: { query: Query; files: Uploads },
   queue: ConversionQueue,
 ): Promise<ConvertRequest> {
   const { presets, variants, logoPlacement, ticket } = parseOptions(
-    req.query,
+    query,
     queue,
   );
-  const { levels, original, logoImage } = await parseUploads(req);
+  const { levels, original, logoImage } = await parseUploads(query, files);
 
   const logo = logoImage && { image: logoImage, ...logoPlacement };
 

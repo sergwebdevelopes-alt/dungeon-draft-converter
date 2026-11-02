@@ -4,7 +4,7 @@ Web app that converts Dungeondraft `.dd2vtt` exports into VTT- and print-ready i
 
 ## Rules
 
-- **Every external library goes behind a port.** Define our own contract (interface or function type) and put the library in one adapter file that implements it. The rest of the code uses only the contract, so switching libraries means writing a new adapter, not changing callers. Example: `src/zip/zip-writer.ts` (port) and `src/zip/fflate-zip-writer.ts` (the only file that imports fflate).
+- **Every external library goes behind a port.** Define our own contract (interface or function type) and put the library in one adapter file that implements it. The rest of the code uses only the contract, so switching libraries means writing a new adapter, not changing callers. Examples: `src/zip/zip-writer.ts` (port) with `src/zip/fflate-zip-writer.ts` (the only file that imports fflate), and `src/http/upload/multipart-parser.ts` (port) with `src/http/upload/multer-multipart-parser.ts` (the only file that imports multer).
 - **Every change is covered by tests.** New behaviour gets new tests; changed behaviour gets updated tests. Tests live next to the code as `*.test.ts` (for example `src/http/convert/request.test.ts`) and run with `npm test`. Check that a new test fails without the change it covers.
 
 ## Architecture
@@ -14,7 +14,8 @@ src/
 ├── server.ts      startup only: http server, listen, cleanup timer, SIGTERM
 ├── app.ts         builds the Express app and wires dependencies (queue, routes)
 ├── config.ts      every process.env read and every limit
-├── http/          Express only: routes, request parsing, uploads, errors, zip streaming
+├── http/          Express only: routes, request parsing, errors, zip streaming
+│   └── upload/    upload rules, per-request temp folder, multipart port + multer adapter
 ├── queue/         ConversionQueue: pending limit, FIFO, tickets
 ├── zip/           zip port + fflate adapter
 ├── core/          image work: dd2vtt format, conversion, images, lighting, merge

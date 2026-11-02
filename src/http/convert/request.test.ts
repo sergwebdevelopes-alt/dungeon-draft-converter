@@ -1,51 +1,44 @@
 import assert from 'node:assert/strict';
 import { before, describe, it } from 'node:test';
-import type { Request } from 'express';
 import sharp from 'sharp';
 import { FORMAT_PRESETS, VARIANTS } from '../../core/images.ts';
 import { parseConvertRequest } from './request.ts';
-import type { UploadedFile } from '../upload.ts';
+import type { UploadedFile, Uploads } from '../upload/index.ts';
 import { ConversionQueue } from '../../queue/conversion-queue.ts';
 
 const TICKET = '0123456789abcdef0123456789abcdef';
 
-function mapFile(originalname: string, withMap = true): UploadedFile {
+type ConvertInput = Parameters<typeof parseConvertRequest>[0];
+
+function mapFile(name: string, withMap = true): UploadedFile {
   return {
-    fieldname: 'maps',
-    originalname,
-    path: `/uploads/${originalname}`,
+    name,
+    path: `/uploads/${name}`,
     size: 100,
     map: withMap
       ? {
-          fileNameWithExt: originalname,
-          fileNameWithoutExt: originalname.replace(/\.dd2vtt$/i, ''),
-          image: `/uploads/${originalname}.png`,
+          fileNameWithExt: name,
+          fileNameWithoutExt: name.replace(/\.dd2vtt$/i, ''),
+          image: `/uploads/${name}.png`,
           pixelsPerGrid: 100,
           metadata: {},
         }
       : undefined,
-  } as UploadedFile;
+  };
 }
 
 function logoFile(buffer: Buffer, size = buffer.length): UploadedFile {
-  return {
-    fieldname: 'logo',
-    originalname: 'logo.png',
-    buffer,
-    size,
-  } as UploadedFile;
+  return { name: 'logo.png', buffer, size };
 }
 
 function makeRequest(
   query: Record<string, string> = {},
-  files: { maps?: UploadedFile[]; logo?: UploadedFile[] } = {
-    maps: [mapFile('Main.dd2vtt')],
-  },
-): Request {
-  return { query, files } as unknown as Request;
+  files: Uploads = { maps: [mapFile('Main.dd2vtt')] },
+): ConvertInput {
+  return { query, files };
 }
 
-function parse(request: Request, queue = new ConversionQueue(10)) {
+function parse(request: ConvertInput, queue = new ConversionQueue(10)) {
   return parseConvertRequest(request, queue);
 }
 

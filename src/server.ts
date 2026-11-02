@@ -8,7 +8,7 @@ import {
   SHUTDOWN_TIMEOUT_MS,
   STALE_CLEANUP_INTERVAL_MS,
 } from './config.ts';
-import { removeStaleUploadDirs } from './http/upload.ts';
+import { removeStaleUploadDirs } from './http/upload/index.ts';
 
 if (SHARP_CONCURRENCY > 0) {
   sharp.concurrency(SHARP_CONCURRENCY);
