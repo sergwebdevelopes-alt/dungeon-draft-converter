@@ -69,16 +69,20 @@ describe('convertRouter', () => {
     }
   });
 
-  it('does not take a place when it refuses', async () => {
+  it('keeps the place held by another request when it refuses', async () => {
     const release = pendingLimit.reserve();
     assert.ok(release);
 
-    const res = await postEmptyForm();
-    await res.arrayBuffer();
-    release();
+    try {
+      const res = await postEmptyForm();
+      await res.arrayBuffer();
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
-    assert.equal(res.status, 503);
-    assert.ok(await placeIsFree());
+      assert.equal(res.status, 503);
+      assert.equal(pendingLimit.reserve(), undefined);
+    } finally {
+      release();
+    }
   });
 
   it('runs the upload checks after taking a place', async () => {
