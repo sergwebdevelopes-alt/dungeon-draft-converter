@@ -9,16 +9,27 @@ type LevelPreview =
 
 type ReadPreview = (file: File) => Promise<MapPreview>;
 
-function combine(files: File[], levels: Map<File, LevelPreview>): PreviewState {
-  const main = files.length > 0 ? levels.get(files[0]) : undefined;
+function combine(
+  files: File[],
+  shown: File[],
+  levels: Map<File, LevelPreview>,
+): PreviewState {
+  if (files.length === 0) {
+    return { status: 'empty' };
+  }
+  if (shown.length === 0) {
+    return { status: 'hidden' };
+  }
+
+  const main = levels.get(shown[0]);
   if (!main) {
-    return files.length === 0 ? { status: 'empty' } : { status: 'loading' };
+    return { status: 'loading' };
   }
   if (main.status !== 'ready') {
     return main;
   }
 
-  const layers = [...files]
+  const layers = [...shown]
     .reverse()
     .map((file) => levels.get(file))
     .flatMap((level) => (level?.status === 'ready' ? [level.url] : []));
@@ -34,6 +45,7 @@ function revoke(level: LevelPreview | undefined) {
 
 function useMapPreview(
   files: File[],
+  shown: File[] = files,
   read: ReadPreview = readPreviewInWorker,
 ): PreviewState {
   const [levels, setLevels] = useState(() => new Map<File, LevelPreview>());
@@ -104,7 +116,7 @@ function useMapPreview(
     [],
   );
 
-  return combine(files, levels);
+  return combine(files, shown, levels);
 }
 
 export { useMapPreview };

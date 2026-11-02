@@ -4,6 +4,7 @@ import {
   converterReducer,
   initialState,
   selectedPresets,
+  visibleMaps,
   type ConverterAction,
   type ConverterState,
 } from './converter-reducer.ts';
@@ -88,6 +89,39 @@ describe('converterReducer', () => {
         (m) => m.name,
       ),
     ).toEqual(['A.dd2vtt']);
+  });
+
+  it('hides and shows a level', () => {
+    const two: ConverterAction = {
+      type: 'mapsAdded',
+      files: [file('A.dd2vtt'), file('B.dd2vtt')],
+    };
+    const hidden = run(loaded, two, { type: 'levelToggled', index: 0 });
+
+    expect(visibleMaps(hidden).map((m) => m.name)).toEqual(['A.dd2vtt']);
+    expect(hidden.maps).toHaveLength(2);
+    expect(
+      visibleMaps(converterReducer(hidden, { type: 'levelToggled', index: 0 })),
+    ).toHaveLength(2);
+  });
+
+  it('keeps a level hidden when it moves, and forgets it when removed', () => {
+    const two: ConverterAction = {
+      type: 'mapsAdded',
+      files: [file('A.dd2vtt'), file('B.dd2vtt')],
+    };
+    const hidden = run(loaded, two, { type: 'levelToggled', index: 0 });
+
+    const moved = converterReducer(hidden, {
+      type: 'mapMoved',
+      from: 0,
+      to: 1,
+    });
+    expect(visibleMaps(moved).map((m) => m.name)).toEqual(['A.dd2vtt']);
+
+    const removed = converterReducer(hidden, { type: 'mapRemoved', index: 0 });
+    expect(removed.hidden).toEqual([]);
+    expect(converterReducer(hidden, { type: 'reset' }).hidden).toEqual([]);
   });
 
   it('toggles formats and sets grid options', () => {
@@ -228,6 +262,9 @@ describe('canSubmit', () => {
       canSubmit(run(loaded, withMap, { type: 'variantsChosen', variants: [] })),
     ).toBe(false);
     expect(canSubmit(run(loaded, withMap, submitted))).toBe(false);
+    expect(
+      canSubmit(run(loaded, withMap, { type: 'levelToggled', index: 0 })),
+    ).toBe(false);
   });
 });
 

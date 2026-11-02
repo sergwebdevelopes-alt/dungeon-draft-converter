@@ -28,10 +28,11 @@ describe('useMapPreview', () => {
     read.mockClear();
   });
 
-  function renderPreviews(files: File[]) {
-    return renderHook<PreviewState, { files: File[] }>(
-      ({ files: current }) => useMapPreview(current, read),
-      { initialProps: { files } },
+  function renderPreviews(files: File[], shown: File[] = files) {
+    return renderHook<PreviewState, { files: File[]; shown: File[] }>(
+      ({ files: current, shown: visible }) =>
+        useMapPreview(current, visible, read),
+      { initialProps: { files, shown } },
     );
   }
 
@@ -67,10 +68,58 @@ describe('useMapPreview', () => {
 
     expect(result.current).toMatchObject({ layers: ['blob:2', 'blob:1'] });
 
-    rerender({ files: [cellar, tower] });
+    rerender({ files: [cellar, tower], shown: [cellar, tower] });
 
     expect(result.current).toMatchObject({ layers: ['blob:1', 'blob:2'] });
     expect(read).toHaveBeenCalledTimes(2);
+  });
+
+  it('draws only the shown levels, with the top shown level as the main map', async () => {
+    const attic = new File(['1'], 'Attic.dd2vtt');
+    const ground = new File(['2'], 'Ground.dd2vtt');
+    const cellar = new File(['3'], 'Cellar.dd2vtt');
+    const { result, rerender } = renderPreviews([attic, ground, cellar]);
+    await waitFor(() =>
+      expect(
+        result.current.status === 'ready' && result.current.layers,
+      ).toHaveLength(3),
+    );
+
+    rerender({ files: [attic, ground, cellar], shown: [ground, cellar] });
+
+    expect(result.current).toMatchObject({ layers: ['blob:3', 'blob:2'] });
+
+    rerender({
+      files: [attic, ground, cellar],
+      shown: [attic, ground, cellar],
+    });
+
+    expect(result.current).toMatchObject({
+      layers: ['blob:3', 'blob:2', 'blob:1'],
+    });
+    expect(read).toHaveBeenCalledTimes(3);
+  });
+
+  it('previews from the level below when an unreadable top level is hidden', async () => {
+    const broken = new File(['x'], 'broken.dd2vtt');
+    const tower = new File(['1'], 'Tower.dd2vtt');
+
+    const { result } = renderPreviews([broken, tower], [tower]);
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        status: 'ready',
+        layers: ['blob:1'],
+        columns: 20,
+        rows: 25,
+      }),
+    );
+  });
+
+  it('says so when every level is hidden', () => {
+    const { result } = renderPreviews([new File(['1'], 'Tower.dd2vtt')], []);
+
+    expect(result.current).toEqual({ status: 'hidden' });
   });
 
   it('frees the image of a removed level', async () => {
@@ -83,7 +132,7 @@ describe('useMapPreview', () => {
       ).toHaveLength(2),
     );
 
-    rerender({ files: [tower] });
+    rerender({ files: [tower], shown: [tower] });
 
     await waitFor(() =>
       expect(result.current).toMatchObject({ layers: ['blob:1'] }),

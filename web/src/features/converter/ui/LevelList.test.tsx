@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { levelKey } from '../model/map-rules.ts';
 import { LevelList } from './LevelList.tsx';
 
 const LEVELS = [
@@ -8,18 +9,21 @@ const LEVELS = [
   new File(['bb'], 'Cellar.dd2vtt'),
 ];
 
-function renderList(disabled = false) {
+function renderList(disabled = false, hidden: string[] = []) {
   const onMove = vi.fn();
   const onRemove = vi.fn();
+  const onToggle = vi.fn();
   render(
     <LevelList
       levels={LEVELS}
+      hidden={hidden}
       disabled={disabled}
       onMove={onMove}
       onRemove={onRemove}
+      onToggle={onToggle}
     />,
   );
-  return { onMove, onRemove };
+  return { onMove, onRemove, onToggle };
 }
 
 describe('LevelList', () => {
@@ -29,6 +33,27 @@ describe('LevelList', () => {
     const [first, second] = screen.getAllByRole('listitem');
     expect(within(first).getByText('Main')).toBeInTheDocument();
     expect(within(second).getByText('Below')).toBeInTheDocument();
+  });
+
+  it('hides or shows a level with its eye button', async () => {
+    const { onToggle } = renderList();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Hide Cellar.dd2vtt' }),
+    );
+
+    expect(onToggle).toHaveBeenCalledWith(1);
+  });
+
+  it('marks hidden levels and gives Main to the top shown level', () => {
+    renderList(false, [levelKey(LEVELS[0])]);
+
+    const [first, second] = screen.getAllByRole('listitem');
+    expect(within(first).getByText('Hidden')).toBeInTheDocument();
+    expect(
+      within(first).getByRole('button', { name: 'Show Tower.dd2vtt' }),
+    ).toBeInTheDocument();
+    expect(within(second).getByText('Main')).toBeInTheDocument();
   });
 
   it('moves and removes levels', async () => {

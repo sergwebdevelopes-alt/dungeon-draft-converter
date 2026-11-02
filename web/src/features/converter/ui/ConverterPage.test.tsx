@@ -145,6 +145,47 @@ describe('ConverterPage', () => {
     expect(params.get('variants')).toBe('NoGrid,Grid');
   });
 
+  it('leaves hidden levels out of the conversion', async () => {
+    const fetchMock = mockServer();
+    await renderPage();
+    await userEvent.upload(mapInput(), mapFile('Ground.dd2vtt'));
+    await userEvent.upload(mapInput(), mapFile('Upper.dd2vtt'));
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Hide Upper.dd2vtt' }),
+    );
+    expect(screen.getByRole('complementary')).toHaveTextContent('1 map');
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Convert & download' }),
+    );
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Ground.zip is ready.',
+    );
+    const convert = fetchMock.mock.calls.find(([url]) =>
+      url.startsWith('/api/convert'),
+    ) as unknown as [string, RequestInit];
+    const form = convert[1].body as FormData;
+    expect(form.getAll('maps').map((map) => (map as File).name)).toEqual([
+      'Ground.dd2vtt',
+    ]);
+  });
+
+  it('cannot convert while every level is hidden', async () => {
+    mockServer();
+    await renderPage();
+    await userEvent.upload(mapInput(), mapFile('Ground.dd2vtt'));
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Hide Ground.dd2vtt' }),
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Convert & download' }),
+    ).toBeDisabled();
+    expect(screen.getByText(/Every level is hidden/)).toBeInTheDocument();
+  });
+
   it('shows the server error when conversion fails', async () => {
     const fetchMock = mockServer();
     fetchMock.mockImplementation((url: string) =>

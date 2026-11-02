@@ -1,4 +1,4 @@
-import { addMaps, logoError, moveItem } from './map-rules.ts';
+import { addMaps, levelKey, logoError, moveItem } from './map-rules.ts';
 import { defaultPlacement } from './placement.ts';
 import { withProgress, type Progress, type Status } from './progress.ts';
 import type { Settings } from './settings.ts';
@@ -8,6 +8,7 @@ interface ConverterState {
   config: Config | null;
   configError: string | null;
   maps: File[];
+  hidden: string[];
   logo: File | null;
   placement: LogoPlacement | null;
   presets: string[];
@@ -21,6 +22,7 @@ type ConverterAction =
   | { type: 'mapsAdded'; files: File[] }
   | { type: 'mapMoved'; from: number; to: number }
   | { type: 'mapRemoved'; index: number }
+  | { type: 'levelToggled'; index: number }
   | { type: 'logoSelected'; file: File }
   | { type: 'logoCleared' }
   | { type: 'presetToggled'; name: string }
@@ -38,6 +40,7 @@ const initialState: ConverterState = {
   config: null,
   configError: null,
   maps: [],
+  hidden: [],
   logo: null,
   placement: null,
   presets: [],
@@ -68,6 +71,24 @@ function edited(
 
 function failed(state: ConverterState, message: string): ConverterState {
   return { ...state, status: { kind: 'error', message } };
+}
+
+function withoutMap(state: ConverterState, index: number): ConverterState {
+  const maps = state.maps.filter((_, i) => i !== index);
+  const kept = new Set(maps.map(levelKey));
+
+  return edited(state, {
+    maps,
+    hidden: state.hidden.filter((key) => kept.has(key)),
+  });
+}
+
+function toggleLevel(state: ConverterState, index: number): ConverterState {
+  const map = state.maps.at(index);
+
+  return map
+    ? edited(state, { hidden: toggle(state.hidden, levelKey(map)) })
+    : state;
 }
 
 function selectLogo(state: ConverterState, file: File): ConverterState {
@@ -105,9 +126,10 @@ function converterReducer(
       });
 
     case 'mapRemoved':
-      return edited(state, {
-        maps: state.maps.filter((_, i) => i !== action.index),
-      });
+      return withoutMap(state, action.index);
+
+    case 'levelToggled':
+      return toggleLevel(state, action.index);
 
     case 'logoSelected':
       return selectLogo(state, action.file);
@@ -159,7 +181,7 @@ function converterReducer(
       return { ...state, status: { kind: 'idle' } };
 
     case 'reset':
-      return { ...state, maps: [], status: { kind: 'idle' } };
+      return { ...state, maps: [], hidden: [], status: { kind: 'idle' } };
   }
 }
 
@@ -167,10 +189,18 @@ function isConverting(state: ConverterState): boolean {
   return state.status.kind === 'converting';
 }
 
+function isHidden(state: ConverterState, map: File): boolean {
+  return state.hidden.includes(levelKey(map));
+}
+
+function visibleMaps(state: ConverterState): File[] {
+  return state.maps.filter((map) => !isHidden(state, map));
+}
+
 function canSubmit(state: ConverterState): boolean {
   return (
     !!state.config &&
-    state.maps.length > 0 &&
+    visibleMaps(state).length > 0 &&
     state.presets.length > 0 &&
     state.variants.length > 0 &&
     !isConverting(state)
@@ -190,6 +220,8 @@ export {
   converterReducer,
   initialState,
   isConverting,
+  isHidden,
   selectedPresets,
+  visibleMaps,
 };
 export type { ConverterAction, ConverterState };

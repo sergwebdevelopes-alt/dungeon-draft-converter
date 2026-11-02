@@ -213,6 +213,11 @@ function MapStage({
       {preview.status === 'loading' && (
         <StageMessage>Reading map…</StageMessage>
       )}
+      {preview.status === 'hidden' && (
+        <StageMessage>
+          Every level is hidden. Show one to preview and convert it.
+        </StageMessage>
+      )}
       {preview.status === 'error' && (
         <StageMessage>{`${preview.message} It can still be converted.`}</StageMessage>
       )}

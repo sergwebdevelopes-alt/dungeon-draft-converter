@@ -7,6 +7,7 @@ import {
   canSubmit,
   isConverting,
   selectedPresets,
+  visibleMaps,
 } from '../model/converter-reducer.ts';
 import { choiceOf, variantsFor } from '../model/grid-choice.ts';
 import { imageCount } from '../model/summary.ts';
@@ -25,7 +26,8 @@ function ConverterPage() {
   const { config, maps, status } = state;
   const converting = isConverting(state);
   const formats = selectedPresets(state);
-  const preview = useMapPreview(maps);
+  const shown = visibleMaps(state);
+  const preview = useMapPreview(maps, shown);
   usePreventPageDrop();
 
   function handleSubmit(event: FormEvent) {
@@ -78,9 +80,11 @@ function ConverterPage() {
               />
               <LevelList
                 levels={maps}
+                hidden={state.hidden}
                 disabled={converting}
                 onMove={(from, to) => dispatch({ type: 'mapMoved', from, to })}
                 onRemove={(index) => dispatch({ type: 'mapRemoved', index })}
+                onToggle={(index) => dispatch({ type: 'levelToggled', index })}
               />
             </div>
           )}
@@ -127,9 +131,9 @@ function ConverterPage() {
           <ConvertPanel
             status={status}
             canSubmit={canSubmit(state)}
-            mapCount={maps.length}
+            mapCount={shown.length}
             imageCount={imageCount(
-              maps.length,
+              shown.length,
               formats.length,
               state.variants.length,
             )}

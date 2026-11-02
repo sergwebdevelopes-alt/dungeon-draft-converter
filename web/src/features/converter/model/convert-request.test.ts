@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { toConvertRequest } from './convert-request.ts';
 import { initialState } from './converter-reducer.ts';
+import { levelKey } from './map-rules.ts';
 import { TEST_CONFIG, file } from './test-config.ts';
 
 describe('toConvertRequest', () => {
@@ -24,6 +25,17 @@ describe('toConvertRequest', () => {
       variants: ['Grid'],
       logo: { image: logo, placement: { size: 20, margin: 1 } },
     });
+  });
+
+  it('sends only the levels that are shown', () => {
+    const attic = file('Attic.dd2vtt');
+    const state = {
+      ...base,
+      maps: [attic, ...maps],
+      hidden: [levelKey(attic)],
+    };
+
+    expect(toConvertRequest(state, 't').maps).toEqual(maps);
   });
 
   it('leaves the logo out when there is none', () => {

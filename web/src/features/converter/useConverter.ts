@@ -8,6 +8,7 @@ import {
   canSubmit,
   converterReducer,
   initialState,
+  visibleMaps,
   type ConverterAction,
   type ConverterState,
 } from './model/converter-reducer.ts';
@@ -55,7 +56,7 @@ function useConverter(
           }),
       );
       const url = URL.createObjectURL(blob);
-      const fileName = zipName(state.maps);
+      const fileName = zipName(visibleMaps(state));
       dispatch({ type: 'succeeded', url, fileName });
       saveFile(url, fileName);
     } catch (error) {

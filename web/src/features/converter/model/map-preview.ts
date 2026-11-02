@@ -6,6 +6,7 @@ interface MapPreview {
 
 type PreviewState =
   | { status: 'empty' }
+  | { status: 'hidden' }
   | { status: 'loading' }
   | { status: 'ready'; layers: string[]; columns: number; rows: number }
   | { status: 'error'; message: string };
