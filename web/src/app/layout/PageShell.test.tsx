@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import type { SiteConfig } from '../../shared/config/site.ts';
 import { PageShell } from './PageShell.tsx';
@@ -7,17 +8,22 @@ const SITE: SiteConfig = {
   name: 'Test Lair',
   tagline: 'Maps and tools',
   nav: [
-    { label: 'Converter', href: '/' },
+    { label: 'Home', href: '/' },
     { label: 'Maps', href: '/maps' },
   ],
   links: { patreon: 'https://example.com/patreon' },
 };
 
-function renderShell(currentPath = '/') {
+function renderShell(path = '/') {
   return render(
-    <PageShell site={SITE} currentPath={currentPath}>
-      <p>Page content</p>
-    </PageShell>,
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route element={<PageShell site={SITE} />}>
+          <Route index element={<p>Home content</p>} />
+          <Route path="maps" element={<p>Maps content</p>} />
+        </Route>
+      </Routes>
+    </MemoryRouter>,
   );
 }
 
@@ -30,22 +36,20 @@ describe('PageShell', () => {
     expect(header).toHaveTextContent('Maps and tools');
   });
 
-  it('renders the page content inside main', () => {
-    renderShell();
-
-    expect(screen.getByRole('main')).toHaveTextContent('Page content');
-  });
-
-  it('marks the current page in the nav', () => {
+  it('renders the current page inside main', () => {
     renderShell('/maps');
 
-    expect(screen.getByRole('link', { name: 'Maps' })).toHaveAttribute(
-      'aria-current',
-      'page',
+    expect(screen.getByRole('main')).toHaveTextContent('Maps content');
+  });
+
+  it('marks only the current page in the nav', () => {
+    renderShell('/maps');
+
+    const nav = screen.getByRole('navigation', { name: 'Site' });
+    expect(nav.querySelector('[aria-current="page"]')).toHaveTextContent(
+      'Maps',
     );
-    expect(screen.getByRole('link', { name: 'Converter' })).not.toHaveAttribute(
-      'aria-current',
-    );
+    expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
   });
 
   it('links to Patreon from the site config in a new tab', () => {

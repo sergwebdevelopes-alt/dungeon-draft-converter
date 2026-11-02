@@ -1,4 +1,4 @@
-interface NavLink {
+interface NavItem {
   label: string;
   href: string;
 }
@@ -6,7 +6,7 @@ interface NavLink {
 interface SiteConfig {
   name: string;
   tagline?: string;
-  nav: NavLink[];
+  nav: NavItem[];
   links: {
     patreon: string;
   };
@@ -14,11 +14,14 @@ interface SiteConfig {
 
 const SITE: SiteConfig = {
   name: 'Lair of Artificer',
-  nav: [{ label: 'Converter', href: '/' }],
+  nav: [
+    { label: 'Home', href: '/' },
+    { label: 'Converter', href: '/converter' },
+  ],
   links: {
     patreon: 'https://www.patreon.com/cw/LairofArtificer',
   },
 };
 
 export { SITE };
-export type { NavLink, SiteConfig };
+export type { NavItem, SiteConfig };

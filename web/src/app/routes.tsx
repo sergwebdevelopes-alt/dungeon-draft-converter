@@ -1,0 +1,28 @@
+import { lazy } from 'react';
+import { Route, Routes } from 'react-router';
+import type { SiteConfig } from '../shared/config/site.ts';
+import { PageShell } from './layout/PageShell.tsx';
+import { NotFoundPage } from './NotFoundPage.tsx';
+
+const HomePage = lazy(async () => ({
+  default: (await import('../features/home/ui/HomePage.tsx')).HomePage,
+}));
+
+const ConverterPage = lazy(async () => ({
+  default: (await import('../features/converter/ui/ConverterPage.tsx'))
+    .ConverterPage,
+}));
+
+function AppRoutes({ site }: { site: SiteConfig }) {
+  return (
+    <Routes>
+      <Route element={<PageShell site={site} />}>
+        <Route index element={<HomePage />} />
+        <Route path="converter" element={<ConverterPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+    </Routes>
+  );
+}
+
+export { AppRoutes };

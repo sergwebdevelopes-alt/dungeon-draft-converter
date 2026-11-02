@@ -1,12 +1,12 @@
+import { BrowserRouter } from 'react-router';
 import { SITE } from '../shared/config/site.ts';
-import { ConverterPage } from '../features/converter/ui/ConverterPage.tsx';
-import { PageShell } from './layout/PageShell.tsx';
+import { AppRoutes } from './routes.tsx';
 
 function App() {
   return (
-    <PageShell site={SITE} currentPath={window.location.pathname}>
-      <ConverterPage />
-    </PageShell>
+    <BrowserRouter>
+      <AppRoutes site={SITE} />
+    </BrowserRouter>
   );
 }
 

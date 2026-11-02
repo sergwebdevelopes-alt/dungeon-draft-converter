@@ -45,6 +45,7 @@
     "express": "^5.2.1",
     "fflate": "^0.8.3",
     "multer": "^2.5.0",
+    "react-router": "^8.5.1",
     "sharp": "^0.35.5"
   }
 }
