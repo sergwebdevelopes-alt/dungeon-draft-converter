@@ -146,8 +146,11 @@ function MapModal({
             </>
           )}
 
-          <p className="justify-self-center rounded-full bg-black/45 px-3 py-1 text-sm text-white tabular-nums">
+          <p className="justify-self-center rounded-full bg-black/60 px-3 py-1 text-sm text-white tabular-nums">
             {position.index + 1} of {position.total}
+          </p>
+          <p role="status" className="sr-only">
+            {map.title}, {position.index + 1} of {position.total}
           </p>
         </Swipeable>
 

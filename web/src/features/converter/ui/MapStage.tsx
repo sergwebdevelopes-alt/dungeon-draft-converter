@@ -98,7 +98,7 @@ function GridLayer({
         </div>
       </div>
       {compare && (
-        <>
+        <div className="group absolute inset-0">
           <span className={`${LABEL} left-3`}>No grid</span>
           <span className={`${LABEL} right-3`}>Grid</span>
           <div
@@ -108,7 +108,10 @@ function GridLayer({
             style={slide(split)}
           >
             <div className="absolute inset-y-0 left-0 w-0.5 -translate-x-1/2 bg-gold shadow-[0_0_14px_var(--gold)]">
-              <span className="absolute top-1/2 left-1/2 grid size-8 -translate-1/2 place-items-center rounded-full bg-gold text-sm font-bold text-on-gold shadow-lg">
+              <span
+                data-testid="grid-handle"
+                className="absolute top-1/2 left-1/2 grid size-8 -translate-1/2 place-items-center rounded-full bg-gold text-sm font-bold text-on-gold shadow-lg group-has-focus-visible:outline-3 group-has-focus-visible:outline-offset-2 group-has-focus-visible:outline-brand-text"
+              >
                 ⇔
               </span>
             </div>
@@ -122,7 +125,7 @@ function GridLayer({
             onChange={(event) => setSplit(Number(event.target.value))}
             className="absolute inset-0 size-full cursor-ew-resize opacity-0"
           />
-        </>
+        </div>
       )}
     </>
   );

@@ -17,6 +17,7 @@ describe('useRotation', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('moves to the next item on each interval and wraps', () => {
@@ -69,5 +70,23 @@ describe('useRotation', () => {
       vi.advanceTimersByTime(2000);
     });
     expect(result.current.index).toBe(0);
+  });
+
+  it('holds still while paused and starts a full wait when resumed', () => {
+    const { result, rerender } = renderHook(
+      ({ paused }) => useRotation(3, 1000, paused),
+      { initialProps: { paused: true } },
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(2500);
+    });
+    expect(result.current.index).toBe(0);
+
+    rerender({ paused: false });
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(result.current.index).toBe(1);
   });
 });

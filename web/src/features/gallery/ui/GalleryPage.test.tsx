@@ -190,6 +190,9 @@ describe('GalleryPage', () => {
     expect(
       within(dialog()!).getByRole('heading', { name: 'Blue Inn' }),
     ).toBeInTheDocument();
+    expect(within(dialog()!).getByRole('status')).toHaveTextContent(
+      'Blue Inn, 2 of 3',
+    );
     expect(location()).toBe('/maps?map=inn');
 
     await userEvent.click(screen.getByRole('button', { name: 'Previous map' }));

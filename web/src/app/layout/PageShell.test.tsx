@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import type { SiteConfig } from '../../shared/config/site.ts';
@@ -41,6 +42,18 @@ describe('PageShell', () => {
     renderShell('/maps');
 
     expect(screen.getByRole('main')).toHaveTextContent('Maps content');
+  });
+
+  it('lets keyboard users skip the header straight to the page', async () => {
+    renderShell('/maps');
+
+    await userEvent.tab();
+    const skip = screen.getByRole('link', { name: 'Skip to content' });
+    expect(skip).toHaveFocus();
+
+    await userEvent.keyboard('{Enter}');
+
+    expect(screen.getByRole('main')).toHaveFocus();
   });
 
   it('marks only the current page in the nav', () => {

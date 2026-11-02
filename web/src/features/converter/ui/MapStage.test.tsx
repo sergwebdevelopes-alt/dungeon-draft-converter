@@ -86,6 +86,19 @@ describe('MapStage', () => {
     });
   });
 
+  it('shows keyboard focus on the visible handle of the hidden slider', () => {
+    renderStage({ grid: 'both' });
+
+    const slider = screen.getByRole('slider', {
+      name: 'Compare without and with the grid',
+    });
+    const handle = screen.getByTestId('grid-handle');
+
+    expect(slider.closest('.group')).not.toBeNull();
+    expect(handle.closest('.group')).toBe(slider.closest('.group'));
+    expect(handle).toHaveClass('group-has-focus-visible:outline-3');
+  });
+
   it('places the logo like the export does', async () => {
     renderStage({
       logo: new File(['l'], 'logo.png', { type: 'image/png' }),

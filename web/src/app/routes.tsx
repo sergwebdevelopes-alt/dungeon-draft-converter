@@ -4,7 +4,7 @@ import { galleryApi } from '../features/gallery/api.ts';
 import type { SiteConfig } from '../shared/config/site.ts';
 import { PageShell } from './layout/PageShell.tsx';
 import { NotFoundPage } from './NotFoundPage.tsx';
-import { ScrollToTop } from './ScrollToTop.tsx';
+import { PageChange } from './PageChange.tsx';
 
 const HomePage = lazy(async () => {
   void galleryApi.prefetchMaps();
@@ -31,7 +31,7 @@ const GalleryPage = lazy(async () => {
 function AppRoutes({ site }: { site: SiteConfig }) {
   return (
     <>
-      <ScrollToTop />
+      <PageChange />
       <Routes>
         <Route element={<PageShell site={site} />}>
           <Route index element={<HomePage />} />

@@ -1,3 +1,4 @@
+import { useState, type FocusEvent } from 'react';
 import { Link } from 'react-router';
 import { useRotation } from '../../../shared/lib/useRotation.ts';
 import { Backdrop } from '../../../shared/ui/Backdrop.tsx';
@@ -23,7 +24,7 @@ function BackdropPicker({
           key={map.slug}
           type="button"
           aria-label={`Show ${map.title}`}
-          aria-current={i === index}
+          aria-pressed={i === index}
           onClick={() => onSelect(i)}
           className="grid h-11 place-items-center"
         >
@@ -36,11 +37,32 @@ function BackdropPicker({
   );
 }
 
+function useHeld() {
+  const [pointer, setPointer] = useState(false);
+  const [focus, setFocus] = useState(false);
+
+  return {
+    held: pointer || focus,
+    handlers: {
+      onPointerEnter: () => setPointer(true),
+      onPointerLeave: () => setPointer(false),
+      onFocus: () => setFocus(true),
+      onBlur(event: FocusEvent) {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          setFocus(false);
+        }
+      },
+    },
+  };
+}
+
 function Hero({ maps }: { maps: MapEntry[] }) {
-  const { index, select } = useRotation(maps.length, ROTATE_MS);
+  const { held, handlers } = useHeld();
+  const { index, select } = useRotation(maps.length, ROTATE_MS, held);
 
   return (
     <section
+      {...handlers}
       aria-labelledby="hero-title"
       className="relative isolate flex min-h-[calc(100svh-var(--header-height))] items-end overflow-hidden"
     >

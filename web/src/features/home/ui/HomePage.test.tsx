@@ -80,7 +80,7 @@ describe('HomePage', () => {
     const picker = await screen.findByRole('group', { name: 'Backdrop maps' });
     const buttons = within(picker).getAllByRole('button');
     expect(buttons).toHaveLength(5);
-    expect(buttons[0]).toHaveAttribute('aria-current', 'true');
+    expect(buttons[0]).toHaveAttribute('aria-pressed', 'true');
 
     await userEvent.click(
       within(picker).getByRole('button', { name: 'Show Frozen Cavern' }),
@@ -88,8 +88,8 @@ describe('HomePage', () => {
 
     expect(
       within(picker).getByRole('button', { name: 'Show Frozen Cavern' }),
-    ).toHaveAttribute('aria-current', 'true');
-    expect(buttons[0]).toHaveAttribute('aria-current', 'false');
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(buttons[0]).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('links the latest maps straight to their gallery modal', async () => {

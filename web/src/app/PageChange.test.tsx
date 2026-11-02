@@ -2,7 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { Link, MemoryRouter, Route, Routes, useNavigate } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ScrollToTop } from './ScrollToTop.tsx';
+import { PageChange } from './PageChange.tsx';
 
 let goBack: () => void = () => undefined;
 
@@ -24,16 +24,18 @@ function Page({ name }: { name: string }) {
 function renderApp() {
   render(
     <MemoryRouter initialEntries={['/']}>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<Page name="Home" />} />
-        <Route path="/maps" element={<Page name="Maps" />} />
-      </Routes>
+      <PageChange />
+      <main id="content" tabIndex={-1}>
+        <Routes>
+          <Route path="/" element={<Page name="Home" />} />
+          <Route path="/maps" element={<Page name="Maps" />} />
+        </Routes>
+      </main>
     </MemoryRouter>,
   );
 }
 
-describe('ScrollToTop', () => {
+describe('PageChange', () => {
   const scrollTo = vi.fn();
   const scrollIntoView = vi.fn();
 
@@ -56,6 +58,26 @@ describe('ScrollToTop', () => {
 
     expect(screen.getByRole('heading', { name: 'Maps' })).toBeInTheDocument();
     expect(scrollTo).toHaveBeenCalledWith(0, 0);
+  });
+
+  it('moves focus to the new page so screen readers start there', async () => {
+    renderApp();
+    const link = screen.getByRole('link', { name: 'Maps' });
+    link.focus();
+
+    await userEvent.click(link);
+
+    expect(screen.getByRole('main')).toHaveFocus();
+  });
+
+  it('leaves focus alone when a link points within the same page', async () => {
+    renderApp();
+    const membership = screen.getByRole('link', { name: 'Membership' });
+    membership.focus();
+
+    await userEvent.click(membership);
+
+    expect(membership).toHaveFocus();
   });
 
   it('keeps the position when only the query changes', async () => {

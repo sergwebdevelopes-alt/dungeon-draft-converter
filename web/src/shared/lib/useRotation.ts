@@ -6,12 +6,12 @@ function prefersReducedMotion(): boolean {
   );
 }
 
-function useRotation(count: number, intervalMs: number) {
+function useRotation(count: number, intervalMs: number, paused = false) {
   const [index, setIndex] = useState(0);
   const [restartKey, setRestartKey] = useState(0);
 
   useEffect(() => {
-    if (count < 2 || prefersReducedMotion()) {
+    if (paused || count < 2 || prefersReducedMotion()) {
       return;
     }
 
@@ -21,7 +21,7 @@ function useRotation(count: number, intervalMs: number) {
       }
     }, intervalMs);
     return () => clearInterval(timer);
-  }, [count, intervalMs, restartKey]);
+  }, [count, intervalMs, paused, restartKey]);
 
   function select(next: number) {
     setIndex(next);
