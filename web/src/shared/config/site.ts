@@ -41,7 +41,7 @@ const SITE: SiteConfig = {
   ],
   links: {
     patreon: 'https://www.patreon.com/cw/LairofArtificer',
-    twitter: 'https://twitter.com/lairofartificer',
+    // twitter: 'https://twitter.com/lairofartificer',
   },
   membership: {
     plans: [
