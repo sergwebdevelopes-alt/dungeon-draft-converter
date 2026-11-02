@@ -7,7 +7,7 @@ import { mapImages, type MapEntry } from '../../gallery/index.ts';
 
 const ROTATE_MS = 8000;
 
-function BackdropCredit({
+function BackdropPicker({
   maps,
   index,
   onSelect,
@@ -16,34 +16,22 @@ function BackdropCredit({
   index: number;
   onSelect: (index: number) => void;
 }) {
-  const current = maps[index];
-
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm">
-      <div className="flex gap-1.5" role="group" aria-label="Backdrop maps">
-        {maps.map((map, i) => (
-          <button
-            key={map.slug}
-            type="button"
-            aria-label={`Show ${map.title}`}
-            aria-current={i === index}
-            onClick={() => onSelect(i)}
-            className="grid h-11 place-items-center"
-          >
-            <span
-              className={`block h-1 rounded-full transition-all duration-500 ${i === index ? 'w-9 bg-gold' : 'w-5 bg-text/25 hover:bg-text/50'}`}
-            />
-          </button>
-        ))}
-      </div>
-      <Link
-        to={`/maps?map=${current.slug}`}
-        aria-label={`Open ${current.title}`}
-        className="text-muted transition-colors hover:text-text"
-      >
-        <strong className="text-text">{current.title}</strong>{' '}
-        <span aria-hidden="true">→</span>
-      </Link>
+    <div className="flex gap-1.5" role="group" aria-label="Backdrop maps">
+      {maps.map((map, i) => (
+        <button
+          key={map.slug}
+          type="button"
+          aria-label={`Show ${map.title}`}
+          aria-current={i === index}
+          onClick={() => onSelect(i)}
+          className="grid h-11 place-items-center"
+        >
+          <span
+            className={`block h-1 rounded-full transition-all duration-500 ${i === index ? 'w-9 bg-gold' : 'w-5 bg-text/25 hover:bg-text/50'}`}
+          />
+        </button>
+      ))}
     </div>
   );
 }
@@ -54,7 +42,7 @@ function Hero({ maps }: { maps: MapEntry[] }) {
   return (
     <section
       aria-labelledby="hero-title"
-      className="relative isolate flex min-h-[min(86svh,860px)] items-end overflow-hidden"
+      className="relative isolate flex min-h-[calc(100svh-var(--header-height))] items-end overflow-hidden"
     >
       <Backdrop
         images={maps.map((map) => mapImages(map.slug).backdrop)}
@@ -95,7 +83,7 @@ function Hero({ maps }: { maps: MapEntry[] }) {
           </a>
         </Reveal>
         {maps.length > 0 && (
-          <BackdropCredit maps={maps} index={index} onSelect={select} />
+          <BackdropPicker maps={maps} index={index} onSelect={select} />
         )}
       </Container>
     </section>

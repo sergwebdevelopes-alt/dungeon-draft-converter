@@ -254,7 +254,7 @@ describe('GalleryPage', () => {
     await renderGallery();
 
     expect(
-      screen.getByRole('region', { name: 'Join the Lair' }),
+      screen.getByRole('region', { name: 'Join the Lair of Artificer' }),
     ).toBeInTheDocument();
   });
 

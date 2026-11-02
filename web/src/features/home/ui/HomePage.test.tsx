@@ -73,22 +73,22 @@ describe('HomePage', () => {
     ).toHaveAttribute('href', '#membership');
   });
 
-  it('credits the backdrop map and lets the visitor pick another', async () => {
+  it('lets the visitor pick a backdrop map', async () => {
     await renderHome();
 
     const picker = await screen.findByRole('group', { name: 'Backdrop maps' });
-    expect(within(picker).getAllByRole('button')).toHaveLength(5);
-    expect(
-      screen.getByRole('link', { name: 'Open Submerged Library' }),
-    ).toHaveAttribute('href', '/maps?map=library');
+    const buttons = within(picker).getAllByRole('button');
+    expect(buttons).toHaveLength(5);
+    expect(buttons[0]).toHaveAttribute('aria-current', 'true');
 
     await userEvent.click(
       within(picker).getByRole('button', { name: 'Show Frozen Cavern' }),
     );
 
     expect(
-      screen.getByRole('link', { name: 'Open Frozen Cavern' }),
-    ).toHaveAttribute('href', '/maps?map=cavern');
+      within(picker).getByRole('button', { name: 'Show Frozen Cavern' }),
+    ).toHaveAttribute('aria-current', 'true');
+    expect(buttons[0]).toHaveAttribute('aria-current', 'false');
   });
 
   it('links the latest maps straight to their gallery modal', async () => {
@@ -131,7 +131,7 @@ describe('HomePage', () => {
     await renderHome();
 
     const membership = within(
-      screen.getByRole('region', { name: 'Join the Lair' }),
+      screen.getByRole('region', { name: 'Join the Lair of Artificer' }),
     );
     expect(
       membership
@@ -146,7 +146,7 @@ describe('HomePage', () => {
     expect(screen.queryByRole('group', { name: 'Backdrop maps' })).toBeNull();
     expect(screen.queryByRole('region', { name: 'Latest maps' })).toBeNull();
     expect(
-      screen.getByRole('region', { name: 'Join the Lair' }),
+      screen.getByRole('region', { name: 'Join the Lair of Artificer' }),
     ).toBeInTheDocument();
   });
 });

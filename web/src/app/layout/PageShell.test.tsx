@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import type { SiteConfig } from '../../shared/config/site.ts';
@@ -57,8 +57,10 @@ describe('PageShell', () => {
     renderShell();
 
     const links = [
-      screen.getByRole('link', { name: 'Patreon' }),
-      screen.getByRole('link', { name: 'Support on Patreon' }),
+      within(screen.getByRole('banner')).getByRole('link', { name: 'Patreon' }),
+      within(screen.getByRole('contentinfo')).getByRole('link', {
+        name: 'Patreon',
+      }),
     ];
     for (const link of links) {
       expect(link).toHaveAttribute('href', 'https://example.com/patreon');
@@ -67,11 +69,13 @@ describe('PageShell', () => {
     }
   });
 
-  it('shows the copyright year and site name in the footer', () => {
+  it('has a theme switch in the header', () => {
     renderShell();
 
-    expect(screen.getByRole('contentinfo')).toHaveTextContent(
-      `© ${new Date().getFullYear()} Test Lair`,
-    );
+    expect(
+      within(screen.getByRole('banner')).getByRole('button', {
+        name: /Switch to (light|dark) theme/,
+      }),
+    ).toBeInTheDocument();
   });
 });

@@ -185,6 +185,7 @@ function GalleryPage({ api, site = SITE }: GalleryPageProps) {
       </Container>
 
       <MembershipSection
+        siteName={site.name}
         plans={site.membership.plans}
         followUrl={site.links.patreon}
       />

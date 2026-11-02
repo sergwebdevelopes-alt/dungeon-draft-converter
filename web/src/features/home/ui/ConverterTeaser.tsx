@@ -23,12 +23,7 @@ function GridWipe({ map }: { map: MapEntry }) {
         className="absolute inset-0 size-full object-cover"
       />
       <div className="absolute inset-0 animate-wipe motion-reduce:animate-none motion-reduce:[clip-path:inset(0_0_0_50%)]">
-        <div className="absolute inset-0 bg-black/15" />
-        <GridOverlay
-          columns={map.squares.x}
-          rows={map.squares.y}
-          look="highlight"
-        />
+        <GridOverlay columns={map.squares.x} rows={map.squares.y} />
       </div>
       <div
         aria-hidden="true"

@@ -19,6 +19,7 @@ describe('MembershipSection', () => {
   it('shows each plan with its price and a join link', () => {
     render(
       <MembershipSection
+        siteName="Lair of Artificer"
         plans={[
           plan(),
           plan({
@@ -54,9 +55,24 @@ describe('MembershipSection', () => {
     ]);
   });
 
+  it('invites visitors to join by the site name', () => {
+    render(
+      <MembershipSection
+        siteName="Lair of Artificer"
+        plans={[plan()]}
+        followUrl="https://example.com"
+      />,
+    );
+
+    expect(
+      screen.getByRole('heading', { name: 'Join the Lair of Artificer' }),
+    ).toBeInTheDocument();
+  });
+
   it('offers following for free', () => {
     render(
       <MembershipSection
+        siteName="Lair of Artificer"
         plans={[plan()]}
         followUrl="https://www.patreon.com/cw/LairofArtificer"
       />,
@@ -69,7 +85,11 @@ describe('MembershipSection', () => {
 
   it('shows nothing without plans', () => {
     const { container } = render(
-      <MembershipSection plans={[]} followUrl="https://example.com" />,
+      <MembershipSection
+        siteName="Lair of Artificer"
+        plans={[]}
+        followUrl="https://example.com"
+      />,
     );
 
     expect(container).toBeEmptyDOMElement();

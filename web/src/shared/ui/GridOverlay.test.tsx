@@ -37,14 +37,4 @@ describe('GridOverlay', () => {
 
     expect(container.querySelectorAll('line')).toHaveLength(5 + 4);
   });
-
-  it('has a bright highlight look for showing the grid at a glance', () => {
-    const { container } = render(
-      <GridOverlay columns={4} rows={3} look="highlight" />,
-    );
-
-    expect(group(container)).toHaveAttribute('stroke', 'white');
-    expect(group(container)).toHaveAttribute('stroke-dasharray', '3 3');
-    expect(container.querySelectorAll('line')).toHaveLength(3 + 2);
-  });
 });

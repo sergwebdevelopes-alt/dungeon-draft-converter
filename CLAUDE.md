@@ -36,6 +36,7 @@ web/src/
 │   ├── http/      HttpClient port + fetch adapter (only file using fetch); index.ts exports the `http` instance
 │   ├── storage/   KeyValueStore port + localStorage adapter; index.ts exports `storage`
 │   ├── lib/       format.ts, save-file.ts, useObjectUrl.ts
+│   ├── theme/     light/dark choice (storage port) + toggle; web/public/theme.js applies a saved choice before React starts
 │   ├── ui/        shared presentational components
 │   └── config/    site.ts (site name, nav, links, membership plans)
 └── features/<feature>/

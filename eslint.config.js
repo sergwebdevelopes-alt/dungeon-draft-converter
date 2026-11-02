@@ -22,6 +22,12 @@ export default tseslint.config(
     extends: [tseslint.configs.disableTypeChecked],
   },
   {
+    files: ['web/public/**/*.js'],
+    languageOptions: {
+      globals: { document: 'readonly', localStorage: 'readonly' },
+    },
+  },
+  {
     files: ['web/src/test-setup.ts'],
     rules: {
       '@typescript-eslint/no-empty-object-type': [

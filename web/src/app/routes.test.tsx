@@ -51,7 +51,7 @@ describe('AppRoutes', () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: 'Join the Lair' }),
+      screen.getByRole('heading', { name: 'Join the Lair of Artificer' }),
     ).toBeInTheDocument();
   });
 

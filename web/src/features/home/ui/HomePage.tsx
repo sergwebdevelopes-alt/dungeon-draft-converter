@@ -33,6 +33,7 @@ function HomePage({ api, site = SITE }: HomePageProps) {
       <LatestMaps maps={maps.slice(0, LATEST_MAPS)} total={maps.length} />
       <ConverterTeaser map={teaserMap(maps)} />
       <MembershipSection
+        siteName={site.name}
         plans={site.membership.plans}
         followUrl={site.links.patreon}
       />

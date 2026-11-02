@@ -4,11 +4,16 @@ import { ExternalLink } from '../../../shared/ui/ExternalLink.tsx';
 import { PlanCard } from './PlanCard.tsx';
 
 interface MembershipSectionProps {
+  siteName: string;
   plans: MembershipPlan[];
   followUrl: string;
 }
 
-function MembershipSection({ plans, followUrl }: MembershipSectionProps) {
+function MembershipSection({
+  siteName,
+  plans,
+  followUrl,
+}: MembershipSectionProps) {
   if (plans.length === 0) {
     return null;
   }
@@ -32,7 +37,7 @@ function MembershipSection({ plans, followUrl }: MembershipSectionProps) {
             id="membership-title"
             className="font-display text-4xl font-bold tracking-wide sm:text-5xl"
           >
-            Join the Lair
+            Join the {siteName}
           </h2>
           <p className="text-lg text-muted">
             Four to eight new battle maps every month, with VTT-ready files and

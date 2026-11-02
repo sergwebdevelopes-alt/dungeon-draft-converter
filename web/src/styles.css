@@ -22,12 +22,13 @@
   --success: #9fd8b8;
   --success-soft: #16382f;
   --glow: rgb(241 214 119 / 0.08);
+  --header-height: 4rem;
 
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not([data-theme='dark']) {
     --bg: #f6f0dc;
     --surface: #fffbea;
     --sunken: #f1e9cd;
@@ -47,6 +48,27 @@
 
     color-scheme: light;
   }
+}
+
+:root[data-theme='light'] {
+  --bg: #f6f0dc;
+  --surface: #fffbea;
+  --sunken: #f1e9cd;
+  --line: #d9cfae;
+  --text: #1f2a2c;
+  --muted: #5b6b6e;
+  --brand: #006a82;
+  --brand-text: #006a82;
+  --on-brand: #fffbea;
+  --gold: #b8902a;
+  --on-gold: #1f2a2c;
+  --danger: #8b3a2e;
+  --danger-soft: #f6dfd6;
+  --success: #2f6b4a;
+  --success-soft: #dcefe2;
+  --glow: rgb(0 106 130 / 0.07);
+
+  color-scheme: light;
 }
 
 @theme inline {
