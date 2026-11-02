@@ -1,38 +1,9 @@
 import { useId } from 'react';
-import type { LogoLimits, LogoPlacement } from './api.ts';
-import { useObjectUrl } from './useObjectUrl.ts';
+import { useObjectUrl } from '../../../shared/lib/useObjectUrl.ts';
+import { clamp, type Limit } from '../model/placement.ts';
+import type { LogoLimits, LogoPlacement } from '../model/types.ts';
 
 const PREVIEW_HEIGHT = 80;
-
-type Limit = LogoLimits[keyof LogoLimits];
-
-function clamp(value: number, { min, max }: Limit): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-function clampPlacement(
-  placement: LogoPlacement,
-  limits: LogoLimits,
-): LogoPlacement {
-  return {
-    size: clamp(placement.size, limits.size),
-    margin: clamp(placement.margin, limits.margin),
-  };
-}
-
-function defaultPlacement(limits: LogoLimits): LogoPlacement {
-  return { size: limits.size.default, margin: limits.margin.default };
-}
-
-function isDefaultPlacement(
-  placement: LogoPlacement,
-  limits: LogoLimits,
-): boolean {
-  return (
-    placement.size === limits.size.default &&
-    placement.margin === limits.margin.default
-  );
-}
 
 interface LogoPlacementPanelProps {
   logo: File;
@@ -51,19 +22,24 @@ function LogoPlacementPanel({
 }: LogoPlacementPanelProps) {
   const logoUrl = useObjectUrl(logo);
   const box = (PREVIEW_HEIGHT * value.size) / 100;
-  const margin = (PREVIEW_HEIGHT * value.margin) / 100;
+  const offset = (PREVIEW_HEIGHT * value.margin) / 100;
+
   return (
-    <div className="placement">
-      <div className="placement-preview" aria-hidden="true">
+    <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4">
+      <div
+        aria-hidden="true"
+        className="relative h-20 w-[120px] overflow-hidden rounded-md border border-line bg-sunken bg-[linear-gradient(var(--line)_1px,transparent_1px),linear-gradient(90deg,var(--line)_1px,transparent_1px)] bg-size-[20px_20px]"
+      >
         {logoUrl && (
           <img
             src={logoUrl}
             alt=""
-            style={{ width: box, height: box, right: margin, bottom: margin }}
+            className="absolute object-contain"
+            style={{ width: box, height: box, right: offset, bottom: offset }}
           />
         )}
       </div>
-      <div className="placement-sliders">
+      <div className="grid gap-3">
         <Slider
           label="Size"
           value={value.size}
@@ -76,7 +52,7 @@ function LogoPlacementPanel({
           value={value.margin}
           limit={limits.margin}
           disabled={disabled}
-          onChange={(margin) => onChange({ ...value, margin })}
+          onChange={(newMargin) => onChange({ ...value, margin: newMargin })}
         />
       </div>
     </div>
@@ -95,14 +71,15 @@ function Slider({ label, value, limit, disabled, onChange }: SliderProps) {
   const id = useId();
 
   return (
-    <div className="slider">
-      <label htmlFor={id}>
+    <div className="grid gap-1">
+      <label htmlFor={id} className="flex justify-between text-sm">
         <span>{label}</span>
-        <span className="slider-value">{value}%</span>
+        <span className="text-muted tabular-nums">{value}%</span>
       </label>
       <input
         id={id}
         type="range"
+        className="h-11 w-full disabled:opacity-50 sm:h-6"
         min={limit.min}
         max={limit.max}
         step={limit.step}
@@ -114,9 +91,4 @@ function Slider({ label, value, limit, disabled, onChange }: SliderProps) {
   );
 }
 
-export {
-  LogoPlacementPanel,
-  clampPlacement,
-  defaultPlacement,
-  isDefaultPlacement,
-};
+export { LogoPlacementPanel };

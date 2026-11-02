@@ -27,6 +27,30 @@ src/
 - Core errors extend `InvalidInputError` (→ 400) or `UnprocessableError` (→ 422) from `core/errors.ts`; `http/errors.ts` maps them by kind. HTTP-only errors use `HttpError`.
 - Dependencies are passed in (for example `createApp` creates the `ConversionQueue` and hands it to the routes), not kept in module-level globals.
 
+### Front end (`web/`)
+
+```
+web/src/
+├── app/           entry, App, layout (header, footer, page shell)
+├── shared/
+│   ├── http/      HttpClient port + fetch adapter (only file using fetch); index.ts exports the `http` instance
+│   ├── storage/   KeyValueStore port + localStorage adapter; index.ts exports `storage`
+│   ├── lib/       format.ts, save-file.ts, useObjectUrl.ts
+│   ├── ui/        shared presentational components
+│   └── config/    site.ts (site name, nav, Patreon link)
+└── features/<feature>/
+    ├── api.ts     the feature's contract over HttpClient, plus a ready instance
+    ├── model/     pure TypeScript (no React, no fetch, no storage): types, rules, reducer
+    ├── use*.ts    the hook joining model and api (effects only)
+    └── ui/        presentational components: data and callbacks through props
+```
+
+- Components never fetch or touch storage; logic goes in `model/` with its own tests.
+- A feature reaches the network only through its `api.ts`, and storage only through `shared/storage`.
+- No DI container: modules export ready instances (`http`, `storage`, `converterApi`); hooks take them as default parameters so tests can pass fakes.
+- The ports rule covers runtime libraries (HTTP, storage, animation). UI frameworks and build tools (React, Tailwind, Vite, Vitest) are used directly.
+- Styling uses Tailwind with colour and font tokens in `web/src/styles.css`.
+
 ## Code style
 
 - No comments in code unless asked.

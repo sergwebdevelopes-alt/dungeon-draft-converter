@@ -22,6 +22,15 @@ export default tseslint.config(
     extends: [tseslint.configs.disableTypeChecked],
   },
   {
+    files: ['web/src/test-setup.ts'],
+    rules: {
+      '@typescript-eslint/no-empty-object-type': [
+        'error',
+        { allowInterfaces: 'with-single-extends' },
+      ],
+    },
+  },
+  {
     files: ['src/**/*.test.ts'],
     rules: {
       '@typescript-eslint/no-floating-promises': [

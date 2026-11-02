@@ -1,5 +1,6 @@
-import type { Config, LogoPlacement, Variant } from './api.ts';
-import { clampPlacement, defaultPlacement } from './LogoPlacement.tsx';
+import type { KeyValueStore } from '../../../shared/storage/index.ts';
+import { clampPlacement, defaultPlacement } from './placement.ts';
+import type { Config, LogoPlacement, Variant } from './types.ts';
 
 const STORAGE_KEY = 'dungeon-draft-converter:settings';
 
@@ -36,16 +37,8 @@ function readPlacement(saved: unknown, config: Config): LogoPlacement {
   return clampPlacement({ size, margin }, config.logo);
 }
 
-function readStorage(): unknown {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
-  } catch {
-    return null;
-  }
-}
-
-function loadSettings(config: Config): Settings {
-  const saved = readStorage();
+function loadSettings(config: Config, store: KeyValueStore): Settings {
+  const saved = store.read(STORAGE_KEY);
   const record =
     typeof saved === 'object' && saved !== null
       ? (saved as Record<string, unknown>)
@@ -61,12 +54,9 @@ function loadSettings(config: Config): Settings {
   };
 }
 
-function saveSettings(settings: Settings): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch {
-    return;
-  }
+function saveSettings(settings: Settings, store: KeyValueStore): void {
+  store.write(STORAGE_KEY, settings);
 }
 
-export { loadSettings, saveSettings };
+export { STORAGE_KEY, loadSettings, saveSettings };
+export type { Settings };

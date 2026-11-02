@@ -1,6 +1,6 @@
 import { useEffect, useState, type DragEvent, type MouseEvent } from 'react';
-import { formatBytes } from './format.ts';
-import { useObjectUrl } from './useObjectUrl.ts';
+import { formatBytes } from '../../../shared/lib/format.ts';
+import { useObjectUrl } from '../../../shared/lib/useObjectUrl.ts';
 
 interface DropZoneProps {
   file: File | null;
@@ -13,6 +13,33 @@ interface DropZoneProps {
   multiple?: boolean;
   onFiles: (files: File[]) => void;
   onClear?: () => void;
+}
+
+function zoneClassName({
+  compact,
+  over,
+  hasFile,
+  disabled,
+}: {
+  compact: boolean;
+  over: boolean;
+  hasFile: boolean;
+  disabled: boolean;
+}): string {
+  return [
+    'flex items-center gap-3 rounded-lg border-[1.5px] text-left transition-colors',
+    compact
+      ? 'min-h-14 px-3 py-2.5'
+      : 'flex-col justify-center px-4 py-6 text-center sm:py-8',
+    hasFile
+      ? 'border-solid border-line bg-sunken'
+      : 'border-dashed border-line bg-sunken',
+    over ? 'border-gold bg-gold/10' : '',
+    disabled
+      ? 'cursor-not-allowed opacity-60'
+      : 'cursor-pointer hover:border-gold/70',
+    'has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-brand-text',
+  ].join(' ');
 }
 
 function DropZone({
@@ -68,19 +95,9 @@ function DropZone({
     onClear?.();
   }
 
-  const className = [
-    'dropzone',
-    compact && 'is-compact',
-    over && 'is-over',
-    file && 'has-file',
-    disabled && 'is-disabled',
-  ]
-    .filter(Boolean)
-    .join(' ');
-
   return (
     <label
-      className={className}
+      className={zoneClassName({ compact, over, hasFile: !!file, disabled })}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -102,21 +119,25 @@ function DropZone({
       {file ? (
         <>
           {previewUrl ? (
-            <img className="dropzone-preview" src={previewUrl} alt="" />
+            <img
+              className="size-10 shrink-0 rounded-md border border-line bg-surface object-contain"
+              src={previewUrl}
+              alt=""
+            />
           ) : (
             <MapIcon />
           )}
-          <span className="dropzone-text">
-            <strong className="file-name">{file.name}</strong>
-            <span className="muted">{formatBytes(file.size)}</span>
+          <span className="grid min-w-0 flex-1">
+            <strong className="truncate font-bold">{file.name}</strong>
+            <span className="text-sm text-muted">{formatBytes(file.size)}</span>
           </span>
           {!disabled && (
-            <span className="dropzone-actions">
-              <span className="link">Change</span>
+            <span className="flex shrink-0 items-center gap-3 text-sm">
+              <span className="font-bold text-brand-text">Change</span>
               {onClear && (
                 <button
                   type="button"
-                  className="link-button"
+                  className="min-h-11 font-bold text-muted hover:text-danger"
                   onClick={handleClear}
                 >
                   Remove
@@ -128,10 +149,14 @@ function DropZone({
       ) : (
         <>
           <UploadIcon />
-          <span className="dropzone-text">
-            <strong>{title ?? 'Drop your file here'}</strong>
+          <span className="grid min-w-0">
+            <strong className="font-bold">
+              {title ?? 'Drop your file here'}
+            </strong>
             {hint !== '' && (
-              <span className="muted">{hint ?? 'or click to browse'}</span>
+              <span className="text-sm text-muted">
+                {hint ?? 'or click to browse'}
+              </span>
             )}
           </span>
         </>
@@ -142,7 +167,11 @@ function DropZone({
 
 function UploadIcon() {
   return (
-    <svg className="dropzone-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <svg
+      className="size-7 shrink-0 fill-none stroke-gold stroke-[1.6]"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
       <path d="M12 16V4m0 0-5 5m5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
     </svg>
   );
@@ -150,7 +179,11 @@ function UploadIcon() {
 
 function MapIcon() {
   return (
-    <svg className="dropzone-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <svg
+      className="size-7 shrink-0 fill-none stroke-gold stroke-[1.6]"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
       <path d="m9 4-5 2v14l5-2 6 2 5-2V4l-5 2-6-2Zm0 0v14m6-12v14" />
     </svg>
   );
