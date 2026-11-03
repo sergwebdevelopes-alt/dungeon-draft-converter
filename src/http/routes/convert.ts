@@ -1,5 +1,10 @@
 import { Router, type RequestHandler } from 'express';
 import type { ConversionQueue, PendingLimit } from '../../queue/index.ts';
+import {
+  logConversions,
+  logToConsole,
+  type LogConversion,
+} from '../convert/conversion-log.ts';
 import { convertHandler } from '../convert/handler.ts';
 import { HttpError } from '../errors.ts';
 import {
@@ -28,10 +33,12 @@ function limitPendingConversions(pendingLimit: PendingLimit): RequestHandler {
 function convertRouter(
   queue: ConversionQueue,
   pendingLimit: PendingLimit,
+  log: LogConversion = logToConsole,
 ): Router {
   const router = Router();
   router.post(
     '/convert',
+    logConversions(log),
     limitPendingConversions(pendingLimit),
     limitTotalUpload,
     createUploadDir,

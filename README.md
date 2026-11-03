@@ -14,7 +14,15 @@ docker compose up -d --build
 
 Open http://localhost:3000. To use a different port, run `HOST_PORT=8080 docker compose up -d --build`.
 
-`docker compose logs -f` follows the logs; `docker compose down` stops it.
+`docker compose logs -f` follows the logs; `docker compose down` stops it. Logs are rotated at 5 files of 10 MB.
+
+Every conversion request writes one JSON line, without file names or IP addresses:
+
+```text
+{"event":"conversion","result":"ok","status":200,"levels":2,"uploadMB":2.4,"presets":["JPG_70","WEBP_140"],"variants":["NoGrid","Grid"],"uploadMs":22,"queuedMs":1,"convertMs":1040,"tookMs":1063}
+```
+
+`result` is `ok`, `invalid` (4xx), `busy` (all places taken), `timeout`, `cancelled` (the visitor left) or `error` (5xx). For example, `docker compose logs app | grep '"event":"conversion"'` lists them.
 
 `GET /api/health` answers `{"ok":true}` (200) while the server is running and `{"ok":false}` (503) while it shuts down, for uptime monitors.
 

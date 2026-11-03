@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { formatDuration, formatMegabytes, formatMegapixels } from './format.ts';
+import {
+  formatDuration,
+  formatMegabytes,
+  formatMegapixels,
+  toMegabytes,
+} from './format.ts';
 
 describe('formatDuration', () => {
   it('uses seconds below one minute', () => {
@@ -37,6 +42,13 @@ describe('formatMegabytes', () => {
   it('rounds to one decimal', () => {
     assert.equal(formatMegabytes(1.25 * 1024 * 1024), '1.3 MB');
     assert.equal(formatMegabytes(1.24 * 1024 * 1024), '1.2 MB');
+  });
+});
+
+describe('toMegabytes', () => {
+  it('gives megabytes as a number rounded to one decimal', () => {
+    assert.equal(toMegabytes(31.26 * 1024 * 1024), 31.3);
+    assert.equal(toMegabytes(0), 0);
   });
 });
 

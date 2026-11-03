@@ -3,6 +3,7 @@ import http from 'node:http';
 import { after, before, describe, it } from 'node:test';
 import express from 'express';
 import { ConversionQueue, PendingLimit } from '../../queue/index.ts';
+import type { ConversionLogEntry } from '../convert/conversion-log.ts';
 import { errorHandler } from '../errors.ts';
 import { convertRouter } from './convert.ts';
 
@@ -13,12 +14,13 @@ describe('convertRouter', () => {
   let server: http.Server;
   let base: string;
   let pendingLimit: PendingLimit;
+  const logged: ConversionLogEntry[] = [];
 
   before(async () => {
     const queue = new ConversionQueue({ maxParallel: 1 });
     pendingLimit = new PendingLimit(1);
     const app = express();
-    app.use(convertRouter(queue, pendingLimit));
+    app.use(convertRouter(queue, pendingLimit, (entry) => logged.push(entry)));
     app.use(errorHandler);
 
     server = await new Promise<http.Server>((resolve) => {
@@ -121,6 +123,34 @@ describe('convertRouter', () => {
 
     assert.equal(res.statusCode, 411);
     assert.ok(await placeIsFree());
+  });
+
+  async function waitForLogs(count: number): Promise<void> {
+    const deadline = Date.now() + 5_000;
+    while (logged.length < count && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+  }
+
+  it('logs refused and invalid requests too', async () => {
+    const before = logged.length;
+    const release = pendingLimit.reserve();
+    assert.ok(release);
+    try {
+      await (await postEmptyForm()).arrayBuffer();
+    } finally {
+      release();
+    }
+    await (await postEmptyForm()).arrayBuffer();
+    await waitForLogs(before + 2);
+
+    assert.deepEqual(
+      logged.slice(before).map(({ result, status }) => ({ result, status })),
+      [
+        { result: 'busy', status: 503 },
+        { result: 'invalid', status: 400 },
+      ],
+    );
   });
 
   it('accepts the next request once the place is free again', async () => {

@@ -19,7 +19,7 @@ src/
 ├── queue/         PendingLimit (busy limit) and ConversionQueue (parallel slots, FIFO line, positions; cancel via AbortSignal)
 ├── zip/           zip port + fflate adapter
 ├── core/          image work: dd2vtt format, conversion, images, lighting, merge
-└── utils/         small shared helpers (format.ts)
+└── utils/         small shared helpers (format.ts, time.ts, object.ts)
 ```
 
 - `core/` and `queue/` never import Express or multer.

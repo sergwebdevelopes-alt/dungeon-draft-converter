@@ -16,6 +16,7 @@ describe('createApp', () => {
     server = http.createServer();
     const app = await createApp(server, {
       isShuttingDown: () => shuttingDown,
+      logConversion: () => undefined,
     });
     server.on('request', app);
 

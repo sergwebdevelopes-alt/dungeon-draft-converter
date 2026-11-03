@@ -3,9 +3,21 @@ import { CONVERSION_TIMEOUT_MS } from '../../config.ts';
 import { convertLevels } from '../../core/conversion.ts';
 import type { ConversionQueue } from '../../queue/index.ts';
 import { formatDuration } from '../../utils/format.ts';
-import { keepUploadsDuring, uploadDirOf, uploadsOf } from '../upload/index.ts';
+import {
+  keepUploadsDuring,
+  uploadDirOf,
+  uploadsOf,
+  type Uploads,
+} from '../upload/index.ts';
+import { addToConversionLog } from './conversion-log.ts';
 import { parseConvertRequest } from './request.ts';
 import { streamZip } from './zip.ts';
+
+function uploadedBytes(uploads: Uploads): number {
+  return Object.values(uploads)
+    .flatMap((files) => files ?? [])
+    .reduce((total, file) => total + file.size, 0);
+}
 
 function convertHandler(
   queue: ConversionQueue,
@@ -20,10 +32,21 @@ function convertHandler(
       }
     });
 
+    const uploads = uploadsOf(req);
+    addToConversionLog(res, {
+      uploadedAt: Date.now(),
+      uploadBytes: uploadedBytes(uploads),
+    });
+
     const request = await parseConvertRequest(
-      { query: req.query, files: uploadsOf(req) },
+      { query: req.query, files: uploads },
       queue,
     );
+    addToConversionLog(res, {
+      levels: request.levels.length,
+      presets: request.presets.map((preset) => preset.name),
+      variants: request.variants,
+    });
     const workDir = uploadDirOf(req);
 
     let timedOut = false;
@@ -31,8 +54,11 @@ function convertHandler(
     const stopped = () => stop.signal.aborted;
 
     const task = async () => {
+      addToConversionLog(res, { startedAt: Date.now() });
+
       const timer = setTimeout(() => {
         timedOut = true;
+        addToConversionLog(res, { timedOut: true });
         stop.abort();
 
         if (res.headersSent) {

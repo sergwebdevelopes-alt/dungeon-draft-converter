@@ -7,6 +7,7 @@ import sharp from 'sharp';
 import { ConversionQueue } from '../../queue/index.ts';
 import { errorHandler } from '../errors.ts';
 import { createUploadDir, uploadFiles } from '../upload/index.ts';
+import { logConversions, type ConversionLogEntry } from './conversion-log.ts';
 import { convertHandler } from './handler.ts';
 
 interface MapOptions {
@@ -18,6 +19,7 @@ interface MapOptions {
 interface TestServer {
   base: string;
   queue: ConversionQueue;
+  logged: ConversionLogEntry[];
   close: () => Promise<void>;
 }
 
@@ -63,10 +65,12 @@ async function makeMap({
 
 async function startServer(timeoutMs?: number): Promise<TestServer> {
   const queue = new ConversionQueue({ maxParallel: 1 });
+  const logged: ConversionLogEntry[] = [];
   const app = express();
 
   app.post(
     '/convert',
+    logConversions((entry) => logged.push(entry)),
     createUploadDir,
     uploadFiles,
     convertHandler(queue, timeoutMs),
@@ -81,6 +85,7 @@ async function startServer(timeoutMs?: number): Promise<TestServer> {
   return {
     base: `http://localhost:${port}`,
     queue,
+    logged,
     close: () =>
       new Promise((resolve) => {
         server.closeAllConnections();
@@ -170,6 +175,18 @@ describe('convertHandler', () => {
       ).metadata();
       assert.equal(image.width, 140);
       assert.equal(image.height, 140);
+
+      await waitFor(() => server.logged.length > 0);
+      const entry = server.logged.at(-1)!;
+      assert.equal(entry.result, 'ok');
+      assert.equal(entry.status, 200);
+      assert.equal(entry.levels, 1);
+      assert.deepEqual(entry.presets, ['JPG_70']);
+      assert.deepEqual(entry.variants, ['NoGrid', 'Grid']);
+      assert.ok(entry.uploadMB !== undefined && entry.uploadMB >= 0);
+      assert.ok(entry.convertMs !== undefined && entry.convertMs >= 0);
+      assert.ok(entry.tookMs >= entry.convertMs);
+      assert.doesNotMatch(JSON.stringify(entry), /Castle/);
     });
 
     it('merges several levels into one map', async () => {
@@ -189,6 +206,7 @@ describe('convertHandler', () => {
         'Top_merged/FOUNDRY_VTT_DD2VTT/Top_merged.dd2vtt',
         'Top_merged/JPG_70/Top_merged_70px_NoGrid.jpg',
       ]);
+      await waitFor(() => server.logged.at(-1)?.levels === 2);
     });
 
     it('answers 400 for an invalid request without queueing it', async () => {
@@ -324,6 +342,8 @@ describe('convertHandler', () => {
           error:
             'The conversion took longer than 0 seconds and was stopped. Try fewer formats or a smaller map.',
         });
+        await waitFor(() => server.logged.length > 0);
+        assert.equal(server.logged[0].result, 'timeout');
       } finally {
         await server.close();
       }
@@ -342,6 +362,8 @@ describe('convertHandler', () => {
 
         assert.equal(res.status, 200);
         await assert.rejects(res.arrayBuffer());
+        await waitFor(() => server.logged.length > 0);
+        assert.equal(server.logged[0].result, 'timeout');
       } finally {
         await server.close();
       }

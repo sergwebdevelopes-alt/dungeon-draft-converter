@@ -10,12 +10,16 @@ function formatDuration(ms: number): string {
   return `${rounded} ${unit}${rounded === 1 ? '' : 's'}`;
 }
 
+function toMegabytes(bytes: number): number {
+  return roundToTenth(bytes / 1024 / 1024);
+}
+
 function formatMegabytes(bytes: number): string {
-  return `${roundToTenth(bytes / 1024 / 1024)} MB`;
+  return `${toMegabytes(bytes)} MB`;
 }
 
 function formatMegapixels(pixels: number): string {
   return `${roundToTenth(pixels / 1_000_000)} megapixels`;
 }
 
-export { formatDuration, formatMegabytes, formatMegapixels };
+export { formatDuration, formatMegabytes, formatMegapixels, toMegabytes };
