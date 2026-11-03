@@ -2,3 +2,5 @@ node_modules/
 .DS_Store
 web/dist/
 source/
+.env
+.env.*
