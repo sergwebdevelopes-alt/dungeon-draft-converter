@@ -1,5 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
+import { readSettings } from './settings/read-settings.ts';
 
 const ROOT_DIR = path.join(import.meta.dirname, '..');
 const WEB_DIST_DIR = path.join(ROOT_DIR, 'web/dist');
@@ -39,10 +40,6 @@ const PATREON_API_PAGE_SIZE = 50;
 const PATREON_WEBSITE_PAGE_SIZE = 20;
 const PATREON_WEBSITE_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0 Safari/537.36';
-const PATREON_CAMPAIGN_ID = process.env.PATREON_CAMPAIGN_ID ?? '';
-const PATREON_CREATOR_TOKEN = process.env.PATREON_CREATOR_TOKEN ?? '';
-
-const GALLERY_TAG = process.env.GALLERY_TAG ?? 'portfolio';
 const GALLERY_GENERIC_TAGS = [
   'battle map',
   'battlemap',
@@ -64,10 +61,13 @@ const GALLERY_GENERIC_TAGS = [
   'vtt',
 ];
 
+const { settings: SETTINGS, problems: SETTINGS_PROBLEMS } = readSettings(
+  process.env,
+);
+
 export {
   CONVERSION_TIMEOUT_MS,
   GALLERY_GENERIC_TAGS,
-  GALLERY_TAG,
   HTTP_CLIENT_TIMEOUT_MS,
   IS_PRODUCTION,
   MAX_LEVELS,
@@ -82,14 +82,14 @@ export {
   MULTIPART_OVERHEAD_BYTES,
   PATREON_API_PAGE_SIZE,
   PATREON_API_URL,
-  PATREON_CAMPAIGN_ID,
-  PATREON_CREATOR_TOKEN,
   PATREON_SITE_URL,
   PATREON_WEBSITE_API_URL,
   PATREON_WEBSITE_PAGE_SIZE,
   PATREON_WEBSITE_USER_AGENT,
   PORT,
   ROOT_DIR,
+  SETTINGS,
+  SETTINGS_PROBLEMS,
   SHARP_CONCURRENCY,
   SHUTDOWN_TIMEOUT_MS,
   STALE_CLEANUP_INTERVAL_MS,

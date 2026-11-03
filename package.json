@@ -4,16 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "tsx --test \"src/**/*.test.ts\" \"scripts/**/*.test.ts\" && vitest run",
+    "test": "DOTENV_CONFIG_PATH=.env.testing tsx --import dotenv/config --test \"src/**/*.test.ts\" \"scripts/**/*.test.ts\" && vitest run",
     "typecheck": "tsc",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "start": "NODE_ENV=production node src/server.ts",
-    "dev": "node --watch-path=src src/server.ts",
+    "dev": "node --import dotenv/config --watch-path=src src/server.ts",
     "build": "vite build && node scripts/precompress.ts",
     "bench": "node scripts/bench.ts",
-    "gallery": "node scripts/build-gallery.ts"
+    "gallery": "node scripts/build-gallery.ts",
+    "db": "docker compose -f compose.yml -f compose.dev.yml up -d --wait postgres postgres-test",
+    "db:migrate": "node --import dotenv/config src/db/migrate.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -26,9 +28,11 @@
     "@types/express": "^5.0.6",
     "@types/multer": "^2.3.0",
     "@types/node": "^26.1.2",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
+    "dotenv": "^17.4.2",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "jsdom": "^29.1.1",
@@ -47,7 +51,9 @@
     "fflate": "^0.8.3",
     "motion": "^14.9.0",
     "multer": "^2.5.0",
+    "pg": "^8.23.1",
     "react-router": "^8.5.1",
-    "sharp": "^0.35.5"
+    "sharp": "^0.35.5",
+    "zod": "^4.6.7"
   }
 }

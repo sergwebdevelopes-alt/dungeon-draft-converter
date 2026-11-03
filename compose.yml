@@ -1,3 +1,14 @@
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '5'
+
+x-postgres-credentials: &postgres-credentials
+  POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+  POSTGRES_DB: ${POSTGRES_DB:-${POSTGRES_USER}}
+
 services:
   app:
     build: .
@@ -5,7 +16,17 @@ services:
     container_name: dd-converter
     ports:
       - '${HOST_PORT:-3000}:3000'
-    mem_limit: 4g
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      <<: *postgres-credentials
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: '5432'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    mem_limit: 3g
     restart: unless-stopped
     stop_grace_period: 330s
     read_only: true
@@ -15,11 +36,25 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
-    logging:
-      driver: json-file
-      options:
-        max-size: 10m
-        max-file: '5'
+    logging: *logging
+
+  postgres:
+    image: postgres:17
+    container_name: dd-postgres
+    environment: *postgres-credentials
+    command:
+      ['postgres', '-c', 'shared_buffers=64MB', '-c', 'max_connections=20']
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 512m
+    restart: unless-stopped
+    logging: *logging
 
 volumes:
   uploads:
+  pgdata:

@@ -8,9 +8,20 @@ Upload a `.dd2vtt` file, pick formats and grid variants, optionally add a logo, 
 
 ### Docker
 
+Copy `.env.example` to `.env` and set at least `POSTGRES_USER` and `POSTGRES_PASSWORD`, then:
+
 ```sh
 docker compose up -d --build
 ```
+
+This starts the app and its Postgres database (used by the map gallery). Postgres has no public port; its data lives in the `pgdata` volume. Database migrations run when the app starts. To apply new migrations while the running app keeps serving, run them first and then deploy:
+
+```sh
+docker compose run --rm app node src/db/migrate.ts
+docker compose up -d --build
+```
+
+Each migration must then work with the code that is still running: add tables and columns first, and remove old ones in a later release.
 
 Open http://localhost:3000. To use a different port, run `HOST_PORT=8080 docker compose up -d --build`.
 
@@ -95,7 +106,7 @@ Environment variables, all optional:
 
 The Docker image also uses jemalloc with `MALLOC_CONF` set to return freed memory to the system quickly.
 
-On `SIGTERM` (for example `docker compose down` or a redeploy), the server stops accepting new connections, finishes the conversions that are running or waiting, and then exits. `compose.yml` gives it 330 seconds (`stop_grace_period`) before Docker kills it; keep that above `SHUTDOWN_TIMEOUT_SECONDS`. `Ctrl+C` still stops it immediately.
+On `SIGTERM` (for example `docker compose down` or a redeploy), the server stops accepting new connections, finishes the conversions that are running or waiting, and then exits. `compose.yml` gives it 330 seconds (`stop_grace_period`) before Docker kills it; keep that above `SHUTDOWN_TIMEOUT_SECONDS`. `Ctrl+C` still stops it immediately. In development (`npm run dev`) it stops immediately on `SIGTERM` too, so restarts after a file change don't wait for open connections.
 
 If the server is killed before it can clean up (out of memory, a forced stop), its temporary folders are left behind. They're removed automatically once they're more than 2 hours old: at startup and then every hour.
 
@@ -108,5 +119,7 @@ npm run dev
 Starts the server on http://localhost:3000 with hot reload: Vite runs inside Express, so the API and the page share one port. Use `PORT=3001 npm run dev` to change it.
 
 `npm test` · `npm run typecheck` · `npm run lint` · `npm run format` · `npm run build`
+
+`npm test` reads `.env.testing`, which points at the test Postgres started by `npm run db` (`127.0.0.1:5433`, user/password `test`, data kept in memory). With it running, the database tests run too, each in its own temporary database; without it they are skipped.
 
 `npm run bench` measures time and peak memory per request and appends the results to `bench/results.md`. It creates its test maps in `source/` on the first run. `BENCH_TARGET=docker` runs it against the Docker image (rebuilt first) instead of a local server, and `BENCH_DOCKER_ENV="MAX_PARALLEL_IMAGES=1 …"` passes [server settings](#server-settings) to that container. `BENCH_ONLY=<text>` runs only the cases whose name contains that text, and `BENCH_PORT` changes the port the benchmark server uses (default 3160).
