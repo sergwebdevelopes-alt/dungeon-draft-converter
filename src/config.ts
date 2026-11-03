@@ -29,8 +29,46 @@ const SHARP_CONCURRENCY = Number(process.env.SHARP_CONCURRENCY ?? 0);
 const SHUTDOWN_TIMEOUT_MS =
   Number(process.env.SHUTDOWN_TIMEOUT_SECONDS ?? 300) * 1000;
 
+const HTTP_CLIENT_TIMEOUT_MS =
+  Number(process.env.HTTP_CLIENT_TIMEOUT_SECONDS ?? 30) * 1000;
+
+const PATREON_SITE_URL = 'https://www.patreon.com';
+const PATREON_API_URL = `${PATREON_SITE_URL}/api/oauth2/v2`;
+const PATREON_WEBSITE_API_URL = `${PATREON_SITE_URL}/api`;
+const PATREON_API_PAGE_SIZE = 50;
+const PATREON_WEBSITE_PAGE_SIZE = 20;
+const PATREON_WEBSITE_USER_AGENT =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0 Safari/537.36';
+const PATREON_CAMPAIGN_ID = process.env.PATREON_CAMPAIGN_ID ?? '';
+const PATREON_CREATOR_TOKEN = process.env.PATREON_CREATOR_TOKEN ?? '';
+
+const GALLERY_TAG = process.env.GALLERY_TAG ?? 'portfolio';
+const GALLERY_GENERIC_TAGS = [
+  'battle map',
+  'battlemap',
+  'battlemaps',
+  'dnd',
+  'dnd maps',
+  'dndart',
+  'dndmaps',
+  'dungeondraft',
+  'foundry',
+  'foundryvtt',
+  'free',
+  'map',
+  'maps',
+  'roll20',
+  'rpg',
+  'rpgmaps',
+  'ttrpg',
+  'vtt',
+];
+
 export {
   CONVERSION_TIMEOUT_MS,
+  GALLERY_GENERIC_TAGS,
+  GALLERY_TAG,
+  HTTP_CLIENT_TIMEOUT_MS,
   IS_PRODUCTION,
   MAX_LEVELS,
   MAX_LOGO_BYTES,
@@ -42,6 +80,14 @@ export {
   MAX_TOTAL_UPLOAD_BYTES,
   MAX_UPLOAD_BYTES,
   MULTIPART_OVERHEAD_BYTES,
+  PATREON_API_PAGE_SIZE,
+  PATREON_API_URL,
+  PATREON_CAMPAIGN_ID,
+  PATREON_CREATOR_TOKEN,
+  PATREON_SITE_URL,
+  PATREON_WEBSITE_API_URL,
+  PATREON_WEBSITE_PAGE_SIZE,
+  PATREON_WEBSITE_USER_AGENT,
   PORT,
   ROOT_DIR,
   SHARP_CONCURRENCY,

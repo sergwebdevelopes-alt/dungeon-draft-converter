@@ -14,16 +14,23 @@ src/
 ├── server.ts      startup only: http server, listen, cleanup timer, SIGTERM
 ├── app.ts         builds the Express app and wires dependencies (queue, routes)
 ├── config.ts      every process.env read and every limit
-├── http/          Express only: routes, request parsing, errors, zip streaming
-│   └── upload/    upload rules, per-request temp folder, multipart port + multer adapter
+├── http/          incoming requests (Express): routes, request parsing, errors, zip streaming
+│   ├── upload/    upload rules, per-request temp folder, multipart port + multer adapter
+│   └── client/    outgoing HTTP: HttpClient port (get, timeout, abort) + fetch adapter (the only server file using fetch)
 ├── queue/         PendingLimit (busy limit) and ConversionQueue (parallel slots, FIFO line, positions; cancel via AbortSignal)
 ├── zip/           zip port + fflate adapter
+├── gallery/       the gallery feature
+│   ├── model/     pure gallery rules: which posts count, title, chips, slug, choosing the image, building a MapRecord
+│   └── patreon/   Patreon ports + adapters: official API v2 (post list) and the website's post details (tags, all images); I/O and translation only
 ├── core/          image work: dd2vtt format, conversion, images, lighting, merge
 └── utils/         small shared helpers (format.ts, time.ts, object.ts)
 ```
 
-- `core/` and `queue/` never import Express or multer.
+- `core/`, `queue/` and `gallery/` never import Express or multer.
 - `process.env` is read only in `config.ts`. Settings and limits (sizes, timeouts, folders) live there; facts about formats and output (file extensions, zip folder names, image encoding constants) stay next to the code that produces them.
+- URLs of outside services, page sizes, user agents, tags, IDs and other values someone might want to change also live in `config.ts`, never as constants inside an adapter. Request details that are part of an API's contract (field lists, query parameter names) stay in the adapter.
+- Outgoing HTTP goes through `src/http/client/` (`HttpClient`, `HttpClientError`, `isAbortError`). Adapters receive the client as an argument, never `fetch` itself.
+- Server features follow the front end's split. `<feature>/model/` holds pure TypeScript: data in, data out, no network, files, database or `config.ts` imports (settings are passed in). Adapters only fetch and translate into our types, with no business rules. Orchestration that joins adapters and model lives next to `model/` (e.g. `gallery/sync.ts`).
 - Core errors extend `InvalidInputError` (→ 400) or `UnprocessableError` (→ 422) from `core/errors.ts`; `http/errors.ts` maps them by kind. HTTP-only errors use `HttpError`.
 - Dependencies are passed in (for example `createApp` creates the `ConversionQueue` and hands it to the routes), not kept in module-level globals.
 
