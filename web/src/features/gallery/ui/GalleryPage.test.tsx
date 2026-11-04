@@ -27,14 +27,27 @@ function entry(slug: string, title: string, tags: MapEntry['tags']): MapEntry {
     subtitle: 'Ground floor',
     squares: { x: 20, y: 30 },
     tags,
+    width: 2000,
+    height: 3000,
     patreonUrl: `https://www.patreon.com/LairofArtificer/posts/${slug}`,
+    images: {
+      card: `/maps/1/${slug}/card.webp`,
+      view: `/maps/1/${slug}/view.webp`,
+      backdrop: `/maps/1/${slug}/backdrop.webp`,
+    },
   };
 }
+
+const UNSIZED: MapEntry = {
+  ...entry('crypt', 'Old Crypt', ['Underground']),
+  squares: undefined,
+  subtitle: undefined,
+};
 
 const MAPS = [
   entry('cave', 'Ice Cave', ['Underground']),
   entry('inn', 'Blue Inn', ['Interior']),
-  entry('crypt', 'Old Crypt', ['Underground']),
+  UNSIZED,
 ];
 
 let navigateBack: () => void = () => undefined;
@@ -109,6 +122,10 @@ describe('GalleryPage', () => {
     await renderGallery();
 
     expect(screen.getAllByRole('listitem')).toHaveLength(3);
+    expect(cardImage('Ice Cave')).toHaveAttribute(
+      'src',
+      '/maps/1/cave/card.webp',
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Underground' }));
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
@@ -230,6 +247,19 @@ describe('GalleryPage', () => {
     expect(
       within(modal).getByRole('button', { name: 'With grid' }),
     ).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('shows a map without a known size without the grid choice', async () => {
+    await renderGallery('/maps?map=crypt');
+    const modal = dialog()!;
+
+    expect(
+      within(modal).queryByRole('button', { name: 'With grid' }),
+    ).toBeNull();
+    expect(within(modal).queryByText(/squares/)).toBeNull();
+    expect(
+      within(modal).getByRole('img', { name: 'Old Crypt' }),
+    ).toHaveAttribute('src', '/maps/1/crypt/view.webp');
   });
 
   it('shows placeholders while loading and a message when loading fails', async () => {

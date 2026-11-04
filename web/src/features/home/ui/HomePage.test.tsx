@@ -13,12 +13,25 @@ function entry(slug: string, title: string, x = 30, y = 20): MapEntry {
     subtitle: 'Battlemap',
     squares: { x, y },
     tags: ['Interior'],
+    width: x * 100,
+    height: y * 100,
     patreonUrl: `https://www.patreon.com/LairofArtificer/posts/${slug}`,
+    images: {
+      card: `/maps/1/${slug}/card.webp`,
+      view: `/maps/1/${slug}/view.webp`,
+      backdrop: `/maps/1/${slug}/backdrop.webp`,
+    },
   };
 }
 
+const UNSIZED_LANDSCAPE: MapEntry = {
+  ...entry('falls', 'Tser Falls', 60, 40),
+  squares: undefined,
+};
+
 const MAPS = [
   entry('library', 'Submerged Library', 56, 73),
+  UNSIZED_LANDSCAPE,
   entry('portal', 'Yawning Portal', 40, 40),
   entry('cavern', 'Frozen Cavern', 40, 30),
   entry('brothel', 'Elite Brothel'),
@@ -101,16 +114,16 @@ describe('HomePage', () => {
       .filter((link) => link.getAttribute('href')?.includes('?map='));
     expect(links.map((link) => link.getAttribute('href'))).toEqual([
       '/maps?map=library',
+      '/maps?map=falls',
       '/maps?map=portal',
       '/maps?map=cavern',
-      '/maps?map=brothel',
     ]);
     expect(
-      latest.getByRole('link', { name: 'See all 6 maps' }),
+      latest.getByRole('link', { name: 'See all 7 maps' }),
     ).toHaveAttribute('href', '/maps');
   });
 
-  it('shows the converter with a landscape map', async () => {
+  it('shows the converter with a landscape map that has a known size', async () => {
     await renderHome();
 
     const teaser = within(

@@ -33,17 +33,32 @@ function withTimeout(
 }
 
 function createFetchHttpClient(timeoutMs = HTTP_CLIENT_TIMEOUT_MS): HttpClient {
+  async function request(
+    url: string,
+    { headers, signal }: RequestOptions = {},
+  ): Promise<Response> {
+    const res = await fetch(url, {
+      headers,
+      signal: withTimeout(signal, timeoutMs),
+    });
+    if (!res.ok) {
+      throw toError(res, url);
+    }
+
+    return res;
+  }
+
   return {
-    async get<T>(url: string, { headers, signal }: RequestOptions = {}) {
-      const res = await fetch(url, {
-        headers,
-        signal: withTimeout(signal, timeoutMs),
-      });
-      if (!res.ok) {
-        throw toError(res, url);
-      }
+    async get<T>(url: string, options?: RequestOptions) {
+      const res = await request(url, options);
 
       return (await res.json()) as T;
+    },
+
+    async getBytes(url, options) {
+      const res = await request(url, options);
+
+      return Buffer.from(await res.arrayBuffer());
     },
   };
 }

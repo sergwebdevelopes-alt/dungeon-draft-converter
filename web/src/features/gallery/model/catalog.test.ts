@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  captionOf,
   filterMaps,
   findMap,
-  mapImages,
+  hasSquares,
   neighbour,
   tagsOf,
   type MapEntry,
@@ -12,10 +13,11 @@ function entry(slug: string, tags: MapEntry['tags'] = ['Interior']): MapEntry {
   return {
     slug,
     title: slug,
-    subtitle: '',
-    squares: { x: 10, y: 10 },
     tags,
+    width: 1000,
+    height: 1000,
     patreonUrl: 'https://example.com',
+    images: { card: 'c', view: 'v', backdrop: 'b' },
   };
 }
 
@@ -60,12 +62,30 @@ describe('neighbour', () => {
   });
 });
 
-describe('mapImages', () => {
-  it('points at the generated images', () => {
-    expect(mapImages('frozen-cavern')).toEqual({
-      card: '/maps/frozen-cavern/card.webp',
-      view: '/maps/frozen-cavern/view.webp',
-      backdrop: '/maps/frozen-cavern/backdrop.webp',
-    });
+describe('captionOf', () => {
+  it('joins the subtitle and the size that a map has', () => {
+    const map = entry('a');
+
+    expect(
+      captionOf({
+        ...map,
+        subtitle: 'Curse of Strahd',
+        squares: { x: 60, y: 40 },
+      }),
+    ).toBe('Curse of Strahd · 60 × 40 squares');
+    expect(captionOf({ ...map, squares: { x: 60, y: 40 } })).toBe(
+      '60 × 40 squares',
+    );
+    expect(captionOf({ ...map, subtitle: 'Curse of Strahd' })).toBe(
+      'Curse of Strahd',
+    );
+    expect(captionOf(map)).toBe('');
+  });
+});
+
+describe('hasSquares', () => {
+  it('tells maps with a known size apart', () => {
+    expect(hasSquares({ ...entry('a'), squares: { x: 1, y: 1 } })).toBe(true);
+    expect(hasSquares(entry('a'))).toBe(false);
   });
 });

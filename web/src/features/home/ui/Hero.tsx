@@ -4,7 +4,7 @@ import { Backdrop } from '../../../shared/ui/Backdrop.tsx';
 import { ButtonLink, buttonClass } from '../../../shared/ui/Button.tsx';
 import { Container } from '../../../shared/ui/Container.tsx';
 import { Reveal } from '../../../shared/ui/motion/index.ts';
-import { mapImages, type MapEntry } from '../../gallery/index.ts';
+import type { MapEntry } from '../../gallery/index.ts';
 
 const ROTATE_MS = 8000;
 
@@ -66,10 +66,7 @@ function Hero({ maps }: { maps: MapEntry[] }) {
       aria-labelledby="hero-title"
       className="relative isolate flex min-h-[calc(100svh-var(--header-height))] items-end overflow-hidden"
     >
-      <Backdrop
-        images={maps.map((map) => mapImages(map.slug).backdrop)}
-        index={index}
-      />
+      <Backdrop images={maps.map((map) => map.images.backdrop)} index={index} />
       <Container className="grid gap-7 pt-28 pb-12 sm:pb-16">
         <Reveal index={0}>
           <p className="text-sm font-bold tracking-[0.25em] text-gold uppercase">

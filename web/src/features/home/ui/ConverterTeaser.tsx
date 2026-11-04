@@ -1,7 +1,7 @@
 import { ButtonLink } from '../../../shared/ui/Button.tsx';
 import { Container } from '../../../shared/ui/Container.tsx';
 import { GridOverlay } from '../../../shared/ui/GridOverlay.tsx';
-import { mapImages, type MapEntry } from '../../gallery/index.ts';
+import type { GriddedMap } from '../../gallery/index.ts';
 
 const STATS = [
   { value: 'JPG · WebP', label: 'Formats', accent: true },
@@ -28,14 +28,14 @@ function Stats() {
   );
 }
 
-function GridWipe({ map }: { map: MapEntry }) {
+function GridWipe({ map }: { map: GriddedMap }) {
   return (
     <div
       className="relative overflow-hidden rounded-3xl shadow-2xl ring-1 ring-line"
-      style={{ aspectRatio: `${map.squares.x} / ${map.squares.y}` }}
+      style={{ aspectRatio: `${map.width} / ${map.height}` }}
     >
       <img
-        src={mapImages(map.slug).view}
+        src={map.images.view}
         alt={`${map.title}, shown without and with a grid`}
         loading="lazy"
         decoding="async"
@@ -58,7 +58,7 @@ function GridWipe({ map }: { map: MapEntry }) {
   );
 }
 
-function ConverterTeaser({ map }: { map: MapEntry | null }) {
+function ConverterTeaser({ map }: { map: GriddedMap | null }) {
   return (
     <section
       aria-labelledby="converter-title"

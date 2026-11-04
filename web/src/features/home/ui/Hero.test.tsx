@@ -11,7 +11,14 @@ function entry(slug: string, title: string): MapEntry {
     subtitle: 'Ground floor',
     squares: { x: 30, y: 20 },
     tags: [],
+    width: 3000,
+    height: 2000,
     patreonUrl: 'https://example.com',
+    images: {
+      card: `/maps/1/${slug}/card.webp`,
+      view: `/maps/1/${slug}/view.webp`,
+      backdrop: `/maps/1/${slug}/backdrop.webp`,
+    },
   };
 }
 
@@ -47,6 +54,18 @@ describe('Hero', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it('shows the backdrop image of the first map', () => {
+    renderHero();
+    const hero = screen.getByRole('region', {
+      name: 'Battle maps for epic adventures',
+    });
+
+    expect(hero.querySelector('img')).toHaveAttribute(
+      'src',
+      '/maps/1/cave/backdrop.webp',
+    );
   });
 
   it('rotates the backdrop on its own', () => {

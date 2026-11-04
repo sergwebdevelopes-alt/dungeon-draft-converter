@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import { mapImages, type MapEntry } from '../model/catalog.ts';
+import { captionOf, type MapEntry } from '../model/catalog.ts';
 
 const TILE =
   'group relative block w-full overflow-hidden rounded-2xl bg-sunken text-left ring-1 ring-white/5 transition-shadow duration-500 hover:shadow-[0_30px_60px_-25px_rgb(0_0_0/0.7)]';
@@ -8,14 +8,10 @@ const TILE =
 const TILE_IMAGE =
   'size-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]';
 
-function squaresLabel({ squares }: MapEntry): string {
-  return `${squares.x} × ${squares.y} squares`;
-}
-
 function TileImage({ map }: { map: MapEntry }) {
   return (
     <img
-      src={mapImages(map.slug).card}
+      src={map.images.card}
       alt=""
       width={640}
       height={800}
@@ -39,9 +35,7 @@ function TileCaption({ map, featured = false }: TileCaptionProps) {
       >
         {map.title}
       </strong>
-      <span className="text-sm text-white/75">
-        {map.subtitle} · {squaresLabel(map)}
-      </span>
+      <span className="text-sm text-white/75">{captionOf(map)}</span>
     </span>
   );
 }
@@ -61,4 +55,4 @@ function MapTileLink({ map }: { map: MapEntry }) {
   );
 }
 
-export { MapTileLink, TILE, TileCaption, TileFrame, TileImage, squaresLabel };
+export { MapTileLink, TILE, TileCaption, TileFrame, TileImage };

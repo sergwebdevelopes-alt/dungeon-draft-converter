@@ -16,6 +16,10 @@ describe('createFetchHttpClient', () => {
         res.end(JSON.stringify({ agent: req.headers['user-agent'] }));
         return;
       }
+      if (path === '/bytes') {
+        res.end(Buffer.from([0, 1, 2, 255]));
+        return;
+      }
       if (path === '/busy') {
         res.writeHead(429, { 'Retry-After': '30' });
         res.end('{}');
@@ -46,6 +50,20 @@ describe('createFetchHttpClient', () => {
     );
 
     assert.deepEqual(body, { agent: 'lair-test' });
+  });
+
+  it('downloads a body as bytes', async () => {
+    const bytes = await createFetchHttpClient().getBytes(`${base}/bytes`);
+
+    assert.ok(Buffer.isBuffer(bytes));
+    assert.deepEqual([...bytes], [0, 1, 2, 255]);
+  });
+
+  it('turns an error answer to a download into an HttpClientError', async () => {
+    await assert.rejects(
+      createFetchHttpClient().getBytes(`${base}/nope`),
+      (error) => error instanceof HttpClientError && error.status === 404,
+    );
   });
 
   it('turns an error answer into an HttpClientError with the wait time', async () => {

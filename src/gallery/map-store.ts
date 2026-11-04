@@ -6,8 +6,7 @@ interface StoredMap extends MapRecord {
 
 interface MapStore {
   listMaps(): Promise<StoredMap[]>;
-  saveMap(map: MapRecord, source: unknown): Promise<void>;
-  removeMaps(postIds: string[]): Promise<void>;
+  replaceMaps(maps: MapRecord[]): Promise<void>;
 }
 
 export type { MapStore, StoredMap };

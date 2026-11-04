@@ -45,7 +45,7 @@ describe('createPostgresMapStore', () => {
   after(() => test.drop());
 
   it('saves a map and reads every field back', async () => {
-    await store.saveMap(map(), { post: 'raw' });
+    await store.replaceMaps([map()]);
 
     const [saved] = await store.listMaps();
     const { checkedAt, ...rest } = saved;
@@ -59,7 +59,7 @@ describe('createPostgresMapStore', () => {
       squares: undefined,
       image: { ...map().image, fileName: undefined, isMain: true },
     });
-    await store.saveMap(plain, {});
+    await store.replaceMaps([plain]);
 
     const [saved] = await store.listMaps();
     assert.equal('subtitle' in saved, false);
@@ -68,43 +68,32 @@ describe('createPostgresMapStore', () => {
     assert.equal(saved.image.isMain, true);
   });
 
-  it('updates a saved map', async () => {
-    await store.saveMap(map(), { version: 1 });
+  it('updates saved maps', async () => {
+    await store.replaceMaps([map()]);
 
-    await store.saveMap(
+    await store.replaceMaps([
       map({ title: 'Tser Falls at Night', squares: undefined }),
-      {
-        version: 2,
-      },
-    );
+    ]);
 
     const maps = await store.listMaps();
     assert.equal(maps.length, 1);
     assert.equal(maps[0].title, 'Tser Falls at Night');
     assert.equal(maps[0].squares, undefined);
-    const [{ source }] = await test.db.query<{ source: unknown }>(
-      'SELECT source FROM maps',
-    );
-    assert.deepEqual(source, { version: 2 });
   });
 
   it('lists the newest maps first', async () => {
-    await store.saveMap(
+    await store.replaceMaps([
       map({
         postId: '1',
         slug: 'old',
         publishedAt: '2024-01-01T00:00:00.000Z',
       }),
-      {},
-    );
-    await store.saveMap(
       map({
         postId: '2',
         slug: 'new',
         publishedAt: '2026-01-01T00:00:00.000Z',
       }),
-      {},
-    );
+    ]);
 
     assert.deepEqual(
       (await store.listMaps()).map((m) => m.slug),
@@ -112,16 +101,52 @@ describe('createPostgresMapStore', () => {
     );
   });
 
-  it('removes only the given maps', async () => {
-    await store.saveMap(map({ postId: '1', slug: 'a' }), {});
-    await store.saveMap(map({ postId: '2', slug: 'b' }), {});
+  it('removes the maps that are not in the new list', async () => {
+    await store.replaceMaps([
+      map({ postId: '1', slug: 'a' }),
+      map({ postId: '2', slug: 'b' }),
+    ]);
 
-    await store.removeMaps([]);
-    await store.removeMaps(['1']);
-
+    await store.replaceMaps([map({ postId: '2', slug: 'b' })]);
     assert.deepEqual(
       (await store.listMaps()).map((m) => m.postId),
       ['2'],
+    );
+
+    await store.replaceMaps([]);
+    assert.deepEqual(await store.listMaps(), []);
+  });
+
+  it('lets two maps swap their slugs', async () => {
+    await store.replaceMaps([
+      map({ postId: '1', slug: 'a' }),
+      map({ postId: '2', slug: 'b' }),
+    ]);
+
+    await store.replaceMaps([
+      map({ postId: '1', slug: 'b' }),
+      map({ postId: '2', slug: 'a' }),
+    ]);
+
+    const slugs = Object.fromEntries(
+      (await store.listMaps()).map((m) => [m.postId, m.slug]),
+    );
+    assert.deepEqual(slugs, { '1': 'b', '2': 'a' });
+  });
+
+  it('keeps the old gallery when saving fails half way', async () => {
+    await store.replaceMaps([map({ postId: '1', slug: 'a' })]);
+
+    await assert.rejects(
+      store.replaceMaps([
+        map({ postId: '2', slug: 'same' }),
+        map({ postId: '3', slug: 'same' }),
+      ]),
+    );
+
+    assert.deepEqual(
+      (await store.listMaps()).map((m) => m.postId),
+      ['1'],
     );
   });
 });

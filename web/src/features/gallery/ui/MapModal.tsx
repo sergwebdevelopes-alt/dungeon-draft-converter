@@ -10,8 +10,7 @@ import {
 import { ButtonLink } from '../../../shared/ui/Button.tsx';
 import { Segmented } from '../../../shared/ui/Segmented.tsx';
 import { Reveal, Swipeable } from '../../../shared/ui/motion/index.ts';
-import { mapImages, type MapEntry } from '../model/catalog.ts';
-import { squaresLabel } from './MapTile.tsx';
+import { captionOf, type MapEntry } from '../model/catalog.ts';
 import { MapViewer } from './MapViewer.tsx';
 
 interface MapModalProps {
@@ -78,7 +77,7 @@ function useArrowKeys(
 function usePreload(maps: MapEntry[]) {
   useEffect(() => {
     for (const map of maps) {
-      new Image().src = mapImages(map.slug).view;
+      new Image().src = map.images.view;
     }
   }, [maps]);
 }
@@ -165,9 +164,7 @@ function MapModal({
             >
               {map.title}
             </h2>
-            <p className="text-muted">
-              {map.subtitle} · {squaresLabel(map)}
-            </p>
+            <p className="text-muted">{captionOf(map)}</p>
           </div>
 
           <ul className="flex flex-wrap gap-2" aria-label="Tags">
@@ -181,12 +178,14 @@ function MapModal({
             ))}
           </ul>
 
-          <Segmented
-            label="Grid"
-            options={GRID_OPTIONS}
-            value={showGrid ? 'with' : 'without'}
-            onChange={(choice) => setShowGrid(choice === 'with')}
-          />
+          {map.squares && (
+            <Segmented
+              label="Grid"
+              options={GRID_OPTIONS}
+              value={showGrid ? 'with' : 'without'}
+              onChange={(choice) => setShowGrid(choice === 'with')}
+            />
+          )}
 
           <ButtonLink href={map.patreonUrl}>Get it on Patreon</ButtonLink>
         </div>

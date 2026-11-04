@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { FadeImage } from '../../../shared/ui/FadeImage.tsx';
 import { GridOverlay } from '../../../shared/ui/GridOverlay.tsx';
 import { SharedFrame } from '../../../shared/ui/motion/index.ts';
-import { mapImages, type MapEntry } from '../model/catalog.ts';
+import type { MapEntry } from '../model/catalog.ts';
 
 interface MapViewerProps {
   map: MapEntry;
@@ -12,11 +12,11 @@ interface MapViewerProps {
 
 const FRAME = 'relative overflow-hidden rounded-lg bg-surface shadow-2xl';
 
-function frameStyle({ squares }: MapEntry): CSSProperties {
-  const ratio = squares.x / squares.y;
+function frameStyle({ width, height }: MapEntry): CSSProperties {
+  const ratio = width / height;
 
   return {
-    aspectRatio: `${squares.x} / ${squares.y}`,
+    aspectRatio: `${width} / ${height}`,
     width: `min(100cqw, calc(100cqh * ${ratio}))`,
   };
 }
@@ -50,8 +50,6 @@ function Frame({
 }
 
 function MapViewer({ map, showGrid, morph }: MapViewerProps) {
-  const images = mapImages(map.slug);
-
   return (
     <div
       className="grid size-full place-items-center"
@@ -59,12 +57,12 @@ function MapViewer({ map, showGrid, morph }: MapViewerProps) {
     >
       <Frame map={map} morph={morph}>
         <FadeImage
-          key={images.view}
-          src={images.view}
-          alt={`${map.title}, ${map.subtitle}`}
+          key={map.images.view}
+          src={map.images.view}
+          alt={[map.title, map.subtitle].filter(Boolean).join(', ')}
           className="size-full object-cover"
         />
-        {showGrid && (
+        {showGrid && map.squares && (
           <GridOverlay columns={map.squares.x} rows={map.squares.y} />
         )}
       </Frame>

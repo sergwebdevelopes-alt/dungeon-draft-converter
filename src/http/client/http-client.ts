@@ -5,6 +5,7 @@ interface RequestOptions {
 
 interface HttpClient {
   get<T>(url: string, options?: RequestOptions): Promise<T>;
+  getBytes(url: string, options?: RequestOptions): Promise<Buffer>;
 }
 
 class HttpClientError extends Error {

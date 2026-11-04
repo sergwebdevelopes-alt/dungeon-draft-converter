@@ -11,23 +11,27 @@ Web app that converts Dungeondraft `.dd2vtt` exports into VTT- and print-ready i
 
 ```
 src/
-├── server.ts      startup only: http server, listen, cleanup timer, SIGTERM
+├── server.ts      startup only: settings check, database, jobs, http server, listen, SIGTERM
 ├── app.ts         builds the Express app and wires dependencies (queue, routes)
 ├── config.ts      every process.env read and every limit
 ├── settings/      read-settings.ts: validated settings (Zod) for database, Patreon, gallery; stop-on-bad-settings.ts
 ├── http/          incoming requests (Express): routes, request parsing, errors, zip streaming
 │   ├── upload/    upload rules, per-request temp folder, multipart port + multer adapter
-│   └── client/    outgoing HTTP: HttpClient port (get, timeout, abort) + fetch adapter (the only server file using fetch)
+│   └── client/    outgoing HTTP: HttpClient port (get, getBytes, timeout, abort) + fetch adapter (the only server file using fetch) + rate-limited client (a minimum time between requests)
+├── jobs/          scheduled work: schedule() (timer, optional run at start, stop), upload cleanup, gallery sync (reads its settings from config.ts); startJobs({ galleryStores }) starts them all
 ├── queue/         PendingLimit (busy limit) and ConversionQueue (parallel slots, FIFO line, positions; cancel via AbortSignal)
 ├── zip/           zip port + fflate adapter
 ├── db/           Database port (query, transaction, exclusive lock) + pg adapter (the only file importing pg); openDatabase (connect + migrate); migrate.ts (the `db:migrate` script); migrations runner + migrations/*.sql; LOCKS (every advisory lock key)
 ├── gallery/       the gallery feature
 │   ├── map-store.ts + postgres-map-store.ts   MapStore port + adapter (SQL through the Database port)
 │   ├── image-store.ts + local-image-store.ts  ImageStore port + folder adapter (GALLERY_DIR, served at /maps by http/gallery-images.ts)
-│   ├── model/     pure gallery rules: which posts count, title, chips, slug, choosing the image, building a MapRecord
+│   ├── sync.ts    one sync: Patreon posts → maps, images via map-images.ts, gallery saved in one transaction; runs through utils/single-flight.ts
+│   ├── map-images.ts  makes sure a map's card/view/backdrop are stored: renders missing ones, keeps the previous version if that fails
+│   ├── setup.ts   builds the stores and the sync from settings (used by server.ts and sync-now.ts, the `gallery:sync` script)
+│   ├── model/     pure gallery rules: which posts count, title, chips, slug, choosing the image, building a MapRecord, the public MapEntry (map-entry.ts), where images are stored (image-keys.ts), sync counts and folders (sync-plan.ts)
 │   └── patreon/   Patreon ports + adapters: official API v2 (post list) and the website's post details (tags, all images); I/O and translation only
 ├── core/          image work: dd2vtt format, conversion, images, lighting, merge, gallery-images (card, view, backdrop)
-└── utils/         small shared helpers (format.ts, time.ts, object.ts)
+└── utils/         small shared helpers (format.ts, time.ts, object.ts, error.ts, single-flight.ts: one run at a time, once more if asked meanwhile)
 ```
 
 - `core/`, `queue/` and `gallery/` never import Express or multer.
@@ -67,7 +71,7 @@ web/src/
 - The web app imports only types from the server's `src/`, plus `src/core/grid-stroke.ts` (the export grid style); ESLint enforces this.
 - Use the shared `Button`/`ButtonLink`, `Alert` and `Segmented` instead of repeating their classes.
 - Motion is imported only in `web/src/shared/ui/motion/`; features use its wrappers (`MotionProvider`, `Reveal`, `SharedFrame`, `Swipeable`).
-- Maps live in `content/maps.json` (title, tags, Patreon link, the ungridded source image). The modal draws its grid with `GridOverlay`, so no gridded image is needed. `npm run gallery` renders `web/public/maps/` from it, including the public `catalog.json` the gallery loads at runtime; never edit those files by hand. Adding a map needs no code change. The script never reads `Tych Maps` (client work).
+- The gallery loads `GET /api/maps`, filled by the Patreon sync (public posts tagged `portfolio`). The web `MapEntry` is the server's type from `src/gallery/model/map-entry.ts`; `subtitle` and `squares` are optional, so the grid choice and the converter teaser appear only for maps with squares. The modal draws its grid with `GridOverlay`, so no gridded image is needed. The old `content/maps.json` + `npm run gallery` pipeline (`web/public/maps/`) is still in the repo until it is removed; it never reads `Tych Maps` (client work).
 - Styling uses Tailwind with colour and font tokens in `web/src/styles.css`.
 
 ## Code style
@@ -81,12 +85,13 @@ web/src/
 
 - `npm run dev`: dev server with hot reload on port 3000. Env files are loaded by preloading dotenv in the npm scripts (`node --import dotenv/config`), never imported in code: `npm run dev` reads `.env`, `npm test` reads `.env.testing` (`DOTENV_CONFIG_PATH`); values set in the shell win. Don't use Node's `--env-file` flag with `--watch-path`: in Node 24 it makes the dev server restart in a loop.
 - `npm test` · `npm run typecheck` · `npm run lint` · `npm run format` · `npm run build`
-- Database tests run with plain `npm test` against the test Postgres from `npm run db` (`postgres-test` in `compose.dev.yml`: user/password/database `test`, `127.0.0.1:5433`, in-memory data). `.env.testing` (committed, no secrets) points at it; without that database they are reported as skipped. They use `describeWithDatabase` and `createTestDatabase()` from `src/db/testing.ts` (an empty `test_<random>` database per file, dropped afterwards).
+- Database tests run with plain `npm test` against the test Postgres from `npm run db` (`postgres-test` in `compose.dev.yml`: user/password/database `test`, `127.0.0.1:5433`, in-memory data). `.env.testing` (committed, no secrets) points at it; without that database they fail with "Start it with npm run db". They use `createTestDatabase()` from `src/db/testing.ts`, which creates an empty `test_<random>` database (per file, or per test where each test needs a fresh one) and drops it afterwards.
 - `npm run build` also writes `.br`/`.gz` copies of text files in `web/dist` (`scripts/precompress.ts`); `src/http/precompressed.ts` serves them, and `src/http/cache-control.ts` decides caching per path.
 - `npm run gallery -- --src ~/Desktop/Maps [--manifest content/maps.json] [--out web/public/maps]`: regenerates gallery images and `catalog.json` (about 25 s).
 - `npm run bench`: takes minutes; run it only when asked. `BENCH_TARGET=docker` measures the Docker image.
 - Docker: `docker compose up -d --build` (use `HOST_PORT=3001` when the dev server is on 3000). It needs `POSTGRES_USER` and `POSTGRES_PASSWORD` in `.env` (see `.env.example`; `POSTGRES_DB` defaults to the user). The database is configured by separate `POSTGRES_HOST/PORT/USER/PASSWORD/DB` settings, never a URL; compose sets `POSTGRES_HOST=postgres` for the app. The `app` container is named `dd-converter`; for test runs use a separate project (`-p`) with an override that renames containers and the image, so the user's container is never replaced.
 - `npm run db`: starts the dev Postgres (`127.0.0.1:5432`, for `npm run dev`) and the test Postgres (`127.0.0.1:5433`, for `npm test`) from `compose.dev.yml`, and waits until both are healthy.
+- `npm run gallery:sync`: runs one gallery sync against the database and Patreon settings in `.env` and exits (code 1 if it failed). In production: `docker compose run --rm app node src/gallery/sync-now.ts`. The dev server doesn't sync at startup.
 - `npm run db:migrate`: applies pending migrations to the database in `.env` (`src/db/migrate.ts`); the app also applies them at startup. In production: `docker compose run --rm app node src/db/migrate.ts`. Migrations must work with the previous release's code (add first, remove in a later release).
 
 ## Before finishing a change

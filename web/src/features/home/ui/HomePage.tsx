@@ -1,8 +1,10 @@
 import { SITE, type SiteConfig } from '../../../shared/config/site.ts';
 import { PageTitle } from '../../../shared/ui/PageTitle.tsx';
 import {
+  hasSquares,
   useMapCatalog,
   type GalleryApi,
+  type GriddedMap,
   type MapEntry,
 } from '../../gallery/index.ts';
 import { MembershipSection } from '../../membership/index.ts';
@@ -13,8 +15,10 @@ import { LatestMaps } from './LatestMaps.tsx';
 const BACKDROP_MAPS = 5;
 const LATEST_MAPS = 4;
 
-function teaserMap(maps: MapEntry[]): MapEntry | null {
-  return maps.find((map) => map.squares.x > map.squares.y) ?? maps[0] ?? null;
+function teaserMap(maps: MapEntry[]): GriddedMap | null {
+  const gridded = maps.filter(hasSquares);
+
+  return gridded.find((map) => map.width > map.height) ?? gridded[0] ?? null;
 }
 
 interface HomePageProps {

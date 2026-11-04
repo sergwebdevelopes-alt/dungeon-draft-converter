@@ -35,6 +35,18 @@ Every conversion request writes one JSON line, without file names or IP addresse
 
 `result` is `ok`, `invalid` (4xx), `busy` (all places taken), `timeout`, `cancelled` (the visitor left) or `error` (5xx). For example, `docker compose logs app | grep '"event":"conversion"'` lists them.
 
+### Gallery sync
+
+With the `PATREON_*` settings in `.env` (see `.env.example`), the server fills the gallery from Patreon: every public post tagged `portfolio` (`GALLERY_TAG`) becomes a map, with the post's main or ungridded image rendered as a card, a full view and a backdrop. It syncs at startup and then every `GALLERY_SYNC_INTERVAL_MINUTES` (default 60); in development (`npm run dev`) it skips the sync at startup, so file changes don't call Patreon. Only new or changed images are downloaded. If Patreon can't be reached, the gallery stays as it was until the next sync. Each sync writes one JSON line:
+
+```text
+{"event":"gallery-sync","result":"ok","posts":50,"maps":2,"failed":0,"added":1,"updated":0,"removed":0,"tookMs":12280}
+```
+
+`failed` counts maps whose image couldn't be downloaded or rendered; they keep their previous version. To sync once right away: `npm run gallery:sync` locally, or `docker compose run --rm app node src/gallery/sync-now.ts` in Docker. It exits with code 1 if the sync failed.
+
+`GET /api/maps` lists the gallery, newest first.
+
 `GET /api/health` answers `{"ok":true}` (200) while the server is running and `{"ok":false}` (503) while it shuts down, for uptime monitors.
 
 ### Without Docker
@@ -120,6 +132,6 @@ Starts the server on http://localhost:3000 with hot reload: Vite runs inside Exp
 
 `npm test` · `npm run typecheck` · `npm run lint` · `npm run format` · `npm run build`
 
-`npm test` reads `.env.testing`, which points at the test Postgres started by `npm run db` (`127.0.0.1:5433`, user/password `test`, data kept in memory). With it running, the database tests run too, each in its own temporary database; without it they are skipped.
+`npm test` reads `.env.testing`, which points at the test Postgres started by `npm run db` (`127.0.0.1:5433`, user/password `test`, data kept in memory). The database tests run in their own temporary databases there; without it they fail with a message to start it.
 
 `npm run bench` measures time and peak memory per request and appends the results to `bench/results.md`. It creates its test maps in `source/` on the first run. `BENCH_TARGET=docker` runs it against the Docker image (rebuilt first) instead of a local server, and `BENCH_DOCKER_ENV="MAX_PARALLEL_IMAGES=1 …"` passes [server settings](#server-settings) to that container. `BENCH_ONLY=<text>` runs only the cases whose name contains that text, and `BENCH_PORT` changes the port the benchmark server uses (default 3160).

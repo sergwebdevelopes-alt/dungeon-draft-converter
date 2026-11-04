@@ -8,56 +8,33 @@ import {
   SETTINGS_PROBLEMS,
   SHARP_CONCURRENCY,
   SHUTDOWN_TIMEOUT_MS,
-  STALE_CLEANUP_INTERVAL_MS,
 } from './config.ts';
-import type { Database, DatabaseConnection } from './db/database.ts';
 import { openDatabase } from './db/open-database.ts';
-import { removeStaleUploadDirs } from './http/upload/index.ts';
+import { createGalleryStores } from './gallery/setup.ts';
+import { startJobs } from './jobs/index.ts';
 import { stopOnBadSettings } from './settings/stop-on-bad-settings.ts';
 
-async function startDatabase(
-  connection: DatabaseConnection | undefined,
-): Promise<Database | null> {
-  if (!connection) {
-    console.log(
-      'No POSTGRES_USER and POSTGRES_PASSWORD: gallery features are off.',
-    );
-    return null;
-  }
-
-  return openDatabase(connection);
-}
-
 stopOnBadSettings(SETTINGS_PROBLEMS);
-const database = await startDatabase(SETTINGS.database);
+
+const database = SETTINGS.database
+  ? await openDatabase(SETTINGS.database)
+  : null;
+const galleryStores = database ? createGalleryStores(database) : undefined;
+const jobs = startJobs({ galleryStores });
 
 if (SHARP_CONCURRENCY > 0) {
   sharp.concurrency(SHARP_CONCURRENCY);
 }
-
-async function cleanUpStaleUploads(): Promise<void> {
-  try {
-    const removed = await removeStaleUploadDirs();
-    if (removed > 0) {
-      console.log(`Removed ${removed} leftover upload folder(s).`);
-    }
-  } catch (error) {
-    console.error('Upload folder cleanup failed:', error);
-  }
-}
-
-void cleanUpStaleUploads();
-setInterval(
-  () => void cleanUpStaleUploads(),
-  STALE_CLEANUP_INTERVAL_MS,
-).unref();
 
 let shuttingDown = false;
 const server = http.createServer();
 
 server.on(
   'request',
-  await createApp(server, { isShuttingDown: () => shuttingDown }),
+  await createApp(server, {
+    isShuttingDown: () => shuttingDown,
+    galleryStores,
+  }),
 );
 
 server.listen(PORT, () => {
@@ -74,6 +51,7 @@ function stopNow(): void {
 
 function stopGracefully(): void {
   shuttingDown = true;
+  jobs.stop();
   console.log(
     `SIGTERM received: finishing running requests (up to ${SHUTDOWN_TIMEOUT_MS / 1000} s).`,
   );

@@ -1,26 +1,20 @@
-interface MapEntry {
-  slug: string;
-  title: string;
-  subtitle: string;
-  squares: { x: number; y: number };
-  tags: string[];
-  patreonUrl: string;
+import type { MapEntry } from '../../../../../src/gallery/model/map-entry.ts';
+import type { Squares } from '../../../../../src/gallery/model/types.ts';
+
+type GriddedMap = MapEntry & { squares: Squares };
+
+function hasSquares(map: MapEntry): map is GriddedMap {
+  return map.squares !== undefined;
 }
 
-interface MapImages {
-  card: string;
-  view: string;
-  backdrop: string;
+function squaresLabel({ x, y }: Squares): string {
+  return `${x} × ${y} squares`;
 }
 
-function mapImages(slug: string): MapImages {
-  const base = `/maps/${slug}`;
-
-  return {
-    card: `${base}/card.webp`,
-    view: `${base}/view.webp`,
-    backdrop: `${base}/backdrop.webp`,
-  };
+function captionOf(map: MapEntry): string {
+  return [map.subtitle, map.squares && squaresLabel(map.squares)]
+    .filter(Boolean)
+    .join(' · ');
 }
 
 function findMap(maps: MapEntry[], slug: string | null): MapEntry | null {
@@ -48,5 +42,5 @@ function neighbour(
   return maps[(index + step + maps.length) % maps.length];
 }
 
-export { filterMaps, findMap, mapImages, neighbour, tagsOf };
-export type { MapEntry, MapImages };
+export { captionOf, filterMaps, findMap, hasSquares, neighbour, tagsOf };
+export type { GriddedMap, MapEntry };

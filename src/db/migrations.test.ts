@@ -7,6 +7,12 @@ import { createPgDatabase } from './pg-database.ts';
 import { runMigrations } from './migrations.ts';
 import { createTestDatabase, type TestDatabase } from './testing.ts';
 
+const APP_MIGRATIONS = [
+  '001_gallery.sql',
+  '002_deferred_slugs.sql',
+  '003_drop_source.sql',
+];
+
 async function migrationsDir(files: Record<string, string>): Promise<string> {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'migrations-'));
   for (const [name, sql] of Object.entries(files)) {
@@ -33,13 +39,16 @@ describe('runMigrations', () => {
   it('applies the app migrations once and records them', async () => {
     test = await createTestDatabase();
 
-    assert.deepEqual(await runMigrations(test.db), ['001_gallery.sql']);
+    assert.deepEqual(await runMigrations(test.db), APP_MIGRATIONS);
     assert.deepEqual(await runMigrations(test.db), []);
     assert.ok(await tableExists(test, 'maps'));
     const recorded = await test.db.query<{ name: string }>(
       'SELECT name FROM schema_migrations',
     );
-    assert.deepEqual(recorded, [{ name: '001_gallery.sql' }]);
+    assert.deepEqual(
+      recorded.map((row) => row.name),
+      APP_MIGRATIONS,
+    );
   });
 
   it('applies the files in name order and skips other files', async () => {
@@ -79,7 +88,7 @@ describe('runMigrations', () => {
         runMigrations(second),
       ]);
 
-      assert.deepEqual(results.flat(), ['001_gallery.sql']);
+      assert.deepEqual(results.flat().sort(), APP_MIGRATIONS);
     } finally {
       await second.close();
     }

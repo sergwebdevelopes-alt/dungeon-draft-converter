@@ -1,4 +1,11 @@
-import type { MapEntry } from '../../web/src/features/gallery/model/catalog.ts';
+interface MapEntry {
+  slug: string;
+  title: string;
+  subtitle: string;
+  squares: { x: number; y: number };
+  tags: string[];
+  patreonUrl: string;
+}
 
 interface ManifestEntry extends MapEntry {
   sources: { noGrid: string };

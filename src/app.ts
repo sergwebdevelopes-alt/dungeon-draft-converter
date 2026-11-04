@@ -15,6 +15,8 @@ import { serveGalleryImages } from './http/gallery-images.ts';
 import type { LogConversion } from './http/convert/conversion-log.ts';
 import { configRouter } from './http/routes/config.ts';
 import { healthRouter } from './http/routes/health.ts';
+import type { GalleryStores } from './gallery/setup.ts';
+import { mapsRouter } from './http/routes/maps.ts';
 import { convertRouter } from './http/routes/convert.ts';
 import { queueRouter } from './http/routes/queue.ts';
 import { blockCrossSiteRequests, securityHeaders } from './http/security.ts';
@@ -25,11 +27,12 @@ import { ConversionQueue, PendingLimit } from './queue/index.ts';
 interface AppOptions {
   isShuttingDown: () => boolean;
   logConversion?: LogConversion;
+  galleryStores?: GalleryStores;
 }
 
 async function createApp(
   server: http.Server,
-  { isShuttingDown, logConversion }: AppOptions,
+  { isShuttingDown, logConversion, galleryStores }: AppOptions,
 ): Promise<express.Express> {
   const queue = new ConversionQueue({ maxParallel: MAX_PARALLEL_CONVERSIONS });
   const pendingLimit = new PendingLimit(MAX_PENDING_CONVERSIONS);
@@ -47,6 +50,7 @@ async function createApp(
     healthRouter(isShuttingDown),
     configRouter(),
     queueRouter(queue),
+    mapsRouter(galleryStores),
     convertRouter(queue, pendingLimit, logConversion),
     notFound,
   );

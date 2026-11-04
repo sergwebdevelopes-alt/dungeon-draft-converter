@@ -40,6 +40,15 @@ describe('createLocalImageStore', () => {
     );
   });
 
+  it('tells whether an image is stored', async () => {
+    await store.put('cave/v1/card.webp', Buffer.from('image'));
+
+    assert.equal(await store.has('cave/v1/card.webp'), true);
+    assert.equal(await store.has('cave/v1/view.webp'), false);
+    assert.equal(await store.has('cave/v1'), false);
+    await assert.rejects(store.has('../escape.webp'), /outside/);
+  });
+
   it('removes one folder and leaves the others', async () => {
     await store.put('cave/v1/card.webp', Buffer.from('old'));
     await store.put('cave/v2/card.webp', Buffer.from('new'));

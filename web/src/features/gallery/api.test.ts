@@ -31,7 +31,7 @@ describe('createGalleryApi', () => {
     await expect(
       createGalleryApi(http.client).fetchMaps(signal()),
     ).resolves.toEqual(maps);
-    expect(http.getJson).toHaveBeenCalledWith('/maps/catalog.json', undefined);
+    expect(http.getJson).toHaveBeenCalledWith('/api/maps', undefined);
   });
 
   it('loads the catalog once for every page that asks', async () => {

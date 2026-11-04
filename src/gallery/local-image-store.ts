@@ -24,6 +24,17 @@ function createLocalImageStore({
   const root = path.resolve(dir);
 
   return {
+    async has(key) {
+      try {
+        return (await fs.stat(fileFor(root, key))).isFile();
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+          return false;
+        }
+        throw error;
+      }
+    },
+
     async put(key, data) {
       const file = fileFor(root, key);
       const temp = `${file}.${randomUUID()}.tmp`;

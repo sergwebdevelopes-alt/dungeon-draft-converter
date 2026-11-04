@@ -23,6 +23,7 @@ function fakeHttp(answers: unknown[]) {
         ? Promise.reject(answer)
         : Promise.resolve(answer as T);
     },
+    getBytes: () => Promise.reject(new Error('No downloads here.')),
   };
 
   return { http, calls };

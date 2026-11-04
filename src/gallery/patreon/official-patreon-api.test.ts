@@ -18,6 +18,7 @@ function fakeHttp(pages: unknown[]) {
       calls.push({ url, options });
       return Promise.resolve(pages.shift() as T);
     },
+    getBytes: () => Promise.reject(new Error('No downloads here.')),
   };
 
   return { http, calls };

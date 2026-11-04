@@ -57,7 +57,7 @@ function toStoredMap(row: MapRow): StoredMap {
   };
 }
 
-function toRow(map: MapRecord, source: unknown): Record<string, unknown> {
+function toRow(map: MapRecord): Record<string, unknown> {
   return {
     post_id: map.postId,
     slug: map.slug,
@@ -74,7 +74,6 @@ function toRow(map: MapRecord, source: unknown): Record<string, unknown> {
     image_media_id: map.image.mediaId,
     image_is_main: map.image.isMain,
     image_file_name: map.image.fileName ?? null,
-    source: JSON.stringify(source),
   };
 }
 
@@ -87,15 +86,17 @@ function createPostgresMapStore(db: Database): MapStore {
       return rows.map(toStoredMap);
     },
 
-    async saveMap(map, source) {
-      const row = toRow(map, source);
-      await db.query(upsertSql(Object.keys(row)), Object.values(row));
-    },
+    async replaceMaps(maps) {
+      await db.transaction(async (tx) => {
+        for (const map of maps) {
+          const row = toRow(map);
+          await tx.query(upsertSql(Object.keys(row)), Object.values(row));
+        }
 
-    async removeMaps(postIds) {
-      if (postIds.length > 0) {
-        await db.query('DELETE FROM maps WHERE post_id = ANY($1)', [postIds]);
-      }
+        await tx.query('DELETE FROM maps WHERE NOT (post_id = ANY($1))', [
+          maps.map((map) => map.postId),
+        ]);
+      });
     },
   };
 }
