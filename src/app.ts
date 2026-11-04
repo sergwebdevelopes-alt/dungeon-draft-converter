@@ -2,6 +2,8 @@ import type http from 'node:http';
 import path from 'node:path';
 import express from 'express';
 import {
+  GALLERY_DIR,
+  GALLERY_IMAGES_URL,
   IS_PRODUCTION,
   MAX_PARALLEL_CONVERSIONS,
   MAX_PENDING_CONVERSIONS,
@@ -9,6 +11,7 @@ import {
   WEB_DIST_DIR,
 } from './config.ts';
 import { errorHandler, notFound } from './http/errors.ts';
+import { serveGalleryImages } from './http/gallery-images.ts';
 import type { LogConversion } from './http/convert/conversion-log.ts';
 import { configRouter } from './http/routes/config.ts';
 import { healthRouter } from './http/routes/health.ts';
@@ -47,6 +50,8 @@ async function createApp(
     convertRouter(queue, pendingLimit, logConversion),
     notFound,
   );
+
+  app.use(GALLERY_IMAGES_URL, serveGalleryImages(GALLERY_DIR));
 
   if (IS_PRODUCTION) {
     app.use(serveWebApp(WEB_DIST_DIR));

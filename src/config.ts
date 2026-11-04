@@ -5,6 +5,10 @@ import { readSettings } from './settings/read-settings.ts';
 const ROOT_DIR = path.join(import.meta.dirname, '..');
 const WEB_DIST_DIR = path.join(ROOT_DIR, 'web/dist');
 const UPLOAD_ROOT = os.tmpdir();
+const GALLERY_DIR = path.resolve(
+  process.env.GALLERY_DIR ?? path.join(ROOT_DIR, '.data/gallery'),
+);
+const GALLERY_IMAGES_URL = '/maps';
 
 const PORT = Number(process.env.PORT ?? 3000);
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -67,7 +71,9 @@ const { settings: SETTINGS, problems: SETTINGS_PROBLEMS } = readSettings(
 
 export {
   CONVERSION_TIMEOUT_MS,
+  GALLERY_DIR,
   GALLERY_GENERIC_TAGS,
+  GALLERY_IMAGES_URL,
   HTTP_CLIENT_TIMEOUT_MS,
   IS_PRODUCTION,
   MAX_LEVELS,

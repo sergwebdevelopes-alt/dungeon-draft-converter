@@ -20,6 +20,8 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY src ./src
 COPY --from=build /app/web/dist ./web/dist
+RUN mkdir -p /data/gallery && chown node:node /data/gallery
+ENV GALLERY_DIR=/data/gallery
 USER node
 EXPOSE 3000
 CMD ["node", "src/server.ts"]

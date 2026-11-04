@@ -14,7 +14,7 @@ Copy `.env.example` to `.env` and set at least `POSTGRES_USER` and `POSTGRES_PAS
 docker compose up -d --build
 ```
 
-This starts the app and its Postgres database (used by the map gallery). Postgres has no public port; its data lives in the `pgdata` volume. Database migrations run when the app starts. To apply new migrations while the running app keeps serving, run them first and then deploy:
+This starts the app and its Postgres database (used by the map gallery). Postgres has no public port; its data lives in the `pgdata` volume. Gallery images are kept in the `gallery` volume (`.data/gallery` when running without Docker, or the folder in `GALLERY_DIR`). Database migrations run when the app starts. To apply new migrations while the running app keeps serving, run them first and then deploy:
 
 ```sh
 docker compose run --rm app node src/db/migrate.ts

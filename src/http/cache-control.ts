@@ -5,9 +5,10 @@ const ONE_DAY = 'public, max-age=86400';
 const REVALIDATE = 'no-cache';
 
 const IMAGE_EXTENSIONS = new Set(['.webp', '.png', '.jpg', '.jpeg', '.ico']);
+const VERSIONED_GALLERY_IMAGE = /^\/maps\/[^/]+\/[^/]+\/[^/]+\.webp$/;
 
 function cacheControlFor(urlPath: string): string {
-  if (urlPath.startsWith('/assets/')) {
+  if (urlPath.startsWith('/assets/') || VERSIONED_GALLERY_IMAGE.test(urlPath)) {
     return FOREVER;
   }
   if (IMAGE_EXTENSIONS.has(path.extname(urlPath))) {

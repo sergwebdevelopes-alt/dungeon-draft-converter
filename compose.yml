@@ -32,6 +32,7 @@ services:
     read_only: true
     volumes:
       - uploads:/tmp
+      - gallery:/data/gallery
     cap_drop:
       - ALL
     security_opt:
@@ -57,4 +58,5 @@ services:
 
 volumes:
   uploads:
+  gallery:
   pgdata:

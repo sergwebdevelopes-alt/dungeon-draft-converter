@@ -10,6 +10,13 @@ describe('cacheControlFor', () => {
     );
   });
 
+  it('keeps versioned gallery images for a year', () => {
+    assert.equal(
+      cacheControlFor('/maps/cave/717019350/card.webp'),
+      'public, max-age=31536000, immutable',
+    );
+  });
+
   it('keeps gallery images and icons for a day, as they can be rebuilt', () => {
     assert.equal(
       cacheControlFor('/maps/cave/card.webp'),

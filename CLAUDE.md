@@ -23,9 +23,10 @@ src/
 ├── db/           Database port (query, transaction, exclusive lock) + pg adapter (the only file importing pg); openDatabase (connect + migrate); migrate.ts (the `db:migrate` script); migrations runner + migrations/*.sql; LOCKS (every advisory lock key)
 ├── gallery/       the gallery feature
 │   ├── map-store.ts + postgres-map-store.ts   MapStore port + adapter (SQL through the Database port)
+│   ├── image-store.ts + local-image-store.ts  ImageStore port + folder adapter (GALLERY_DIR, served at /maps by http/gallery-images.ts)
 │   ├── model/     pure gallery rules: which posts count, title, chips, slug, choosing the image, building a MapRecord
 │   └── patreon/   Patreon ports + adapters: official API v2 (post list) and the website's post details (tags, all images); I/O and translation only
-├── core/          image work: dd2vtt format, conversion, images, lighting, merge
+├── core/          image work: dd2vtt format, conversion, images, lighting, merge, gallery-images (card, view, backdrop)
 └── utils/         small shared helpers (format.ts, time.ts, object.ts)
 ```
 

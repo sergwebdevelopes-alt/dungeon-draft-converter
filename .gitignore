@@ -2,6 +2,7 @@ node_modules/
 .DS_Store
 web/dist/
 source/
+.data/
 .env
 .env.*
 !.env.example
