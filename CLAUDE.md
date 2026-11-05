@@ -69,7 +69,7 @@ web/src/
 - No DI container: modules export ready instances (`http`, `storage`, `converterApi`); hooks take them as default parameters so tests can pass fakes.
 - The ports rule covers runtime libraries (HTTP, storage, animation). UI frameworks and build tools (React, Tailwind, Vite, Vitest) are used directly.
 - Membership plans live in `web/src/shared/config/site.ts` (`membership.plans`); adding a Patreon tier means adding one entry there. Pages use `Container` for width and padding; sections may run full width.
-- The web app imports only types from the server's `src/`, plus `src/core/grid-stroke.ts` (the export grid style); ESLint enforces this.
+- The web app imports only types from the server's `src/`, plus `src/core/grid-stroke.ts` (the export grid style); `web/src/server-imports.test.ts` enforces this.
 - Use the shared `Button`/`ButtonLink`, `Alert` and `Segmented` instead of repeating their classes.
 - Motion is imported only in `web/src/shared/ui/motion/`; features use its wrappers (`MotionProvider`, `Reveal`, `SharedFrame`, `Swipeable`).
 - Patreon post HTML is sanitised once, in the sync (the official adapter gets the sanitiser passed in), and stored as `maps.description`; the modal inserts it with `dangerouslySetInnerHTML` in `MapDescription.tsx`, the only place raw HTML is rendered.
@@ -87,6 +87,7 @@ web/src/
 
 - `npm run dev`: dev server with hot reload on port 3000. Env files are loaded by preloading dotenv in the npm scripts (`node --import dotenv/config`), never imported in code: `npm run dev` reads `.env`, `npm test` reads `.env.testing` (`DOTENV_CONFIG_PATH`); values set in the shell win. Don't use Node's `--env-file` flag with `--watch-path`: in Node 24 it makes the dev server restart in a loop.
 - `npm test` · `npm run typecheck` · `npm run lint` · `npm run format` · `npm run build`
+- TypeScript 7 (the native compiler, `tsc`). Linting is oxlint with its type-aware rules (`oxlint-tsgolint`), configured in `.oxlintrc.json`: the ESLint-recommended and typescript-eslint recommended-type-checked rules; type-aware rules are off for plain `.js` files. Prettier does the formatting.
 - Database tests run with plain `npm test` against the test Postgres from `npm run db` (`postgres-test` in `compose.dev.yml`: user/password/database `test`, `127.0.0.1:5433`, in-memory data). `.env.testing` (committed, no secrets) points at it; without that database they fail with "Start it with npm run db". They use `createTestDatabase()` from `src/db/testing.ts`, which creates an empty `test_<random>` database (per file, or per test where each test needs a fresh one) and drops it afterwards.
 - `npm run build` also writes `.br`/`.gz` copies of text files in `web/dist` (`scripts/precompress.ts`); `src/http/precompressed.ts` serves them, and `src/http/cache-control.ts` decides caching per path.
 - `npm run bench`: takes minutes; run it only when asked. `BENCH_TARGET=docker` measures the Docker image.

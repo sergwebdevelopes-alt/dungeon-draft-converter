@@ -140,6 +140,8 @@ Starts the server on http://localhost:3000 with hot reload: Vite runs inside Exp
 
 `npm test` · `npm run typecheck` · `npm run lint` · `npm run format` · `npm run build`
 
+The project uses TypeScript 7. `npm run lint` runs oxlint (with its type-aware rules, configured in `.oxlintrc.json`); Prettier does the formatting.
+
 `npm run db` starts the dev Postgres on `127.0.0.1:5432`, reachable only from this computer. To open it from another computer on your network (for example in a database tool), set `POSTGRES_DEV_BIND=0.0.0.0` in `.env` and run `npm run db` again; then anyone on that network can reach it with the database password, so use a strong one.
 
 `npm test` reads `.env.testing`, which points at the test Postgres started by `npm run db` (`127.0.0.1:5433`, user/password `test`, data kept in memory). The database tests run in their own temporary databases there; without it they fail with a message to start it.
