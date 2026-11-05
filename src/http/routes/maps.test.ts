@@ -15,7 +15,7 @@ function stored(postId: string, slug: string): StoredMap {
     tags: [],
     patreonUrl: `https://www.patreon.com/posts/${postId}`,
     publishedAt: '2026-01-01T00:00:00.000Z',
-    image: { url: 'u', width: 3, height: 2, mediaId: 'm', isMain: true },
+    image: { url: 'u', width: 3, height: 2, mediaId: 'm' },
     checkedAt: '2026-11-04T00:00:00.000Z',
   };
 }

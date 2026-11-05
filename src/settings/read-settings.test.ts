@@ -14,7 +14,7 @@ const DATABASE = { POSTGRES_USER: 'artificer', POSTGRES_PASSWORD: 'p@ss:w/rd' };
 describe('readSettings', () => {
   it('starts with the gallery off and default gallery settings', () => {
     assert.deepEqual(readSettings({}), {
-      settings: { gallery: { tag: 'portfolio', syncIntervalMinutes: 60 } },
+      settings: { gallery: { syncIntervalMinutes: 60 } },
       problems: [],
     });
   });
@@ -27,7 +27,6 @@ describe('readSettings', () => {
       POSTGRES_DB: 'gallery',
       ...PATREON,
       PATREON_WEBHOOK_SECRET: 'hook',
-      GALLERY_TAG: 'showcase',
       GALLERY_SYNC_INTERVAL_MINUTES: '15',
       GALLERY_SYNC_TOKEN: 'x'.repeat(32),
     });
@@ -50,7 +49,6 @@ describe('readSettings', () => {
         webhookSecret: 'hook',
       },
       gallery: {
-        tag: 'showcase',
         syncIntervalMinutes: 15,
         syncToken: 'x'.repeat(32),
       },
@@ -73,7 +71,7 @@ describe('readSettings', () => {
       POSTGRES_USER: ' artificer ',
       POSTGRES_PASSWORD: 'pw',
       PATREON_CAMPAIGN_ID: '',
-      GALLERY_TAG: '   ',
+      GALLERY_SYNC_INTERVAL_MINUTES: '   ',
       GALLERY_SYNC_TOKEN: '',
     });
 
@@ -81,7 +79,7 @@ describe('readSettings', () => {
     assert.equal(settings.database?.host, '127.0.0.1');
     assert.equal(settings.database?.user, 'artificer');
     assert.equal(settings.patreon, undefined);
-    assert.equal(settings.gallery.tag, 'portfolio');
+    assert.equal(settings.gallery.syncIntervalMinutes, 60);
   });
 
   it('needs the database user and password together', () => {
@@ -169,7 +167,7 @@ describe('readSettings', () => {
       'Patreon settings are incomplete: set PATREON_CAMPAIGN_ID, PATREON_CLIENT_SECRET, PATREON_CREATOR_TOKEN, PATREON_REFRESH_TOKEN.',
     ]);
     assert.deepEqual(settings, {
-      gallery: { tag: 'portfolio', syncIntervalMinutes: 60 },
+      gallery: { syncIntervalMinutes: 60 },
     });
   });
 });

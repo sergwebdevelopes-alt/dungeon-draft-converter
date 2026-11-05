@@ -18,7 +18,6 @@ function map(overrides: Partial<MapRecord> = {}): MapRecord {
       width: 8400,
       height: 5600,
       mediaId: '717019350',
-      isMain: false,
     },
     ...overrides,
   };

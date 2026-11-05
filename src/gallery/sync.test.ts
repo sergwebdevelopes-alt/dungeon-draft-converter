@@ -28,11 +28,15 @@ function post(id: string, title = `Map ${id}`): PatreonPost {
   };
 }
 
-function details(id: string, mediaId = `m${id}`, tags = ['portfolio']) {
+function details(
+  id: string,
+  mediaId = `m${id}`,
+  collections = ['Original Content'],
+): PostDetails {
   return {
     postId: id,
     publishedAt: `2026-01-0${id}T00:00:00.000Z`,
-    tags,
+    collections,
     images: [
       {
         url: `https://cdn.test/${mediaId}`,
@@ -130,7 +134,6 @@ function setUp(state: FakePatreon) {
     maps: maps.store,
     images,
     render,
-    rules: { tag: 'portfolio', genericTags: [] },
     log: (entry) => logs.push(entry),
     now: () => 0,
   });
@@ -145,10 +148,10 @@ function folders(files: Map<string, Buffer>): string[] {
 }
 
 describe('createGallerySync', () => {
-  it('adds the tagged posts with their images and logs the result', async () => {
+  it('adds the posts in a collection with their images and logs the result', async () => {
     const state = {
       posts: [post('1'), post('2'), post('3')],
-      details: [details('1'), details('2', 'm2', ['other']), details('3')],
+      details: [details('1'), details('2', 'm2', []), details('3')],
     };
     const { sync, maps, files, logs } = setUp(state);
 
@@ -205,7 +208,7 @@ describe('createGallerySync', () => {
     assert.deepEqual(folders(files), ['1/new']);
   });
 
-  it('removes maps and images of posts that lost the tag', async () => {
+  it('removes maps and images of posts that left their collection', async () => {
     const state = {
       posts: [post('1'), post('2')],
       details: [details('1'), details('2')],

@@ -33,22 +33,22 @@ function rawPost(
   id: string,
   {
     postFile = null,
-    tagIds = [] as string[],
+    collectionIds = [] as string[],
     mediaIds = [] as string[],
-  }: { postFile?: unknown; tagIds?: string[]; mediaIds?: string[] } = {},
+  }: { postFile?: unknown; collectionIds?: string[]; mediaIds?: string[] } = {},
 ) {
   return {
     id,
     attributes: { published_at: `2026-10-${id}`, post_file: postFile },
     relationships: {
-      user_defined_tags: { data: tagIds.map((tagId) => ({ id: tagId })) },
+      collections: { data: collectionIds.map((cid) => ({ id: cid })) },
       media: { data: mediaIds.map((mediaId) => ({ id: mediaId })) },
     },
   };
 }
 
-function tag(id: string, value: string) {
-  return { id, type: 'post_tag', attributes: { value } };
+function collection(id: string, title: string) {
+  return { id, type: 'collection', attributes: { title } };
 }
 
 function media(
@@ -69,7 +69,7 @@ function media(
 }
 
 describe('createWebsitePostDetails', () => {
-  it('reads the tags and the main image of an Image-tab post', async () => {
+  it('reads the collections and the main image of an Image-tab post', async () => {
     const { http } = fakeHttp([
       {
         data: [
@@ -80,13 +80,13 @@ describe('createWebsitePostDetails', () => {
               height: 2240,
               media_id: 7,
             },
-            tagIds: ['t1', 't2'],
+            collectionIds: ['c1', 'c2'],
             mediaIds: ['7'],
           }),
         ],
         included: [
-          tag('t1', 'curse of strahd'),
-          tag('t2', 'portfolio'),
+          collection('c1', 'Curse of Strahd [In Progress]'),
+          collection('c2', 'Original Content'),
           media('7', 'Mansion_34x16_NoGrid.jpg'),
         ],
       },
@@ -97,7 +97,7 @@ describe('createWebsitePostDetails', () => {
     assert.deepEqual(details, {
       postId: '19',
       publishedAt: '2026-10-19',
-      tags: ['curse of strahd', 'portfolio'],
+      collections: ['Curse of Strahd [In Progress]', 'Original Content'],
       images: [
         {
           url: 'https://cdn.test/main.jpg',
@@ -125,6 +125,7 @@ describe('createWebsitePostDetails', () => {
 
     const [details] = await createWebsitePostDetails(http, '1').listDetails();
 
+    assert.deepEqual(details.collections, []);
     assert.deepEqual(
       details.images.map(({ mediaId, isMain, url, width }) => ({
         mediaId,
@@ -168,6 +169,9 @@ describe('createWebsitePostDetails', () => {
     assert.equal(calls.length, 2);
     assert.match(calls[0].url, /filter%5Bcampaign_id%5D=12754508/);
     assert.match(calls[0].url, /sort=-published_at/);
+    assert.match(calls[0].url, /include=media%2Ccollections&/);
+    assert.match(calls[0].url, /fields%5Bcollection%5D=title/);
+    assert.doesNotMatch(calls[0].url, /tag/);
     assert.equal(calls[1].url, 'https://site.test/page-2');
   });
 
@@ -184,16 +188,17 @@ describe('createWebsitePostDetails', () => {
   it('reads one post, and gives null for a post that does not exist', async () => {
     const { http, calls } = fakeHttp([
       {
-        data: rawPost('19', { tagIds: ['t1'] }),
-        included: [tag('t1', 'portfolio')],
+        data: rawPost('19', { collectionIds: ['c1', 'missing'] }),
+        included: [collection('c1', 'Waterdeep')],
       },
       new HttpClientError(404, 'Not found.'),
     ]);
     const source = createWebsitePostDetails(http, '1');
 
-    assert.deepEqual((await source.details('19'))?.tags, ['portfolio']);
+    assert.deepEqual((await source.details('19'))?.collections, ['Waterdeep']);
     assert.equal(await source.details('404'), null);
     assert.match(calls[0].url, /\/posts\/19\?/);
+    assert.match(calls[0].url, /include=media%2Ccollections/);
   });
 
   it('passes on other errors, such as being blocked', async () => {

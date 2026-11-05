@@ -21,8 +21,6 @@ function map(overrides: Partial<MapRecord> = {}): MapRecord {
       width: 8400,
       height: 5600,
       mediaId: '717019350',
-      isMain: false,
-      fileName: 'TserFalls_60x40_140px_NoGrid.jpg',
     },
     ...overrides,
   };
@@ -31,6 +29,19 @@ function map(overrides: Partial<MapRecord> = {}): MapRecord {
 describe('createPostgresMapStore', () => {
   let test: TestDatabase;
   let store: MapStore;
+
+  async function times(): Promise<{ updatedAt: string; checkedAt: string }> {
+    const [row] = await test.db.query<{
+      updatedAt: string;
+      checkedAt: string;
+    }>(
+      `SELECT to_char(updated_at, 'YYYY') AS "updatedAt",
+              to_char(checked_at, 'YYYY') AS "checkedAt"
+       FROM maps`,
+    );
+
+    return row;
+  }
 
   before(async () => {
     test = await createTestDatabase();
@@ -54,18 +65,11 @@ describe('createPostgresMapStore', () => {
   });
 
   it('reads optional fields back as missing, not as empty values', async () => {
-    const plain = map({
-      subtitle: undefined,
-      squares: undefined,
-      image: { ...map().image, fileName: undefined, isMain: true },
-    });
-    await store.replaceMaps([plain]);
+    await store.replaceMaps([map({ subtitle: undefined, squares: undefined })]);
 
     const [saved] = await store.listMaps();
     assert.equal('subtitle' in saved, false);
     assert.equal('squares' in saved, false);
-    assert.equal('fileName' in saved.image, false);
-    assert.equal(saved.image.isMain, true);
   });
 
   it('updates saved maps', async () => {
@@ -79,6 +83,22 @@ describe('createPostgresMapStore', () => {
     assert.equal(maps.length, 1);
     assert.equal(maps[0].title, 'Tser Falls at Night');
     assert.equal(maps[0].squares, undefined);
+  });
+
+  it('moves updated_at only when the map changed, and checked_at on every save', async () => {
+    await store.replaceMaps([map()]);
+    await test.db.query(
+      "UPDATE maps SET updated_at = '2020-01-01', checked_at = '2020-01-01'",
+    );
+
+    await store.replaceMaps([map()]);
+    const unchanged = await times();
+    await store.replaceMaps([map({ tags: ['Original Content'] })]);
+    const changed = await times();
+
+    assert.equal(unchanged.updatedAt, '2020');
+    assert.notEqual(unchanged.checkedAt, '2020');
+    assert.notEqual(changed.updatedAt, '2020');
   });
 
   it('lists the newest maps first', async () => {

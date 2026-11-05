@@ -28,8 +28,8 @@ src/
 │   ├── sync.ts    one sync: Patreon posts → maps, images via map-images.ts, gallery saved in one transaction; runs through utils/single-flight.ts
 │   ├── map-images.ts  makes sure a map's card/view/backdrop are stored: renders missing ones, keeps the previous version if that fails
 │   ├── setup.ts   builds the stores and the sync from settings (used by server.ts and sync-now.ts, the `gallery:sync` script)
-│   ├── model/     pure gallery rules: which posts count, title, chips, slug, choosing the image, building a MapRecord, the public MapEntry (map-entry.ts), where images are stored (image-keys.ts), sync counts and folders (sync-plan.ts)
-│   └── patreon/   Patreon ports + adapters: official API v2 (post list) and the website's post details (tags, all images); I/O and translation only
+│   ├── model/     pure gallery rules: which posts count (public and in a collection), title, collection chips (collections.ts), slug, choosing the image, building a MapRecord (whose MapImage keeps only url, size and media ID), the public MapEntry (map-entry.ts), where images are stored (image-keys.ts), sync counts and folders (sync-plan.ts)
+│   └── patreon/   Patreon ports + adapters: official API v2 (post list) and the website's post details (collections, all images); I/O and translation only
 ├── core/          image work: dd2vtt format, conversion, images, lighting, merge, gallery-images (card, view, backdrop)
 └── utils/         small shared helpers (format.ts, time.ts, object.ts, error.ts, single-flight.ts: one run at a time, once more if asked meanwhile)
 ```

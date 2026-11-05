@@ -32,7 +32,7 @@ describe('AppRoutes', () => {
       'fetch',
       vi.fn((url: string) =>
         Promise.resolve(
-          Response.json(url === '/maps/catalog.json' ? { maps: [] } : CONFIG),
+          Response.json(url === '/api/maps' ? { maps: [] } : CONFIG),
         ),
       ),
     );

@@ -22,7 +22,6 @@ function map(mediaId = 'm1'): MapRecord {
       width: 2,
       height: 1,
       mediaId,
-      isMain: true,
     },
   };
 }

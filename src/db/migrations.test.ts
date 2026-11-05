@@ -11,6 +11,7 @@ const APP_MIGRATIONS = [
   '001_gallery.sql',
   '002_deferred_slugs.sql',
   '003_drop_source.sql',
+  '004_drop_image_choice_columns.sql',
 ];
 
 async function migrationsDir(files: Record<string, string>): Promise<string> {

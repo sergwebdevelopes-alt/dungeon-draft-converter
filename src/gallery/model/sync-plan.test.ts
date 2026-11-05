@@ -5,8 +5,6 @@ import type { PostDetails } from '../patreon/post-details.ts';
 import { foldersToRemove, galleryMaps, syncCounts } from './sync-plan.ts';
 import type { MapRecord } from './types.ts';
 
-const RULES = { tag: 'portfolio', genericTags: [] };
-
 function post(id: string, overrides: Partial<PatreonPost> = {}): PatreonPost {
   return {
     id,
@@ -18,11 +16,11 @@ function post(id: string, overrides: Partial<PatreonPost> = {}): PatreonPost {
   };
 }
 
-function details(id: string, tags = ['portfolio']): PostDetails {
+function details(id: string, collections = ['Original Content']): PostDetails {
   return {
     postId: id,
     publishedAt: '2026-01-01T00:00:00.000Z',
-    tags,
+    collections,
     images: [
       {
         url: `https://cdn.test/${id}`,
@@ -47,17 +45,16 @@ function map(
     tags: [],
     patreonUrl: `https://www.patreon.com/posts/${postId}`,
     publishedAt: '2026-01-01T00:00:00.000Z',
-    image: { url: 'u', width: 2, height: 1, mediaId, isMain: true },
+    image: { url: 'u', width: 2, height: 1, mediaId },
     ...overrides,
   };
 }
 
 describe('galleryMaps', () => {
-  it('keeps the tagged public posts that have details, in post order', () => {
+  it('keeps the public posts in a collection that have details, in post order', () => {
     const maps = galleryMaps(
       [post('1'), post('2'), post('3', { isPublic: false }), post('4')],
-      [details('4'), details('2', ['other']), details('1'), details('3')],
-      RULES,
+      [details('4'), details('2', []), details('1'), details('3')],
     );
 
     assert.deepEqual(
