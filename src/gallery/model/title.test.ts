@@ -47,6 +47,19 @@ describe('parseTitle', () => {
     });
   });
 
+  it('closes the gap the word Battlemap leaves before punctuation', () => {
+    assert.deepEqual(
+      parseTitle(
+        'Curse of Strahd Begins! Free Battlemap: The Gates of Barovia [40x30]',
+      ),
+      {
+        title: 'Curse of Strahd Begins! Free: The Gates of Barovia',
+        squares: { x: 40, y: 30 },
+      },
+    );
+    assert.equal(parseTitle('Ruins Battlemap, Night').title, 'Ruins, Night');
+  });
+
   it('accepts a size with spaces or a multiplication sign', () => {
     assert.deepEqual(parseTitle('Cave [ 20 × 30 ]').squares, { x: 20, y: 30 });
   });

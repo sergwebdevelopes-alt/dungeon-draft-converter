@@ -13,6 +13,7 @@ const INLINE_SIZE = /\b(\d+)\s*[x×]\s*(\d+)\b/i;
 const FILE_SIZE = /(?:^|[^\d])(\d+)x(\d+)(?:[^\d]|$)/i;
 const BATTLEMAP = /^battle\s*maps?$/i;
 const BATTLEMAP_WORD = /\bbattle\s*maps?\b/gi;
+const SPACE_BEFORE_MARK = /\s+([:;,.!?])/g;
 
 function isLabel(text: string): boolean {
   return text !== '' && !BATTLEMAP.test(text);
@@ -42,6 +43,7 @@ function parseTitle(raw: string): ParsedTitle {
   const names = rest
     .replace(new RegExp(INLINE_SIZE, 'gi'), ' ')
     .replace(BATTLEMAP_WORD, ' ')
+    .replace(SPACE_BEFORE_MARK, '$1')
     .split('|')
     .map(tidy)
     .filter(Boolean);
