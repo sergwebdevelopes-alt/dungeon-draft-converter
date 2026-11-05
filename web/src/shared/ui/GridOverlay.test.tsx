@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { GRID_STROKE } from '../../../../src/core/grid-stroke.ts';
+import { GRID_STROKE } from '../../../../src/features/converter/domain/grid-stroke.ts';
 import { GridOverlay } from './GridOverlay.tsx';
 
 function group(container: HTMLElement) {

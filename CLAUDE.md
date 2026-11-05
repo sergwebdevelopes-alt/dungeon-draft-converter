@@ -4,8 +4,8 @@ Web app that converts Dungeondraft `.dd2vtt` exports into VTT- and print-ready i
 
 ## Rules
 
-- **Every external library goes behind a port.** Define our own contract (interface or function type) and put the library in one adapter file that implements it. The rest of the code uses only the contract, so switching libraries means writing a new adapter, not changing callers. Examples: `src/zip/zip-writer.ts` (port) with `src/zip/fflate-zip-writer.ts` (the only file that imports fflate), and `src/http/upload/multipart-parser.ts` (port) with `src/http/upload/multer-multipart-parser.ts` (the only file that imports multer).
-- **Every change is covered by tests.** New behaviour gets new tests; changed behaviour gets updated tests. Tests live next to the code as `*.test.ts` (for example `src/http/convert/request.test.ts`) and run with `npm test`. Check that a new test fails without the change it covers.
+- **Every external library goes behind a port.** Define our own contract (interface or function type) and put the library in one adapter file that implements it. The rest of the code uses only the contract, so switching libraries means writing a new adapter, not changing callers. Examples: `src/features/converter/ports/zip-writer.ts` (port) with `src/features/converter/adapters/fflate-zip-writer.ts` (the only file that imports fflate), and `src/features/converter/ports/multipart-parser.ts` (port) with `src/features/converter/adapters/multer-multipart-parser.ts` (the only file that imports multer).
+- **Every change is covered by tests.** New behaviour gets new tests; changed behaviour gets updated tests. Tests live next to the code as `*.test.ts` (for example `src/features/converter/http/parse-convert-request.test.ts`) and run with `npm test`. Check that a new test fails without the change it covers.
 
 ## Architecture
 
@@ -69,7 +69,7 @@ web/src/
 - No DI container: modules export ready instances (`http`, `storage`, `converterApi`); hooks take them as default parameters so tests can pass fakes.
 - The ports rule covers runtime libraries (HTTP, storage, animation). UI frameworks and build tools (React, Tailwind, Vite, Vitest) are used directly.
 - Membership plans live in `web/src/shared/config/site.ts` (`membership.plans`); adding a Patreon tier means adding one entry there. Pages use `Container` for width and padding; sections may run full width.
-- The web app imports only types from the server's `src/`, plus `src/core/grid-stroke.ts` (the export grid style); `web/src/server-imports.test.ts` enforces this.
+- The web app imports only types from the server's `src/`, plus `src/features/converter/domain/grid-stroke.ts` (the export grid style); `web/src/server-imports.test.ts` enforces this.
 - Use the shared `Button`/`ButtonLink`, `Alert` and `Segmented` instead of repeating their classes.
 - Motion is imported only in `web/src/shared/ui/motion/`; features use its wrappers (`MotionProvider`, `Reveal`, `SharedFrame`, `Swipeable`).
 - Patreon post HTML is sanitised once, in the sync (the official adapter gets the sanitiser passed in), and stored as `maps.description`; the modal inserts it with `dangerouslySetInnerHTML` in `MapDescription.tsx`, the only place raw HTML is rendered.
@@ -79,7 +79,7 @@ web/src/
 ## Code style
 
 - No comments in code unless asked.
-- Small named functions; separate steps with blank lines (see `src/http/convert/handler.ts`).
+- Small named functions; separate steps with blank lines (see `src/features/converter/http/convert-handler.ts`).
 - `async`/`await` with `try`/`catch` rather than `.then()` chains.
 - User-facing sizes and durations go through `src/shared/utils/format.ts`.
 

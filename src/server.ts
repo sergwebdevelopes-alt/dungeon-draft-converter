@@ -14,7 +14,7 @@ import {
   createGalleryStores,
   createGallerySyncIfConfigured,
 } from './create-gallery.ts';
-import { startJobs } from './jobs/index.ts';
+import { startJobs } from './start-jobs.ts';
 import { stopOnBadSettings } from './settings/stop-on-bad-settings.ts';
 
 stopOnBadSettings(SETTINGS_PROBLEMS);

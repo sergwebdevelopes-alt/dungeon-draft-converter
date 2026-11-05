@@ -8,7 +8,8 @@ const THIS_FILE = path.basename(fileURLToPath(import.meta.url));
 const SOURCE_FILE = /\.tsx?$/;
 const SERVER_IMPORT =
   /^\s*import\s+(type\s+)?[^'"]*?from\s+'((?:\.\.\/)+src\/[^']+)'/gm;
-const VALUE_IMPORT_ALLOWED = /\/src\/core\/grid-stroke\.ts$/;
+const VALUE_IMPORT_ALLOWED =
+  /\/src\/features\/converter\/domain\/grid-stroke\.ts$/;
 
 interface ServerImport {
   file: string;
