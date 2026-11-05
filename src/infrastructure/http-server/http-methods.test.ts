@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { isSafeMethod } from './methods.ts';
+import { isSafeMethod } from './http-methods.ts';
 
 describe('isSafeMethod', () => {
   it('treats GET, HEAD and OPTIONS as safe', () => {

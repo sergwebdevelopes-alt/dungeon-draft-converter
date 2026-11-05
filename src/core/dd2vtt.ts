@@ -2,8 +2,8 @@ import { randomUUID } from 'crypto';
 import { createReadStream, createWriteStream, type WriteStream } from 'fs';
 import { once } from 'events';
 import path from 'path';
-import { InvalidInputError } from './errors.ts';
-import { formatMegabytes } from '../utils/format.ts';
+import { InvalidInputError } from '../shared/errors.ts';
+import { formatMegabytes } from '../shared/utils/format.ts';
 
 const QUOTE = 0x22;
 const BACKSLASH = 0x5c;

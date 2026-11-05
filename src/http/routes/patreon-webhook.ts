@@ -1,7 +1,7 @@
 import express, { Router, type Request, type RequestHandler } from 'express';
 import { isValidSignature } from '../../gallery/patreon/webhook-signature.ts';
 import type { GallerySync } from '../../gallery/sync.ts';
-import { HttpError } from '../errors.ts';
+import { HttpError } from '../../infrastructure/http-server/http-errors.ts';
 
 const MAX_WEBHOOK_BYTES = 1024 * 1024;
 const POST_EVENTS = 'posts:';

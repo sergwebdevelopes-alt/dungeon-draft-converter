@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { PATREON_TOKEN_URL } from '../../config.ts';
-import type { HttpClient } from '../../http/client/http-client.ts';
+import type { HttpClient } from '../../infrastructure/http-client/http-client.ts';
 import type { PatreonSettings } from '../../settings/read-settings.ts';
 import { chooseTokens } from '../model/tokens.ts';
 import type { StoredTokens, TokenStore } from './token-store.ts';

@@ -1,7 +1,7 @@
 import type { RequestHandler } from 'express';
-import { IS_PRODUCTION } from '../config.ts';
-import { HttpError } from './errors.ts';
-import { isSafeMethod } from './methods.ts';
+import { IS_PRODUCTION } from '../../config.ts';
+import { HttpError } from './http-errors.ts';
+import { isSafeMethod } from './http-methods.ts';
 
 const ALLOWED_FETCH_SITES = new Set(['same-origin', 'none']);
 

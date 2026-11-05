@@ -2,7 +2,7 @@ import { createReadStream } from 'node:fs';
 import path from 'node:path';
 import { makeImages, type ImageOptions } from './images.ts';
 import { MAP_EXTENSION, type LoadedMap } from './dd2vtt.ts';
-import { UnprocessableError } from './errors.ts';
+import { UnprocessableError } from '../shared/errors.ts';
 import { mergeLevels } from './merge.ts';
 
 const FOUNDRY_DIR = 'FOUNDRY_VTT_DD2VTT';

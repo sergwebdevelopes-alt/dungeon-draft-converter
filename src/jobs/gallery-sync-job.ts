@@ -1,6 +1,6 @@
 import { IS_PRODUCTION, SETTINGS } from '../config.ts';
 import type { GallerySync } from '../gallery/sync.ts';
-import { schedule, type Job } from './schedule.ts';
+import { schedule, type Job } from '../infrastructure/scheduler/schedule.ts';
 
 const NO_JOB: Job = { stop: () => undefined };
 

@@ -9,7 +9,8 @@ import express from 'express';
 const root = await fs.mkdtemp(path.join(os.tmpdir(), 'upload-test-'));
 process.env.TMPDIR = root;
 
-const { errorHandler } = await import('../errors.ts');
+const { errorHandler } =
+  await import('../../infrastructure/http-server/http-errors.ts');
 const { createUploadDir, uploadDirOf } = await import('./upload-dir.ts');
 const { limitTotalUpload, uploadFiles, uploadsOf } =
   await import('./upload.ts');

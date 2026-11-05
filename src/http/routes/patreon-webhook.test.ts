@@ -4,7 +4,7 @@ import type http from 'node:http';
 import { after, before, beforeEach, describe, it } from 'node:test';
 import express from 'express';
 import type { GallerySync } from '../../gallery/sync.ts';
-import { errorHandler } from '../errors.ts';
+import { errorHandler } from '../../infrastructure/http-server/http-errors.ts';
 import {
   patreonWebhookRouter,
   type WebhookLogEntry,

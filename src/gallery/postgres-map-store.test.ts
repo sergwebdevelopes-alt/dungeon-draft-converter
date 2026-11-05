@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { after, before, beforeEach, describe, it } from 'node:test';
-import { runMigrations } from '../db/migrations.ts';
-import { createTestDatabase, type TestDatabase } from '../db/testing.ts';
+import { runMigrations } from '../infrastructure/database/run-migrations.ts';
+import {
+  createTestDatabase,
+  type TestDatabase,
+} from '../infrastructure/database/test-database.ts';
 import type { MapStore } from './map-store.ts';
 import type { MapRecord } from './model/types.ts';
 import { createPostgresMapStore } from './postgres-map-store.ts';

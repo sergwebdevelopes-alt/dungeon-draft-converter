@@ -1,6 +1,6 @@
 import { STALE_CLEANUP_INTERVAL_MS } from '../config.ts';
 import { removeStaleUploadDirs } from '../http/upload/index.ts';
-import { schedule, type Job } from './schedule.ts';
+import { schedule, type Job } from '../infrastructure/scheduler/schedule.ts';
 
 async function cleanUpStaleUploads(): Promise<void> {
   try {

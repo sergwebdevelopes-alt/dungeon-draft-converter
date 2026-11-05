@@ -4,7 +4,7 @@ import {
   HttpClientError,
   type HttpClient,
   type RequestOptions,
-} from '../../http/client/http-client.ts';
+} from '../../infrastructure/http-client/http-client.ts';
 import { createOfficialPatreonApi } from './official-patreon-api.ts';
 import type { PatreonAuth } from './patreon-auth.ts';
 

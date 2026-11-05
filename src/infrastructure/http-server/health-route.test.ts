@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import type http from 'node:http';
 import { after, before, describe, it } from 'node:test';
 import express from 'express';
-import { healthRouter } from './health.ts';
+import { healthRouter } from './health-route.ts';
 
 describe('healthRouter', () => {
   let server: http.Server;

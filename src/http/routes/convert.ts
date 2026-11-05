@@ -6,7 +6,7 @@ import {
   type LogConversion,
 } from '../convert/conversion-log.ts';
 import { convertHandler } from '../convert/handler.ts';
-import { HttpError } from '../errors.ts';
+import { HttpError } from '../../infrastructure/http-server/http-errors.ts';
 import {
   createUploadDir,
   limitTotalUpload,

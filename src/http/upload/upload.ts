@@ -15,8 +15,8 @@ import {
   readDd2vttStream,
   type LoadedMap,
 } from '../../core/dd2vtt.ts';
-import { formatMegabytes } from '../../utils/format.ts';
-import { HttpError } from '../errors.ts';
+import { formatMegabytes } from '../../shared/utils/format.ts';
+import { HttpError } from '../../infrastructure/http-server/http-errors.ts';
 import { createMulterMultipartParser } from './multer-multipart-parser.ts';
 import {
   MultipartLimitError,

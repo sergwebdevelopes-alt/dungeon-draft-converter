@@ -14,8 +14,8 @@ import {
   type Variant,
 } from '../../core/images.ts';
 import type { ConversionQueue } from '../../queue/index.ts';
-import { formatMegabytes } from '../../utils/format.ts';
-import { HttpError } from '../errors.ts';
+import { formatMegabytes } from '../../shared/utils/format.ts';
+import { HttpError } from '../../infrastructure/http-server/http-errors.ts';
 import {
   LOGO_FIELD,
   MAP_FIELD,

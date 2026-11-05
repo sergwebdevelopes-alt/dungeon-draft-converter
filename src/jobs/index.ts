@@ -1,6 +1,6 @@
 import type { GallerySync } from '../gallery/sync.ts';
 import { startGallerySyncJob } from './gallery-sync-job.ts';
-import type { Job } from './schedule.ts';
+import type { Job } from '../infrastructure/scheduler/schedule.ts';
 import { startUploadCleanupJob } from './upload-cleanup-job.ts';
 
 interface JobDeps {

@@ -4,7 +4,7 @@ import {
   HttpClientError,
   type HttpClient,
   type RequestOptions,
-} from '../../http/client/http-client.ts';
+} from '../../infrastructure/http-client/http-client.ts';
 import type { PostDetails } from './post-details.ts';
 import { createWebsitePostDetails } from './website-post-details.ts';
 

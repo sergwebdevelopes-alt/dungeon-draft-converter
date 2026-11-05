@@ -1,5 +1,5 @@
 import type { Database, DatabaseConnection } from './database.ts';
-import { runMigrations } from './migrations.ts';
+import { runMigrations } from './run-migrations.ts';
 import { createPgDatabase } from './pg-database.ts';
 
 function migrationsMessage(applied: string[]): string {

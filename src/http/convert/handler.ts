@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { CONVERSION_TIMEOUT_MS } from '../../config.ts';
 import { convertLevels } from '../../core/conversion.ts';
 import type { ConversionQueue } from '../../queue/index.ts';
-import { formatDuration } from '../../utils/format.ts';
+import { formatDuration } from '../../shared/utils/format.ts';
 import {
   keepUploadsDuring,
   uploadDirOf,

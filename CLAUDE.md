@@ -36,12 +36,12 @@ src/
 ```
 
 - `core/`, `queue/` and `gallery/` never import Express or multer.
-- `settings/read-settings.ts` validates the database and gallery settings with a Zod schema behind `readSettings(env) → { settings, problems }` (the only file importing zod); `config.ts` calls it with `process.env`, and `server.ts` and `db/migrate.ts` stop with the list of problems if any (`settings/stop-on-bad-settings.ts`). Patreon settings are all or nothing.
+- `settings/read-settings.ts` validates the database and gallery settings with a Zod schema behind `readSettings(env) → { settings, problems }` (the only file importing zod); `config.ts` calls it with `process.env`, and `server.ts` and `cli/migrate-database.ts` stop with the list of problems if any (`settings/stop-on-bad-settings.ts`). Patreon settings are all or nothing.
 - `process.env` is read only in `config.ts`. Settings and limits (sizes, timeouts, folders) live there; facts about formats and output (file extensions, zip folder names, image encoding constants) stay next to the code that produces them.
 - URLs of outside services, page sizes, user agents, tags, IDs and other values someone might want to change also live in `config.ts`, never as constants inside an adapter. Request details that are part of an API's contract (field lists, query parameter names) stay in the adapter.
-- Outgoing HTTP goes through `src/http/client/` (`HttpClient`, `HttpClientError`, `isAbortError`). Adapters receive the client as an argument, never `fetch` itself.
+- Outgoing HTTP goes through `src/infrastructure/http-client/` (`HttpClient`, `HttpClientError`, `isAbortError`). Adapters receive the client as an argument, never `fetch` itself.
 - Server features follow the front end's split. `<feature>/model/` holds pure TypeScript: data in, data out, no network, files, database or `config.ts` imports (settings are passed in). Adapters only fetch and translate into our types, with no business rules. Orchestration that joins adapters and model lives next to `model/` (e.g. `gallery/sync.ts`).
-- Core errors extend `InvalidInputError` (→ 400) or `UnprocessableError` (→ 422) from `core/errors.ts`; `http/errors.ts` maps them by kind. HTTP-only errors use `HttpError`.
+- Core errors extend `InvalidInputError` (→ 400) or `UnprocessableError` (→ 422) from `shared/errors.ts`; `infrastructure/http-server/http-errors.ts` maps them by kind. HTTP-only errors use `HttpError`.
 - Dependencies are passed in (for example `createApp` creates the `ConversionQueue` and hands it to the routes), not kept in module-level globals.
 
 ### Front end (`web/`)
@@ -81,20 +81,20 @@ web/src/
 - No comments in code unless asked.
 - Small named functions; separate steps with blank lines (see `src/http/convert/handler.ts`).
 - `async`/`await` with `try`/`catch` rather than `.then()` chains.
-- User-facing sizes and durations go through `src/utils/format.ts`.
+- User-facing sizes and durations go through `src/shared/utils/format.ts`.
 
 ## Commands
 
 - `npm run dev`: dev server with hot reload on port 3000. Env files are loaded by preloading dotenv in the npm scripts (`node --import dotenv/config`), never imported in code: `npm run dev` reads `.env`, `npm test` reads `.env.testing` (`DOTENV_CONFIG_PATH`); values set in the shell win. Don't use Node's `--env-file` flag with `--watch-path`: in Node 24 it makes the dev server restart in a loop.
 - `npm test` · `npm run typecheck` · `npm run lint` · `npm run format` · `npm run build`
 - TypeScript 7 (the native compiler, `tsc`). Linting is oxlint with its type-aware rules (`oxlint-tsgolint`), configured in `.oxlintrc.json`: the ESLint-recommended and typescript-eslint recommended-type-checked rules; type-aware rules are off for plain `.js` files. Prettier does the formatting.
-- Database tests run with plain `npm test` against the test Postgres from `npm run db` (`postgres-test` in `compose.dev.yml`: user/password/database `test`, `127.0.0.1:5433`, in-memory data). `.env.testing` (committed, no secrets) points at it; without that database they fail with "Start it with npm run db". They use `createTestDatabase()` from `src/db/testing.ts`, which creates an empty `test_<random>` database (per file, or per test where each test needs a fresh one) and drops it afterwards.
-- `npm run build` also writes `.br`/`.gz` copies of text files in `web/dist` (`scripts/precompress.ts`); `src/http/precompressed.ts` serves them, and `src/http/cache-control.ts` decides caching per path.
+- Database tests run with plain `npm test` against the test Postgres from `npm run db` (`postgres-test` in `compose.dev.yml`: user/password/database `test`, `127.0.0.1:5433`, in-memory data). `.env.testing` (committed, no secrets) points at it; without that database they fail with "Start it with npm run db". They use `createTestDatabase()` from `src/infrastructure/database/test-database.ts`, which creates an empty `test_<random>` database (per file, or per test where each test needs a fresh one) and drops it afterwards.
+- `npm run build` also writes `.br`/`.gz` copies of text files in `web/dist` (`scripts/precompress.ts`); `src/infrastructure/http-server/serve-precompressed.ts` serves them, and `src/infrastructure/http-server/cache-control.ts` decides caching per path.
 - `npm run bench`: takes minutes; run it only when asked. `BENCH_TARGET=docker` measures the Docker image.
 - Docker: `docker compose up -d --build` (use `HOST_PORT=3001` when the dev server is on 3000). It needs `POSTGRES_USER` and `POSTGRES_PASSWORD` in `.env` (see `.env.example`; `POSTGRES_DB` defaults to the user). The database is configured by separate `POSTGRES_HOST/PORT/USER/PASSWORD/DB` settings, never a URL; compose sets `POSTGRES_HOST=postgres` for the app. The `app` container is named `dd-converter`; for test runs use a separate project (`-p`) with an override that renames containers and the image, so the user's container is never replaced.
 - `npm run db`: starts the dev Postgres (`127.0.0.1:5432`, for `npm run dev`; `POSTGRES_DEV_BIND=0.0.0.0` in `.env` publishes it on the local network) and the test Postgres (`127.0.0.1:5433`, for `npm test`) from `compose.dev.yml`, and waits until both are healthy.
 - `npm run gallery:sync`: runs one gallery sync against the database and Patreon settings in `.env` and exits (code 1 if it failed). In production: `docker compose run --rm app node src/gallery/sync-now.ts`. The dev server doesn't sync at startup.
-- `npm run db:migrate`: applies pending migrations to the database in `.env` (`src/db/migrate.ts`); the app also applies them at startup. In production: `docker compose run --rm app node src/db/migrate.ts`. Migrations must work with the previous release's code (add first, remove in a later release).
+- `npm run db:migrate`: applies pending migrations to the database in `.env` (`src/cli/migrate-database.ts`); the app also applies them at startup. In production: `docker compose run --rm app node src/cli/migrate-database.ts`. Migrations must work with the previous release's code (add first, remove in a later release).
 
 ## Before finishing a change
 

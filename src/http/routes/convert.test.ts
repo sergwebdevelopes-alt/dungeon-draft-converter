@@ -4,7 +4,7 @@ import { after, before, describe, it } from 'node:test';
 import express from 'express';
 import { ConversionQueue, PendingLimit } from '../../queue/index.ts';
 import type { ConversionLogEntry } from '../convert/conversion-log.ts';
-import { errorHandler } from '../errors.ts';
+import { errorHandler } from '../../infrastructure/http-server/http-errors.ts';
 import { convertRouter } from './convert.ts';
 
 const BUSY_MESSAGE =

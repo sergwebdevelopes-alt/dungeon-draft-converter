@@ -1,6 +1,9 @@
 import type { GalleryImages } from '../core/gallery-images.ts';
-import { isAbortError, type HttpClient } from '../http/client/http-client.ts';
-import { messageOf } from '../utils/error.ts';
+import {
+  isAbortError,
+  type HttpClient,
+} from '../infrastructure/http-client/http-client.ts';
+import { messageOf } from '../shared/utils/error-message.ts';
 import type { ImageStore } from './image-store.ts';
 import { IMAGE_NAMES, imageKey } from './model/image-keys.ts';
 import type { MapRecord } from './model/types.ts';

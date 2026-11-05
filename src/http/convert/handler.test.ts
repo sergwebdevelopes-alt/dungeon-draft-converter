@@ -5,7 +5,7 @@ import express from 'express';
 import { unzipSync } from 'fflate';
 import sharp from 'sharp';
 import { ConversionQueue } from '../../queue/index.ts';
-import { errorHandler } from '../errors.ts';
+import { errorHandler } from '../../infrastructure/http-server/http-errors.ts';
 import { createUploadDir, uploadFiles } from '../upload/index.ts';
 import { logConversions, type ConversionLogEntry } from './conversion-log.ts';
 import { convertHandler } from './handler.ts';

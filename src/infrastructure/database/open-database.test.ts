@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, it, mock } from 'node:test';
 import { openDatabase } from './open-database.ts';
-import { createTestDatabase, type TestDatabase } from './testing.ts';
+import { createTestDatabase, type TestDatabase } from './test-database.ts';
 
 describe('openDatabase', () => {
   let test: TestDatabase;

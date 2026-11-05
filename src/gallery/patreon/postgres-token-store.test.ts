@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
-import { runMigrations } from '../../db/migrations.ts';
-import { createTestDatabase, type TestDatabase } from '../../db/testing.ts';
+import { runMigrations } from '../../infrastructure/database/run-migrations.ts';
+import {
+  createTestDatabase,
+  type TestDatabase,
+} from '../../infrastructure/database/test-database.ts';
 import { createPostgresTokenStore } from './postgres-token-store.ts';
 import type { TokenStore } from './token-store.ts';
 

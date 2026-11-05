@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { Request, RequestHandler } from 'express';
 import { STALE_UPLOAD_DIR_MS, UPLOAD_ROOT } from '../../config.ts';
-import { HttpError } from '../errors.ts';
+import { HttpError } from '../../infrastructure/http-server/http-errors.ts';
 
 const UPLOAD_DIR_PREFIX = 'dd2vtt-';
 

@@ -6,7 +6,7 @@ import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import zlib from 'node:zlib';
 import express from 'express';
-import { serveWebApp } from './spa-fallback.ts';
+import { serveWebApp } from './serve-web-app.ts';
 
 const INDEX_HTML = '<!doctype html><div id="root"></div>';
 const SCRIPT = 'console.log("lair");';

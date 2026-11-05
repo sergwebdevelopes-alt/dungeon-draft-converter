@@ -1,6 +1,6 @@
 import { SETTINGS, SETTINGS_PROBLEMS } from '../config.ts';
 import { stopOnBadSettings } from '../settings/stop-on-bad-settings.ts';
-import { openDatabase } from './open-database.ts';
+import { openDatabase } from '../infrastructure/database/open-database.ts';
 
 stopOnBadSettings(SETTINGS_PROBLEMS);
 

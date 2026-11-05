@@ -11,20 +11,26 @@ import {
   SETTINGS,
   WEB_DIST_DIR,
 } from './config.ts';
-import { errorHandler, notFound } from './http/errors.ts';
+import {
+  errorHandler,
+  notFound,
+} from './infrastructure/http-server/http-errors.ts';
 import { serveGalleryImages } from './http/gallery-images.ts';
 import type { LogConversion } from './http/convert/conversion-log.ts';
 import { configRouter } from './http/routes/config.ts';
-import { healthRouter } from './http/routes/health.ts';
+import { healthRouter } from './infrastructure/http-server/health-route.ts';
 import type { GalleryStores } from './gallery/setup.ts';
 import type { GallerySync } from './gallery/sync.ts';
 import { mapsRouter } from './http/routes/maps.ts';
 import { patreonWebhookRouter } from './http/routes/patreon-webhook.ts';
 import { convertRouter } from './http/routes/convert.ts';
 import { queueRouter } from './http/routes/queue.ts';
-import { blockCrossSiteRequests, securityHeaders } from './http/security.ts';
-import { refuseNewWorkDuringShutdown } from './http/shutdown.ts';
-import { serveWebApp } from './http/spa-fallback.ts';
+import {
+  blockCrossSiteRequests,
+  securityHeaders,
+} from './infrastructure/http-server/security.ts';
+import { refuseNewWorkDuringShutdown } from './infrastructure/http-server/refuse-work-during-shutdown.ts';
+import { serveWebApp } from './infrastructure/http-server/serve-web-app.ts';
 import { ConversionQueue, PendingLimit } from './queue/index.ts';
 
 interface AppOptions {

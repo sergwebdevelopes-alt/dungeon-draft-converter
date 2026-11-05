@@ -6,7 +6,7 @@ import {
 import {
   HttpClientError,
   type HttpClient,
-} from '../../http/client/http-client.ts';
+} from '../../infrastructure/http-client/http-client.ts';
 import type {
   ListOptions,
   PostDetails,

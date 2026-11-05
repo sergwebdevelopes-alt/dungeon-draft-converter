@@ -1,4 +1,7 @@
-import type { Database, Queryable } from '../db/database.ts';
+import type {
+  Database,
+  Queryable,
+} from '../infrastructure/database/database.ts';
 import type { MapStore, StoredMap, SyncCounts } from './map-store.ts';
 import type { MapRecord } from './model/types.ts';
 

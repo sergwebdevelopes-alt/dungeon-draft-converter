@@ -1,8 +1,11 @@
 import type { GalleryImages } from '../core/gallery-images.ts';
-import { isAbortError, type HttpClient } from '../http/client/http-client.ts';
-import { messageOf } from '../utils/error.ts';
-import { withoutUndefined } from '../utils/object.ts';
-import { singleFlight } from '../utils/single-flight.ts';
+import {
+  isAbortError,
+  type HttpClient,
+} from '../infrastructure/http-client/http-client.ts';
+import { messageOf } from '../shared/utils/error-message.ts';
+import { withoutUndefined } from '../shared/utils/object.ts';
+import { singleFlight } from '../shared/utils/single-flight.ts';
 import type { ImageStore } from './image-store.ts';
 import type { MapStore, StoredMap, SyncCounts } from './map-store.ts';
 import { createMapImages, type MapImages } from './map-images.ts';

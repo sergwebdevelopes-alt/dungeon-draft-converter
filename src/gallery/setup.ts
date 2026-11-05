@@ -5,9 +5,9 @@ import {
   SETTINGS,
 } from '../config.ts';
 import { renderGalleryImages } from '../core/gallery-images.ts';
-import type { Database } from '../db/database.ts';
-import { createFetchHttpClient } from '../http/client/fetch-http-client.ts';
-import { createRateLimitedHttpClient } from '../http/client/rate-limited-http-client.ts';
+import type { Database } from '../infrastructure/database/database.ts';
+import { createFetchHttpClient } from '../infrastructure/http-client/fetch-http-client.ts';
+import { createRateLimitedHttpClient } from '../infrastructure/http-client/rate-limited-http-client.ts';
 import { sanitizeWithLibrary } from '../html/sanitize-html-sanitizer.ts';
 import type { PatreonSettings } from '../settings/read-settings.ts';
 import type { ImageStore } from './image-store.ts';

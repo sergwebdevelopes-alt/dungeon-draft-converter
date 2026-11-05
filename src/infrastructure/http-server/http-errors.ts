@@ -1,5 +1,5 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
-import { InvalidInputError, UnprocessableError } from '../core/errors.ts';
+import { InvalidInputError, UnprocessableError } from '../../shared/errors.ts';
 
 class HttpError extends Error {
   readonly status: number;

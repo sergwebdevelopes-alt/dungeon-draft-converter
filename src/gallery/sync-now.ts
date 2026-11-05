@@ -1,5 +1,5 @@
 import { SETTINGS, SETTINGS_PROBLEMS } from '../config.ts';
-import { openDatabase } from '../db/open-database.ts';
+import { openDatabase } from '../infrastructure/database/open-database.ts';
 import { stopOnBadSettings } from '../settings/stop-on-bad-settings.ts';
 import { createGalleryStores, createGallerySyncFromSettings } from './setup.ts';
 import { logToConsole, type GallerySyncLogEntry } from './sync.ts';

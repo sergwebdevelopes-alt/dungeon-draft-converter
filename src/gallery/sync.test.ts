@@ -4,7 +4,7 @@ import type { GalleryImages } from '../core/gallery-images.ts';
 import {
   HttpClientError,
   type HttpClient,
-} from '../http/client/http-client.ts';
+} from '../infrastructure/http-client/http-client.ts';
 import type { ImageStore } from './image-store.ts';
 import type { MapStore, StoredMap } from './map-store.ts';
 import type { MapRecord } from './model/types.ts';

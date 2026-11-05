@@ -1,6 +1,6 @@
 import type { RequestHandler } from 'express';
-import { HttpError } from './errors.ts';
-import { isSafeMethod } from './methods.ts';
+import { HttpError } from './http-errors.ts';
+import { isSafeMethod } from './http-methods.ts';
 
 function refuseNewWorkDuringShutdown(
   isShuttingDown: () => boolean,

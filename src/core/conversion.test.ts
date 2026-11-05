@@ -6,7 +6,7 @@ import { after, before, describe, it } from 'node:test';
 import sharp from 'sharp';
 import { convertLevels, type ConversionFile } from './conversion.ts';
 import type { LoadedMap } from './dd2vtt.ts';
-import { UnprocessableError } from './errors.ts';
+import { UnprocessableError } from '../shared/errors.ts';
 import { FORMAT_PRESETS } from './images.ts';
 
 const SIZE = 200;

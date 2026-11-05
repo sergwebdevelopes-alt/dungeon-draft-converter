@@ -9,7 +9,7 @@ import {
   SHARP_CONCURRENCY,
   SHUTDOWN_TIMEOUT_MS,
 } from './config.ts';
-import { openDatabase } from './db/open-database.ts';
+import { openDatabase } from './infrastructure/database/open-database.ts';
 import {
   createGalleryStores,
   createGallerySyncIfConfigured,

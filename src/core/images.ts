@@ -3,9 +3,9 @@ import sharp, { type OverlayOptions, type Sharp } from 'sharp';
 import { createGridSvg, gridTileSquares } from './grid.ts';
 import { newImagePath, type LoadedMap, type MapImage } from './dd2vtt.ts';
 import { bakeLighting } from './lighting.ts';
-import { InvalidInputError, UnprocessableError } from './errors.ts';
+import { InvalidInputError, UnprocessableError } from '../shared/errors.ts';
 import { MAX_LOGO_PIXELS, MAX_PARALLEL_IMAGES } from '../config.ts';
-import { formatMegapixels } from '../utils/format.ts';
+import { formatMegapixels } from '../shared/utils/format.ts';
 
 const JPEG_QUALITY = 80;
 const JPEG_OPTIMISE_CODING = false;

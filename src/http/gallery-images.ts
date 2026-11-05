@@ -1,5 +1,5 @@
 import express, { type RequestHandler } from 'express';
-import { cacheControlFor } from './cache-control.ts';
+import { cacheControlFor } from '../infrastructure/http-server/cache-control.ts';
 
 function serveGalleryImages(dir: string): RequestHandler {
   return express.static(dir, {

@@ -4,8 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, it } from 'node:test';
 import { createPgDatabase } from './pg-database.ts';
-import { runMigrations } from './migrations.ts';
-import { createTestDatabase, type TestDatabase } from './testing.ts';
+import { runMigrations } from './run-migrations.ts';
+import { createTestDatabase, type TestDatabase } from './test-database.ts';
 
 const APP_MIGRATIONS = [
   '001_gallery.sql',

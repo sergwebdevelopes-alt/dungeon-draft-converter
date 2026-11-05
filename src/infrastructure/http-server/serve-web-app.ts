@@ -1,7 +1,7 @@
 import path from 'node:path';
 import express, { type RequestHandler } from 'express';
 import { cacheControlFor } from './cache-control.ts';
-import { servePrecompressed } from './precompressed.ts';
+import { servePrecompressed } from './serve-precompressed.ts';
 
 function isPageRequest(method: string, urlPath: string): boolean {
   const isRead = method === 'GET' || method === 'HEAD';

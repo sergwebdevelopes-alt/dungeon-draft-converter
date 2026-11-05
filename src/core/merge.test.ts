@@ -5,7 +5,7 @@ import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import sharp from 'sharp';
 import type { LoadedMap } from './dd2vtt.ts';
-import { UnprocessableError } from './errors.ts';
+import { UnprocessableError } from '../shared/errors.ts';
 import { LevelMismatchError, mergeLevels } from './merge.ts';
 
 const SIZE = 200;

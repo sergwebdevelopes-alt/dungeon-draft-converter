@@ -4,7 +4,7 @@ import { describe, it } from 'node:test';
 import {
   HttpClientError,
   type HttpClient,
-} from '../../http/client/http-client.ts';
+} from '../../infrastructure/http-client/http-client.ts';
 import type { PatreonSettings } from '../../settings/read-settings.ts';
 import { createPatreonAuth } from './patreon-auth.ts';
 import type { StoredTokens, TokenStore } from './token-store.ts';

@@ -4,7 +4,7 @@ import sharp from 'sharp';
 import { serializeDd2vtt, type LoadedMap, type MapImage } from './dd2vtt.ts';
 import { MAX_INPUT_PIXELS, readMapImageSize } from './images.ts';
 import { bakeLighting, hasBakedLighting, stackLevels } from './lighting.ts';
-import { UnprocessableError } from './errors.ts';
+import { UnprocessableError } from '../shared/errors.ts';
 import {
   readRawLights,
   readResolution,

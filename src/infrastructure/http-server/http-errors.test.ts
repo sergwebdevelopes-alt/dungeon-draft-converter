@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import type http from 'node:http';
 import { after, afterEach, before, beforeEach, describe, it } from 'node:test';
 import express, { type ErrorRequestHandler } from 'express';
-import { InvalidInputError, UnprocessableError } from '../core/errors.ts';
-import { HttpError, errorHandler, notFound } from './errors.ts';
+import { InvalidInputError, UnprocessableError } from '../../shared/errors.ts';
+import { HttpError, errorHandler, notFound } from './http-errors.ts';
 
 class BadLevelError extends InvalidInputError {}
 

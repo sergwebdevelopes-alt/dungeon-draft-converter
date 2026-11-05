@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { DatabaseConnection } from '../db/database.ts';
+import type { DatabaseConnection } from '../infrastructure/database/database.ts';
 
 interface PatreonSettings {
   campaignId: string;

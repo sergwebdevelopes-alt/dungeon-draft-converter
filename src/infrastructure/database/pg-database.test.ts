@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
-import { createTestDatabase, type TestDatabase } from './testing.ts';
+import { createTestDatabase, type TestDatabase } from './test-database.ts';
 
 describe('createPgDatabase', () => {
   let test: TestDatabase;

@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import type http from 'node:http';
 import { after, before, beforeEach, describe, it } from 'node:test';
 import express from 'express';
-import { errorHandler } from './errors.ts';
-import { refuseNewWorkDuringShutdown } from './shutdown.ts';
+import { errorHandler } from './http-errors.ts';
+import { refuseNewWorkDuringShutdown } from './refuse-work-during-shutdown.ts';
 
 const RESTART_MESSAGE =
   'The server is restarting. Please try again in a minute.';

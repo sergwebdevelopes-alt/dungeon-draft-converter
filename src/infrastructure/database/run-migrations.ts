@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { Database, Queryable } from './database.ts';
-import { LOCKS } from './locks.ts';
+import { LOCKS } from './advisory-locks.ts';
 
 const MIGRATIONS_DIR = path.join(import.meta.dirname, 'migrations');
 

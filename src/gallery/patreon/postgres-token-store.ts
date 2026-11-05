@@ -1,4 +1,4 @@
-import type { Database } from '../../db/database.ts';
+import type { Database } from '../../infrastructure/database/database.ts';
 import type { StoredTokens, TokenStore } from './token-store.ts';
 
 interface TokenRow {

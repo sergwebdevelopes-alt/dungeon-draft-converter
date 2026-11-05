@@ -5,7 +5,7 @@ import express from 'express';
 
 delete process.env.NODE_ENV;
 
-const { errorHandler } = await import('./errors.ts');
+const { errorHandler } = await import('./http-errors.ts');
 const { blockCrossSiteRequests, securityHeaders } =
   await import('./security.ts');
 

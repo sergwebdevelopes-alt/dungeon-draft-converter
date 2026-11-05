@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { SETTINGS } from '../config.ts';
+import { SETTINGS } from '../../config.ts';
 import type { Database, DatabaseConnection } from './database.ts';
 import { createPgDatabase } from './pg-database.ts';
 

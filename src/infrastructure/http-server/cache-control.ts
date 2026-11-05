@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { GALLERY_IMAGES_URL } from '../config.ts';
+import { GALLERY_IMAGES_URL } from '../../config.ts';
 
 const FOREVER = 'public, max-age=31536000, immutable';
 const ONE_DAY = 'public, max-age=86400';
