@@ -4,19 +4,19 @@ import {
   GALLERY_REQUEST_INTERVAL_MS,
   SETTINGS,
 } from './config.ts';
-import { renderGalleryImages } from './features/gallery/adapters/sharp-map-image-renderer.ts';
+import { renderMapImagesWithSharp } from './features/gallery/adapters/sharp-map-image-renderer.ts';
 import type { Database } from './infrastructure/database/database.ts';
 import { createFetchHttpClient } from './infrastructure/http-client/fetch-http-client.ts';
 import { createHttpMapImageSource } from './features/gallery/adapters/http-map-image-source.ts';
 import { createRateLimitedHttpClient } from './infrastructure/http-client/rate-limited-http-client.ts';
 import { sanitizeWithLibrary } from './features/gallery/adapters/sanitize-html-sanitizer.ts';
 import type { PatreonSettings } from './settings/read-settings.ts';
-import { createLocalImageStore } from './features/gallery/adapters/local-image-storage.ts';
-import { createOfficialPatreonApi } from './features/gallery/adapters/patreon-api-posts.ts';
-import { createPatreonAuth } from './features/gallery/adapters/patreon-token-refresher.ts';
-import { createPostgresTokenStore } from './features/gallery/adapters/postgres-patreon-token-repository.ts';
-import { createWebsitePostDetails } from './features/gallery/adapters/patreon-website-post-details.ts';
-import { createPostgresMapStore } from './features/gallery/adapters/postgres-map-repository.ts';
+import { createLocalImageStorage } from './features/gallery/adapters/local-image-storage.ts';
+import { createPatreonApiPosts } from './features/gallery/adapters/patreon-api-posts.ts';
+import { createPatreonTokenRefresher } from './features/gallery/adapters/patreon-token-refresher.ts';
+import { createPostgresPatreonTokenRepository } from './features/gallery/adapters/postgres-patreon-token-repository.ts';
+import { createPatreonWebsitePostDetails } from './features/gallery/adapters/patreon-website-post-details.ts';
+import { createPostgresMapRepository } from './features/gallery/adapters/postgres-map-repository.ts';
 import {
   createGallerySync,
   type GallerySync,
@@ -32,12 +32,12 @@ type SyncOptions = Pick<GallerySyncDeps, 'log' | 'signal'>;
 
 function createGalleryStores(database: Database): GalleryStores {
   return {
-    maps: createPostgresMapStore(database),
-    images: createLocalImageStore({
+    maps: createPostgresMapRepository(database),
+    images: createLocalImageStorage({
       dir: GALLERY_DIR,
       baseUrl: GALLERY_IMAGES_URL,
     }),
-    tokens: createPostgresTokenStore(database),
+    tokens: createPostgresPatreonTokenRepository(database),
   };
 }
 
@@ -51,19 +51,19 @@ function createGallerySyncFromSettings(
     GALLERY_REQUEST_INTERVAL_MS,
   );
 
-  const auth = createPatreonAuth(http, patreon, stores.tokens);
+  const auth = createPatreonTokenRefresher(http, patreon, stores.tokens);
 
   return createGallerySync({
-    patreon: createOfficialPatreonApi(http, {
+    patreon: createPatreonApiPosts(http, {
       auth,
       campaignId: patreon.campaignId,
       sanitize: sanitizeWithLibrary,
     }),
-    details: createWebsitePostDetails(http, patreon.campaignId),
+    details: createPatreonWebsitePostDetails(http, patreon.campaignId),
     fetchImage: createHttpMapImageSource(http),
     maps: stores.maps,
     images: stores.images,
-    render: renderGalleryImages,
+    render: renderMapImagesWithSharp,
     ...options,
   });
 }

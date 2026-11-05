@@ -6,8 +6,8 @@ import {
   type HttpClient,
 } from '../../../infrastructure/http-client/http-client.ts';
 import type { PatreonSettings } from '../../../settings/read-settings.ts';
-import { createPatreonAuth } from './patreon-token-refresher.ts';
-import type { TokenStore } from '../ports/patreon-token-repository.ts';
+import { createPatreonTokenRefresher } from './patreon-token-refresher.ts';
+import type { PatreonTokenRepository } from '../ports/patreon-token-repository.ts';
 import type { StoredTokens } from '../domain/patreon-tokens.ts';
 
 const SETTINGS: PatreonSettings = {
@@ -23,7 +23,7 @@ const R1_HASH = createHash('sha256').update('R1').digest('hex');
 function fakeStore(initial: StoredTokens | null = null) {
   let stored = initial;
   const saves: StoredTokens[] = [];
-  const store: TokenStore = {
+  const store: PatreonTokenRepository = {
     load: () => Promise.resolve(stored),
     save(tokens) {
       stored = tokens;
@@ -58,10 +58,14 @@ function tokenAnswer(access: string, refresh: string) {
   return { access_token: access, refresh_token: refresh, expires_in: 2678400 };
 }
 
-describe('createPatreonAuth', () => {
+describe('createPatreonTokenRefresher', () => {
   it('starts from the .env pair and stores it with its fingerprint', async () => {
     const { store, stored } = fakeStore();
-    const auth = createPatreonAuth(fakeHttp([]).http, SETTINGS, store);
+    const auth = createPatreonTokenRefresher(
+      fakeHttp([]).http,
+      SETTINGS,
+      store,
+    );
 
     assert.equal(await auth.accessToken(), 'A1');
     assert.deepEqual(stored(), {
@@ -77,7 +81,11 @@ describe('createPatreonAuth', () => {
       refreshToken: 'R2',
       seededFrom: R1_HASH,
     });
-    const auth = createPatreonAuth(fakeHttp([]).http, SETTINGS, store);
+    const auth = createPatreonTokenRefresher(
+      fakeHttp([]).http,
+      SETTINGS,
+      store,
+    );
 
     assert.equal(await auth.accessToken(), 'A2');
     assert.equal(saves.length, 0);
@@ -90,7 +98,11 @@ describe('createPatreonAuth', () => {
       seededFrom: R1_HASH,
     });
     const settings = { ...SETTINGS, creatorToken: 'A9', refreshToken: 'R9' };
-    const auth = createPatreonAuth(fakeHttp([]).http, settings, store);
+    const auth = createPatreonTokenRefresher(
+      fakeHttp([]).http,
+      settings,
+      store,
+    );
 
     assert.equal(await auth.accessToken(), 'A9');
     assert.equal(stored()?.refreshToken, 'R9');
@@ -104,7 +116,7 @@ describe('createPatreonAuth', () => {
       seededFrom: R1_HASH,
     });
     const { http, urls } = fakeHttp([tokenAnswer('A3', 'R3')]);
-    const auth = createPatreonAuth(http, SETTINGS, store);
+    const auth = createPatreonTokenRefresher(http, SETTINGS, store);
 
     assert.equal(await auth.refresh(), 'A3');
 
@@ -125,7 +137,7 @@ describe('createPatreonAuth', () => {
   it('makes one request when several callers refresh at once', async () => {
     const { store } = fakeStore();
     const { http, urls } = fakeHttp([tokenAnswer('A2', 'R2')]);
-    const auth = createPatreonAuth(http, SETTINGS, store);
+    const auth = createPatreonTokenRefresher(http, SETTINGS, store);
 
     const tokens = await Promise.all([auth.refresh(), auth.refresh()]);
 
@@ -139,7 +151,7 @@ describe('createPatreonAuth', () => {
       new HttpClientError(400, 'Invalid grant.'),
       tokenAnswer('A2', 'R2'),
     ]);
-    const auth = createPatreonAuth(http, SETTINGS, store);
+    const auth = createPatreonTokenRefresher(http, SETTINGS, store);
 
     await assert.rejects(auth.refresh(), /Invalid grant/);
     assert.equal(stored()?.refreshToken, 'R1');

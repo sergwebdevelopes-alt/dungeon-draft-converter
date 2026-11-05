@@ -71,7 +71,9 @@ async function renderView(original: Buffer): Promise<Buffer> {
     .toBuffer();
 }
 
-async function renderGalleryImages(original: Buffer): Promise<GalleryImages> {
+async function renderMapImagesWithSharp(
+  original: Buffer,
+): Promise<GalleryImages> {
   const size = await sizeOf(original);
 
   const card = await renderCrop(original, size, CARD);
@@ -81,4 +83,4 @@ async function renderGalleryImages(original: Buffer): Promise<GalleryImages> {
   return { card, view, backdrop };
 }
 
-export { renderGalleryImages, scaledCrop };
+export { renderMapImagesWithSharp, scaledCrop };

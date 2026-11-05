@@ -2,12 +2,12 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { GalleryImages } from '../ports/map-image-renderer.ts';
 import type { FetchMapImage } from '../ports/map-image-source.ts';
-import type { ImageStore } from '../ports/image-storage.ts';
-import type { MapStore, StoredMap } from '../ports/map-repository.ts';
+import type { ImageStorage } from '../ports/image-storage.ts';
+import type { MapRepository, StoredMap } from '../ports/map-repository.ts';
 import type { MapRecord } from '../domain/map-record.ts';
-import type { PatreonApi } from '../ports/patreon-posts.ts';
+import type { PatreonPosts } from '../ports/patreon-posts.ts';
 import type { PatreonPost } from '../domain/patreon-post.ts';
-import type { PostDetailsSource } from '../ports/patreon-post-details.ts';
+import type { PatreonPostDetails } from '../ports/patreon-post-details.ts';
 import type { PostDetails } from '../domain/patreon-post.ts';
 import { createGallerySync, type GallerySyncLogEntry } from './sync-gallery.ts';
 
@@ -50,11 +50,11 @@ function details(
 }
 
 function fakePatreon(state: FakePatreon) {
-  const patreon: PatreonApi = {
+  const patreon: PatreonPosts = {
     listPosts: () =>
       state.error ? Promise.reject(state.error) : Promise.resolve(state.posts),
   };
-  const source: PostDetailsSource = {
+  const source: PatreonPostDetails = {
     listDetails: () => Promise.resolve(state.details),
     details: () => Promise.resolve(null),
   };
@@ -80,7 +80,7 @@ function comparable(map: MapRecord): string {
 
 function fakeMapStore() {
   let stored: StoredMap[] = [];
-  const store: MapStore = {
+  const store: MapRepository = {
     listMaps: () => Promise.resolve(stored),
     replaceMaps(maps: MapRecord[]) {
       const before = new Map(
@@ -107,7 +107,7 @@ function fakeMapStore() {
 
 function fakeImageStore() {
   const files = new Map<string, Buffer>();
-  const images: ImageStore = {
+  const images: ImageStorage = {
     has: (key) => Promise.resolve(files.has(key)),
     put(key, data) {
       files.set(key, data);

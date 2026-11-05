@@ -3,8 +3,8 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, it } from 'node:test';
-import type { ImageStore } from '../ports/image-storage.ts';
-import { createLocalImageStore } from './local-image-storage.ts';
+import type { ImageStorage } from '../ports/image-storage.ts';
+import { createLocalImageStorage } from './local-image-storage.ts';
 
 async function filesIn(dir: string): Promise<string[]> {
   const entries = await fs.readdir(dir, {
@@ -18,13 +18,13 @@ async function filesIn(dir: string): Promise<string[]> {
     .sort();
 }
 
-describe('createLocalImageStore', () => {
+describe('createLocalImageStorage', () => {
   let dir: string;
-  let store: ImageStore;
+  let store: ImageStorage;
 
   beforeEach(async () => {
     dir = await fs.mkdtemp(path.join(os.tmpdir(), 'images-'));
-    store = createLocalImageStore({ dir, baseUrl: '/maps' });
+    store = createLocalImageStorage({ dir, baseUrl: '/maps' });
   });
 
   afterEach(() => fs.rm(dir, { recursive: true, force: true }));

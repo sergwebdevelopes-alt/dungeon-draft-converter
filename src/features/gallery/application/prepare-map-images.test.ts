@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it, mock } from 'node:test';
 import type { GalleryImages } from '../ports/map-image-renderer.ts';
 import type { FetchMapImage } from '../ports/map-image-source.ts';
-import type { ImageStore } from '../ports/image-storage.ts';
+import type { ImageStorage } from '../ports/image-storage.ts';
 import { createMapImages } from './prepare-map-images.ts';
 import type { MapRecord } from '../domain/map-record.ts';
 
@@ -36,7 +36,7 @@ function setUp(answer?: Error, signal?: AbortSignal) {
     downloads.push({ url, signal: given });
     return answer ? Promise.reject(answer) : Promise.resolve(Buffer.from(url));
   };
-  const images: ImageStore = {
+  const images: ImageStorage = {
     has: (key) => Promise.resolve(files.has(key)),
     put(key, data) {
       files.set(key, data);

@@ -5,9 +5,9 @@ import {
   createTestDatabase,
   type TestDatabase,
 } from '../../../infrastructure/database/test-database.ts';
-import type { MapStore } from '../ports/map-repository.ts';
+import type { MapRepository } from '../ports/map-repository.ts';
 import type { MapRecord } from '../domain/map-record.ts';
-import { createPostgresMapStore } from './postgres-map-repository.ts';
+import { createPostgresMapRepository } from './postgres-map-repository.ts';
 
 function map(overrides: Partial<MapRecord> = {}): MapRecord {
   return {
@@ -30,9 +30,9 @@ function map(overrides: Partial<MapRecord> = {}): MapRecord {
   };
 }
 
-describe('createPostgresMapStore', () => {
+describe('createPostgresMapRepository', () => {
   let test: TestDatabase;
-  let store: MapStore;
+  let store: MapRepository;
 
   async function times(): Promise<{ updatedAt: string; checkedAt: string }> {
     const [row] = await test.db.query<{
@@ -50,7 +50,7 @@ describe('createPostgresMapStore', () => {
   before(async () => {
     test = await createTestDatabase();
     await runMigrations(test.db);
-    store = createPostgresMapStore(test.db);
+    store = createPostgresMapRepository(test.db);
   });
 
   beforeEach(async () => {

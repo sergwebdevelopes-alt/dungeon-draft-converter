@@ -1,13 +1,13 @@
 import type { RenderMapImages } from '../ports/map-image-renderer.ts';
 import type { FetchMapImage } from '../ports/map-image-source.ts';
 import { messageOf } from '../../../shared/utils/error-message.ts';
-import type { ImageStore } from '../ports/image-storage.ts';
+import type { ImageStorage } from '../ports/image-storage.ts';
 import { IMAGE_NAMES, imageKey } from '../domain/map-image-keys.ts';
 import type { MapRecord } from '../domain/map-record.ts';
 
 interface MapImagesDeps {
   fetchImage: FetchMapImage;
-  images: ImageStore;
+  images: ImageStorage;
   render: RenderMapImages;
   signal?: AbortSignal;
 }

@@ -10,9 +10,9 @@ interface SyncCounts {
   removed: number;
 }
 
-interface MapStore {
+interface MapRepository {
   listMaps(): Promise<StoredMap[]>;
   replaceMaps(maps: MapRecord[]): Promise<SyncCounts>;
 }
 
-export type { MapStore, StoredMap, SyncCounts };
+export type { MapRepository, StoredMap, SyncCounts };

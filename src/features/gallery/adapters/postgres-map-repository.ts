@@ -3,7 +3,7 @@ import type {
   Queryable,
 } from '../../../infrastructure/database/database.ts';
 import type {
-  MapStore,
+  MapRepository,
   StoredMap,
   SyncCounts,
 } from '../ports/map-repository.ts';
@@ -114,7 +114,7 @@ function toRow(map: MapRecord): Record<string, unknown> {
   };
 }
 
-function createPostgresMapStore(db: Database): MapStore {
+function createPostgresMapRepository(db: Database): MapRepository {
   return {
     async listMaps() {
       const rows = await db.query<MapRow>(
@@ -144,4 +144,4 @@ function createPostgresMapStore(db: Database): MapStore {
   };
 }
 
-export { createPostgresMapStore };
+export { createPostgresMapRepository };

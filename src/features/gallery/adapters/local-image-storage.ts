@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { ImageStore } from '../ports/image-storage.ts';
+import type { ImageStorage } from '../ports/image-storage.ts';
 
 interface LocalImageStoreOptions {
   dir: string;
@@ -17,10 +17,10 @@ function fileFor(root: string, key: string): string {
   return file;
 }
 
-function createLocalImageStore({
+function createLocalImageStorage({
   dir,
   baseUrl,
-}: LocalImageStoreOptions): ImageStore {
+}: LocalImageStoreOptions): ImageStorage {
   const root = path.resolve(dir);
 
   return {
@@ -54,4 +54,4 @@ function createLocalImageStore({
   };
 }
 
-export { createLocalImageStore };
+export { createLocalImageStorage };

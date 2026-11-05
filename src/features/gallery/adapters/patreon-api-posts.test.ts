@@ -5,8 +5,8 @@ import {
   type HttpClient,
   type RequestOptions,
 } from '../../../infrastructure/http-client/http-client.ts';
-import { createOfficialPatreonApi } from './patreon-api-posts.ts';
-import type { PatreonAuth } from './patreon-token-refresher.ts';
+import { createPatreonApiPosts } from './patreon-api-posts.ts';
+import type { PatreonTokenRefresher } from './patreon-token-refresher.ts';
 
 interface Call {
   url: string;
@@ -33,7 +33,7 @@ function fakeHttp(answers: unknown[]) {
 function fakeAuth(token = 'secret') {
   let current = token;
   let refreshes = 0;
-  const auth: PatreonAuth = {
+  const auth: PatreonTokenRefresher = {
     accessToken: () => Promise.resolve(current),
     refresh() {
       refreshes += 1;
@@ -64,13 +64,13 @@ function rawPost(id: string, isPublic: boolean | null = true) {
   };
 }
 
-describe('createOfficialPatreonApi', () => {
+describe('createPatreonApiPosts', () => {
   it('lists every post of the campaign, following the pages', async () => {
     const { http, calls } = fakeHttp([
       { data: [rawPost('1')], links: { next: 'https://api.test/page-2' } },
       { data: [rawPost('2')] },
     ]);
-    const api = createOfficialPatreonApi(http, {
+    const api = createPatreonApiPosts(http, {
       auth: fakeAuth().auth,
       campaignId: '12754508',
       sanitize: keepHtml,
@@ -95,7 +95,7 @@ describe('createOfficialPatreonApi', () => {
     const { http, calls } = fakeHttp([{ data: [] }]);
     const signal = new AbortController().signal;
 
-    await createOfficialPatreonApi(http, {
+    await createPatreonApiPosts(http, {
       auth: fakeAuth().auth,
       campaignId: '1',
       sanitize: keepHtml,
@@ -112,7 +112,7 @@ describe('createOfficialPatreonApi', () => {
       { data: [rawPost('1'), rawPost('2', null), rawPost('3', false)] },
     ]);
 
-    const posts = await createOfficialPatreonApi(http, {
+    const posts = await createPatreonApiPosts(http, {
       auth: fakeAuth().auth,
       campaignId: '1',
       sanitize: keepHtml,
@@ -136,7 +136,7 @@ describe('createOfficialPatreonApi', () => {
     ]);
     const { auth, refreshes } = fakeAuth();
 
-    const posts = await createOfficialPatreonApi(http, {
+    const posts = await createPatreonApiPosts(http, {
       auth,
       campaignId: '1',
       sanitize: keepHtml,
@@ -163,7 +163,7 @@ describe('createOfficialPatreonApi', () => {
     const { auth, refreshes } = fakeAuth();
 
     await assert.rejects(
-      createOfficialPatreonApi(http, {
+      createPatreonApiPosts(http, {
         auth,
         campaignId: '1',
         sanitize: keepHtml,
@@ -178,7 +178,7 @@ describe('createOfficialPatreonApi', () => {
     const { auth, refreshes } = fakeAuth();
 
     await assert.rejects(
-      createOfficialPatreonApi(http, {
+      createPatreonApiPosts(http, {
         auth,
         campaignId: '1',
         sanitize: keepHtml,
@@ -202,7 +202,7 @@ describe('createOfficialPatreonApi', () => {
     ]);
     const seen: string[] = [];
 
-    const posts = await createOfficialPatreonApi(http, {
+    const posts = await createPatreonApiPosts(http, {
       auth: fakeAuth().auth,
       campaignId: '1',
       sanitize: (html) => {

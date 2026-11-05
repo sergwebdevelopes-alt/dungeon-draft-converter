@@ -6,7 +6,7 @@ import {
   type RequestOptions,
 } from '../../../infrastructure/http-client/http-client.ts';
 import type { PostDetails } from '../domain/patreon-post.ts';
-import { createWebsitePostDetails } from './patreon-website-post-details.ts';
+import { createPatreonWebsitePostDetails } from './patreon-website-post-details.ts';
 
 interface Call {
   url: string;
@@ -69,7 +69,7 @@ function media(
   };
 }
 
-describe('createWebsitePostDetails', () => {
+describe('createPatreonWebsitePostDetails', () => {
   it('reads the collections and the main image of an Image-tab post', async () => {
     const { http } = fakeHttp([
       {
@@ -93,7 +93,10 @@ describe('createWebsitePostDetails', () => {
       },
     ]);
 
-    const [details] = await createWebsitePostDetails(http, '1').listDetails();
+    const [details] = await createPatreonWebsitePostDetails(
+      http,
+      '1',
+    ).listDetails();
 
     assert.deepEqual(details, {
       postId: '19',
@@ -124,7 +127,10 @@ describe('createWebsitePostDetails', () => {
       },
     ]);
 
-    const [details] = await createWebsitePostDetails(http, '1').listDetails();
+    const [details] = await createPatreonWebsitePostDetails(
+      http,
+      '1',
+    ).listDetails();
 
     assert.deepEqual(details.collections, []);
     assert.deepEqual(
@@ -157,7 +163,7 @@ describe('createWebsitePostDetails', () => {
       { data: [rawPost('12')], links: { next: 'https://site.test/page-3' } },
       { data: [rawPost('01')] },
     ]);
-    const source = createWebsitePostDetails(http, '12754508');
+    const source = createPatreonWebsitePostDetails(http, '12754508');
 
     const seen = await source.listDetails({
       stopWhen: (details: PostDetails) => details.postId === '12',
@@ -180,7 +186,7 @@ describe('createWebsitePostDetails', () => {
     const { http, calls } = fakeHttp([{ data: [] }]);
     const signal = new AbortController().signal;
 
-    await createWebsitePostDetails(http, '1').listDetails({ signal });
+    await createPatreonWebsitePostDetails(http, '1').listDetails({ signal });
 
     assert.match(calls[0].options?.headers?.['User-Agent'] ?? '', /Mozilla/);
     assert.equal(calls[0].options?.signal, signal);
@@ -194,7 +200,7 @@ describe('createWebsitePostDetails', () => {
       },
       new HttpClientError(404, 'Not found.'),
     ]);
-    const source = createWebsitePostDetails(http, '1');
+    const source = createPatreonWebsitePostDetails(http, '1');
 
     assert.deepEqual((await source.details('19'))?.collections, ['Waterdeep']);
     assert.equal(await source.details('404'), null);
@@ -206,7 +212,7 @@ describe('createWebsitePostDetails', () => {
     const { http } = fakeHttp([new HttpClientError(403, 'Blocked.')]);
 
     await assert.rejects(
-      createWebsitePostDetails(http, '1').details('19'),
+      createPatreonWebsitePostDetails(http, '1').details('19'),
       (error) => error instanceof HttpClientError && error.status === 403,
     );
   });

@@ -5,9 +5,9 @@ interface ListOptions {
   signal?: AbortSignal;
 }
 
-interface PostDetailsSource {
+interface PatreonPostDetails {
   listDetails(options?: ListOptions): Promise<PostDetails[]>;
   details(postId: string, signal?: AbortSignal): Promise<PostDetails | null>;
 }
 
-export type { ListOptions, PostDetailsSource };
+export type { ListOptions, PatreonPostDetails };

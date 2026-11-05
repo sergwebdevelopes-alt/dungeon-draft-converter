@@ -3,9 +3,9 @@ import type { FetchMapImage } from '../ports/map-image-source.ts';
 import { messageOf } from '../../../shared/utils/error-message.ts';
 import { withoutUndefined } from '../../../shared/utils/object.ts';
 import { singleFlight } from '../../../shared/utils/single-flight.ts';
-import type { ImageStore } from '../ports/image-storage.ts';
+import type { ImageStorage } from '../ports/image-storage.ts';
 import type {
-  MapStore,
+  MapRepository,
   StoredMap,
   SyncCounts,
 } from '../ports/map-repository.ts';
@@ -13,8 +13,8 @@ import { createMapImages, type MapImages } from './prepare-map-images.ts';
 import { withUniqueSlugs } from '../domain/map-slugs.ts';
 import { foldersToRemove, galleryMaps } from '../domain/gallery-sync-plan.ts';
 import type { MapRecord } from '../domain/map-record.ts';
-import type { PatreonApi } from '../ports/patreon-posts.ts';
-import type { PostDetailsSource } from '../ports/patreon-post-details.ts';
+import type { PatreonPosts } from '../ports/patreon-posts.ts';
+import type { PatreonPostDetails } from '../ports/patreon-post-details.ts';
 
 interface GallerySyncLogEntry extends Partial<SyncCounts> {
   event: 'gallery-sync';
@@ -27,11 +27,11 @@ interface GallerySyncLogEntry extends Partial<SyncCounts> {
 }
 
 interface GallerySyncDeps {
-  patreon: PatreonApi;
-  details: PostDetailsSource;
+  patreon: PatreonPosts;
+  details: PatreonPostDetails;
   fetchImage: FetchMapImage;
-  maps: MapStore;
-  images: ImageStore;
+  maps: MapRepository;
+  images: ImageStorage;
   render: RenderMapImages;
   log?: (entry: GallerySyncLogEntry) => void;
   signal?: AbortSignal;

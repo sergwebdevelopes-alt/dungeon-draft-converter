@@ -5,17 +5,17 @@ import {
   createTestDatabase,
   type TestDatabase,
 } from '../../../infrastructure/database/test-database.ts';
-import { createPostgresTokenStore } from './postgres-patreon-token-repository.ts';
-import type { TokenStore } from '../ports/patreon-token-repository.ts';
+import { createPostgresPatreonTokenRepository } from './postgres-patreon-token-repository.ts';
+import type { PatreonTokenRepository } from '../ports/patreon-token-repository.ts';
 
-describe('createPostgresTokenStore', () => {
+describe('createPostgresPatreonTokenRepository', () => {
   let test: TestDatabase;
-  let store: TokenStore;
+  let store: PatreonTokenRepository;
 
   before(async () => {
     test = await createTestDatabase();
     await runMigrations(test.db);
-    store = createPostgresTokenStore(test.db);
+    store = createPostgresPatreonTokenRepository(test.db);
   });
 
   after(() => test.drop());

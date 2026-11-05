@@ -3,10 +3,10 @@ import { PATREON_TOKEN_URL } from '../../../config.ts';
 import type { HttpClient } from '../../../infrastructure/http-client/http-client.ts';
 import type { PatreonSettings } from '../../../settings/read-settings.ts';
 import { chooseTokens } from '../domain/choose-patreon-tokens.ts';
-import type { TokenStore } from '../ports/patreon-token-repository.ts';
+import type { PatreonTokenRepository } from '../ports/patreon-token-repository.ts';
 import type { StoredTokens } from '../domain/patreon-tokens.ts';
 
-interface PatreonAuth {
+interface PatreonTokenRefresher {
   accessToken(): Promise<string>;
   refresh(): Promise<string>;
 }
@@ -31,11 +31,11 @@ function refreshUrl(refreshToken: string, settings: PatreonSettings): string {
   return `${PATREON_TOKEN_URL}?${query}`;
 }
 
-function createPatreonAuth(
+function createPatreonTokenRefresher(
   http: HttpClient,
   settings: PatreonSettings,
-  store: TokenStore,
-): PatreonAuth {
+  repository: PatreonTokenRepository,
+): PatreonTokenRefresher {
   let refreshing: Promise<string> | null = null;
 
   const fromEnv: StoredTokens = {
@@ -46,11 +46,11 @@ function createPatreonAuth(
 
   async function currentTokens(): Promise<StoredTokens> {
     const { tokens, fromEnv: isNew } = chooseTokens(
-      await store.load(),
+      await repository.load(),
       fromEnv,
     );
     if (isNew) {
-      await store.save(tokens);
+      await repository.save(tokens);
     }
 
     return tokens;
@@ -62,7 +62,7 @@ function createPatreonAuth(
       refreshUrl(refreshToken, settings),
     );
 
-    await store.save({
+    await repository.save({
       accessToken: answer.access_token,
       refreshToken: answer.refresh_token,
       seededFrom,
@@ -91,5 +91,5 @@ function createPatreonAuth(
   };
 }
 
-export { createPatreonAuth };
-export type { PatreonAuth };
+export { createPatreonTokenRefresher };
+export type { PatreonTokenRefresher };

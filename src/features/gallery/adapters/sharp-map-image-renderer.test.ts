@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import sharp from 'sharp';
-import { renderGalleryImages, scaledCrop } from './sharp-map-image-renderer.ts';
+import {
+  renderMapImagesWithSharp,
+  scaledCrop,
+} from './sharp-map-image-renderer.ts';
 
 const CARD = { zoom: 0.8, width: 640, height: 800, quality: 70 };
 
@@ -39,9 +42,9 @@ describe('scaledCrop', () => {
   });
 });
 
-describe('renderGalleryImages', () => {
+describe('renderMapImagesWithSharp', () => {
   it('renders the card, view and backdrop as WebP at their sizes', async () => {
-    const images = await renderGalleryImages(await original(4760, 2240));
+    const images = await renderMapImagesWithSharp(await original(4760, 2240));
 
     const sizes = await Promise.all(
       [images.card, images.view, images.backdrop].map((image) =>
@@ -59,13 +62,13 @@ describe('renderGalleryImages', () => {
   });
 
   it('keeps a tall view within the long edge', async () => {
-    const { view } = await renderGalleryImages(await original(1500, 3000));
+    const { view } = await renderMapImagesWithSharp(await original(1500, 3000));
 
     const { width, height } = await sharp(view).metadata();
     assert.deepEqual([width, height], [1000, 2000]);
   });
 
   it('rejects data that is not an image', async () => {
-    await assert.rejects(renderGalleryImages(Buffer.from('not an image')));
+    await assert.rejects(renderMapImagesWithSharp(Buffer.from('not an image')));
   });
 });

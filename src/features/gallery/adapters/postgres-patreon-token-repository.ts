@@ -1,5 +1,5 @@
 import type { Database } from '../../../infrastructure/database/database.ts';
-import type { TokenStore } from '../ports/patreon-token-repository.ts';
+import type { PatreonTokenRepository } from '../ports/patreon-token-repository.ts';
 import type { StoredTokens } from '../domain/patreon-tokens.ts';
 
 interface TokenRow {
@@ -8,7 +8,9 @@ interface TokenRow {
   seeded_from: string;
 }
 
-function createPostgresTokenStore(db: Database): TokenStore {
+function createPostgresPatreonTokenRepository(
+  db: Database,
+): PatreonTokenRepository {
   return {
     async load() {
       const [row] = await db.query<TokenRow>(
@@ -39,4 +41,4 @@ function createPostgresTokenStore(db: Database): TokenStore {
   };
 }
 
-export { createPostgresTokenStore };
+export { createPostgresPatreonTokenRepository };

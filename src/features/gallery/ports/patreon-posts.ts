@@ -1,7 +1,7 @@
 import type { PatreonPost } from '../domain/patreon-post.ts';
 
-interface PatreonApi {
+interface PatreonPosts {
   listPosts(signal?: AbortSignal): Promise<PatreonPost[]>;
 }
 
-export type { PatreonApi };
+export type { PatreonPosts };

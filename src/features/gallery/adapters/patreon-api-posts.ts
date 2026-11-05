@@ -8,9 +8,9 @@ import {
   type HttpClient,
 } from '../../../infrastructure/http-client/http-client.ts';
 import type { SanitizeHtml } from '../ports/html-sanitizer.ts';
-import type { PatreonApi } from '../ports/patreon-posts.ts';
+import type { PatreonPosts } from '../ports/patreon-posts.ts';
 import type { PatreonPost } from '../domain/patreon-post.ts';
-import type { PatreonAuth } from './patreon-token-refresher.ts';
+import type { PatreonTokenRefresher } from './patreon-token-refresher.ts';
 
 const POST_FIELDS = 'title,content,url,published_at,is_public';
 
@@ -31,7 +31,7 @@ interface PostPage {
 }
 
 interface PatreonAccount {
-  auth: PatreonAuth;
+  auth: PatreonTokenRefresher;
   campaignId: string;
   sanitize: SanitizeHtml;
 }
@@ -63,10 +63,10 @@ function isUnauthorized(error: unknown): boolean {
   return error instanceof HttpClientError && error.status === 401;
 }
 
-function createOfficialPatreonApi(
+function createPatreonApiPosts(
   http: HttpClient,
   { auth, campaignId, sanitize }: PatreonAccount,
-): PatreonApi {
+): PatreonPosts {
   function getPage(url: string, token: string, signal?: AbortSignal) {
     const headers = { Authorization: `Bearer ${token}` };
 
@@ -103,4 +103,4 @@ function createOfficialPatreonApi(
   };
 }
 
-export { createOfficialPatreonApi };
+export { createPatreonApiPosts };

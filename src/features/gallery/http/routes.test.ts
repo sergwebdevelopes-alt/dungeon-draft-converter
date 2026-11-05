@@ -5,9 +5,9 @@ import { after, before, beforeEach, describe, it } from 'node:test';
 import express from 'express';
 import { errorHandler } from '../../../infrastructure/http-server/http-errors.ts';
 import type { GallerySync } from '../application/sync-gallery.ts';
-import type { ImageStore } from '../ports/image-storage.ts';
-import type { MapStore, StoredMap } from '../ports/map-repository.ts';
-import type { TokenStore } from '../ports/patreon-token-repository.ts';
+import type { ImageStorage } from '../ports/image-storage.ts';
+import type { MapRepository, StoredMap } from '../ports/map-repository.ts';
+import type { PatreonTokenRepository } from '../ports/patreon-token-repository.ts';
 import type { GalleryStores } from '../ports/gallery-stores.ts';
 import { createRoutes, type WebhookLogEntry } from './routes.ts';
 
@@ -26,18 +26,18 @@ function stored(postId: string, slug: string): StoredMap {
 }
 
 function gallery(maps: StoredMap[]): GalleryStores {
-  const store: MapStore = {
+  const store: MapRepository = {
     listMaps: () => Promise.resolve(maps),
     replaceMaps: () => Promise.resolve({ added: 0, updated: 0, removed: 0 }),
   };
-  const images: ImageStore = {
+  const images: ImageStorage = {
     has: () => Promise.resolve(true),
     put: () => Promise.resolve(),
     removeFolder: () => Promise.resolve(),
     urlFor: (key) => `/maps/${key}`,
   };
 
-  const tokens: TokenStore = {
+  const tokens: PatreonTokenRepository = {
     load: () => Promise.resolve(null),
     save: () => Promise.resolve(),
   };

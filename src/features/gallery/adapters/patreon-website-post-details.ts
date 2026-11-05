@@ -9,7 +9,7 @@ import {
 } from '../../../infrastructure/http-client/http-client.ts';
 import type {
   ListOptions,
-  PostDetailsSource,
+  PatreonPostDetails,
 } from '../ports/patreon-post-details.ts';
 import type { PostDetails, PostImage } from '../domain/patreon-post.ts';
 
@@ -173,10 +173,10 @@ function toDetails(
   };
 }
 
-function createWebsitePostDetails(
+function createPatreonWebsitePostDetails(
   http: HttpClient,
   campaignId: string,
-): PostDetailsSource {
+): PatreonPostDetails {
   return {
     async listDetails({ stopWhen, signal }: ListOptions = {}) {
       const all: PostDetails[] = [];
@@ -214,4 +214,4 @@ function createWebsitePostDetails(
   };
 }
 
-export { createWebsitePostDetails };
+export { createPatreonWebsitePostDetails };
