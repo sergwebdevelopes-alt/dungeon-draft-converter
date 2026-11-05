@@ -1,3 +1,5 @@
+name: dungeon-draft-converter
+
 services:
   app:
     image: ghcr.io/sergwebdevelopes-alt/dungeon-draft-converter:${APP_TAG:-latest}

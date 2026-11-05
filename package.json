@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "DOTENV_CONFIG_PATH=.env.testing tsx --import dotenv/config --test \"src/**/*.test.ts\" \"scripts/**/*.test.ts\" \"deploy/**/*.test.mjs\" && vitest run",
+    "test:ci": "tsx --test $(grep -rLE 'test-database\\.ts|createTestDatabase' src scripts --include='*.test.ts') 'deploy/**/*.test.mjs' && vitest run",
     "typecheck": "tsc",
     "lint": "oxlint",
     "format": "prettier --write .",

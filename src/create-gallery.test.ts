@@ -3,6 +3,8 @@ import { describe, it, mock } from 'node:test';
 import type { GalleryStores } from './features/gallery/ports/gallery-stores.ts';
 
 Object.assign(process.env, {
+  POSTGRES_USER: 'test',
+  POSTGRES_PASSWORD: 'test',
   PATREON_CAMPAIGN_ID: '1',
   PATREON_CLIENT_ID: 'client',
   PATREON_CLIENT_SECRET: 'secret',
