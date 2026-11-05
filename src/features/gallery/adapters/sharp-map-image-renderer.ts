@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import type { GalleryImages } from '../ports/map-image-renderer.ts';
+import type { RenderedMapImages } from '../ports/map-image-renderer.ts';
 
 interface Size {
   width: number;
@@ -73,7 +73,7 @@ async function renderView(original: Buffer): Promise<Buffer> {
 
 async function renderMapImagesWithSharp(
   original: Buffer,
-): Promise<GalleryImages> {
+): Promise<RenderedMapImages> {
   const size = await sizeOf(original);
 
   const card = await renderCrop(original, size, CARD);

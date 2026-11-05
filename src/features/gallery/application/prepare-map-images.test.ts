@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it, mock } from 'node:test';
-import type { GalleryImages } from '../ports/map-image-renderer.ts';
+import type { RenderedMapImages } from '../ports/map-image-renderer.ts';
 import type { FetchMapImage } from '../ports/map-image-source.ts';
 import type { ImageStorage } from '../ports/image-storage.ts';
-import { createMapImages } from './prepare-map-images.ts';
+import { createMapImagePreparer } from './prepare-map-images.ts';
 import type { MapRecord } from '../domain/map-record.ts';
 
 function map(mediaId = 'm1'): MapRecord {
@@ -45,7 +45,7 @@ function setUp(answer?: Error, signal?: AbortSignal) {
     removeFolder: () => Promise.resolve(),
     urlFor: (key) => key,
   };
-  const render = (original: Buffer): Promise<GalleryImages> =>
+  const render = (original: Buffer): Promise<RenderedMapImages> =>
     Promise.resolve({
       card: Buffer.from(`card of ${original.toString()}`),
       view: Buffer.from(`view of ${original.toString()}`),
@@ -53,7 +53,7 @@ function setUp(answer?: Error, signal?: AbortSignal) {
     });
 
   return {
-    mapImages: createMapImages({ fetchImage, images, render, signal }),
+    preparer: createMapImagePreparer({ fetchImage, images, render, signal }),
     files,
     downloads,
   };
@@ -63,11 +63,11 @@ function quietErrors() {
   return mock.method(console, 'error', () => undefined);
 }
 
-describe('createMapImages', () => {
+describe('createMapImagePreparer', () => {
   it('renders and stores the images of a map that has none', async () => {
-    const { mapImages, files } = setUp();
+    const { preparer, files } = setUp();
 
-    assert.deepEqual(await mapImages.prepare(map()), {
+    assert.deepEqual(await preparer.prepare(map()), {
       map: map(),
       failed: false,
     });
@@ -83,10 +83,10 @@ describe('createMapImages', () => {
   });
 
   it('does not download images that are already stored', async () => {
-    const { mapImages, downloads } = setUp();
-    await mapImages.prepare(map());
+    const { preparer, downloads } = setUp();
+    await preparer.prepare(map());
 
-    assert.deepEqual(await mapImages.prepare(map()), {
+    assert.deepEqual(await preparer.prepare(map()), {
       map: map(),
       failed: false,
     });
@@ -94,11 +94,11 @@ describe('createMapImages', () => {
   });
 
   it('keeps the previous version when the new image fails', async () => {
-    const { mapImages } = setUp(new Error('Gone.'));
+    const { preparer } = setUp(new Error('Gone.'));
     const errors = quietErrors();
 
     try {
-      assert.deepEqual(await mapImages.prepare(map('new'), map()), {
+      assert.deepEqual(await preparer.prepare(map('new'), map()), {
         map: map(),
         failed: true,
       });
@@ -109,11 +109,11 @@ describe('createMapImages', () => {
   });
 
   it('leaves out a new map whose image fails', async () => {
-    const { mapImages } = setUp(new Error('Gone.'));
+    const { preparer } = setUp(new Error('Gone.'));
     const errors = quietErrors();
 
     try {
-      assert.deepEqual(await mapImages.prepare(map()), {
+      assert.deepEqual(await preparer.prepare(map()), {
         map: null,
         failed: true,
       });
@@ -123,11 +123,11 @@ describe('createMapImages', () => {
   });
 
   it('counts a timed-out download as a failed image and keeps the previous version', async () => {
-    const { mapImages } = setUp(new DOMException('Too slow.', 'TimeoutError'));
+    const { preparer } = setUp(new DOMException('Too slow.', 'TimeoutError'));
     const errors = quietErrors();
 
     try {
-      assert.deepEqual(await mapImages.prepare(map('new'), map()), {
+      assert.deepEqual(await preparer.prepare(map('new'), map()), {
         map: map(),
         failed: true,
       });
@@ -139,12 +139,12 @@ describe('createMapImages', () => {
   it('lets a cancel through instead of counting it as a failed image', async () => {
     const controller = new AbortController();
     controller.abort();
-    const { mapImages, downloads } = setUp(
+    const { preparer, downloads } = setUp(
       new DOMException('Stopped.', 'AbortError'),
       controller.signal,
     );
 
-    await assert.rejects(mapImages.prepare(map(), map('old')), {
+    await assert.rejects(preparer.prepare(map(), map('old')), {
       name: 'AbortError',
     });
     assert.deepEqual(downloads, [

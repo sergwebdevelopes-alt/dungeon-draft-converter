@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { sanitizeWithLibrary as sanitize } from './sanitize-html-sanitizer.ts';
+import { sanitizeWithSanitizeHtml as sanitize } from './sanitize-html-sanitizer.ts';
 
 const SAFE_REL = 'target="_blank" rel="noopener noreferrer nofollow"';
 
-describe('sanitizeWithLibrary', () => {
+describe('sanitizeWithSanitizeHtml', () => {
   it('keeps paragraphs, line breaks, emphasis and lists', () => {
     const html =
       '<p>Hi <strong>all</strong>, <em>enjoy</em><br />this</p><ul><li><p><b>One</b></p></li></ul><ol><li><i>Two</i></li></ol>';

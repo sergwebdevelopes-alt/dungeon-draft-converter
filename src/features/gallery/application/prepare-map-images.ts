@@ -5,28 +5,28 @@ import type { ImageStorage } from '../ports/image-storage.ts';
 import { IMAGE_NAMES, imageKey } from '../domain/map-image-keys.ts';
 import type { MapRecord } from '../domain/map-record.ts';
 
-interface MapImagesDeps {
+interface MapImagePreparerDeps {
   fetchImage: FetchMapImage;
   images: ImageStorage;
   render: RenderMapImages;
   signal?: AbortSignal;
 }
 
-interface Prepared {
+interface PreparedMap {
   map: MapRecord | null;
   failed: boolean;
 }
 
-interface MapImages {
-  prepare(map: MapRecord, previous?: MapRecord): Promise<Prepared>;
+interface MapImagePreparer {
+  prepare(map: MapRecord, previous?: MapRecord): Promise<PreparedMap>;
 }
 
-function createMapImages({
+function createMapImagePreparer({
   fetchImage,
   images,
   render,
   signal,
-}: MapImagesDeps): MapImages {
+}: MapImagePreparerDeps): MapImagePreparer {
   async function hasImages(map: MapRecord): Promise<boolean> {
     for (const name of IMAGE_NAMES) {
       if (!(await images.has(imageKey(map, name)))) {
@@ -68,5 +68,5 @@ function createMapImages({
   };
 }
 
-export { createMapImages };
-export type { MapImages, Prepared };
+export { createMapImagePreparer };
+export type { MapImagePreparer, PreparedMap };

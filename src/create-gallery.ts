@@ -9,7 +9,7 @@ import type { Database } from './infrastructure/database/database.ts';
 import { createFetchHttpClient } from './infrastructure/http-client/fetch-http-client.ts';
 import { createHttpMapImageSource } from './features/gallery/adapters/http-map-image-source.ts';
 import { createRateLimitedHttpClient } from './infrastructure/http-client/rate-limited-http-client.ts';
-import { sanitizeWithLibrary } from './features/gallery/adapters/sanitize-html-sanitizer.ts';
+import { sanitizeWithSanitizeHtml } from './features/gallery/adapters/sanitize-html-sanitizer.ts';
 import type { PatreonSettings } from './settings/read-settings.ts';
 import { createLocalImageStorage } from './features/gallery/adapters/local-image-storage.ts';
 import { createPatreonApiPosts } from './features/gallery/adapters/patreon-api-posts.ts';
@@ -57,7 +57,7 @@ function createGallerySyncFromSettings(
     patreon: createPatreonApiPosts(http, {
       auth,
       campaignId: patreon.campaignId,
-      sanitize: sanitizeWithLibrary,
+      sanitize: sanitizeWithSanitizeHtml,
     }),
     details: createPatreonWebsitePostDetails(http, patreon.campaignId),
     fetchImage: createHttpMapImageSource(http),

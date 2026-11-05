@@ -1,9 +1,9 @@
-interface GalleryImages {
+interface RenderedMapImages {
   card: Buffer;
   view: Buffer;
   backdrop: Buffer;
 }
 
-type RenderMapImages = (original: Buffer) => Promise<GalleryImages>;
+type RenderMapImages = (original: Buffer) => Promise<RenderedMapImages>;
 
-export type { GalleryImages, RenderMapImages };
+export type { RenderedMapImages, RenderMapImages };

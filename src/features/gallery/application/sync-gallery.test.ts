@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type { GalleryImages } from '../ports/map-image-renderer.ts';
+import type { RenderedMapImages } from '../ports/map-image-renderer.ts';
 import type { FetchMapImage } from '../ports/map-image-source.ts';
 import type { ImageStorage } from '../ports/image-storage.ts';
 import type { MapRepository, StoredMap } from '../ports/map-repository.ts';
@@ -127,7 +127,7 @@ function fakeImageStore() {
   return { images, files };
 }
 
-function render(original: Buffer): Promise<GalleryImages> {
+function render(original: Buffer): Promise<RenderedMapImages> {
   return Promise.resolve({
     card: Buffer.from(`card of ${original.toString()}`),
     view: Buffer.from(`view of ${original.toString()}`),

@@ -9,7 +9,10 @@ import type {
   StoredMap,
   SyncCounts,
 } from '../ports/map-repository.ts';
-import { createMapImages, type MapImages } from './prepare-map-images.ts';
+import {
+  createMapImagePreparer,
+  type MapImagePreparer,
+} from './prepare-map-images.ts';
 import { withUniqueSlugs } from '../domain/map-slugs.ts';
 import { foldersToRemove, galleryMaps } from '../domain/gallery-sync-plan.ts';
 import type { MapRecord } from '../domain/map-record.ts';
@@ -60,14 +63,14 @@ function logToConsole(entry: GallerySyncLogEntry): void {
 async function prepareAll(
   wanted: MapRecord[],
   previous: StoredMap[],
-  mapImages: MapImages,
+  preparer: MapImagePreparer,
 ): Promise<ReadyMaps> {
   const previousById = new Map(previous.map((map) => [map.postId, map]));
   const ready: MapRecord[] = [];
   let failed = 0;
 
   for (const map of wanted) {
-    const prepared = await mapImages.prepare(map, previousById.get(map.postId));
+    const prepared = await preparer.prepare(map, previousById.get(map.postId));
     if (prepared.map) {
       ready.push(prepared.map);
     }
@@ -90,7 +93,12 @@ function createGallerySync({
   signal,
   now = Date.now,
 }: GallerySyncDeps): GallerySync {
-  const mapImages = createMapImages({ fetchImage, images, render, signal });
+  const preparer = createMapImagePreparer({
+    fetchImage,
+    images,
+    render,
+    signal,
+  });
 
   async function syncOnce(): Promise<SyncResult> {
     const posts = await patreon.listPosts(signal);
@@ -98,7 +106,7 @@ function createGallerySync({
     const previous = await maps.listMaps();
 
     const wanted = galleryMaps(posts, allDetails);
-    const { ready, failed } = await prepareAll(wanted, previous, mapImages);
+    const { ready, failed } = await prepareAll(wanted, previous, preparer);
 
     const next = withUniqueSlugs(ready);
     const counts = await maps.replaceMaps(next);

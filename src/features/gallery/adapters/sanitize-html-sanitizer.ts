@@ -41,7 +41,7 @@ const OPTIONS: sanitizeHtml.IOptions = {
   exclusiveFilter: (frame) => frame.tag === 'p' && !frame.text.trim(),
 };
 
-const sanitizeWithLibrary: SanitizeHtml = (html) =>
+const sanitizeWithSanitizeHtml: SanitizeHtml = (html) =>
   sanitizeHtml(html, OPTIONS).trim();
 
-export { sanitizeWithLibrary };
+export { sanitizeWithSanitizeHtml };
