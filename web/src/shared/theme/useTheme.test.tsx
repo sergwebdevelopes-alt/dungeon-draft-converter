@@ -19,51 +19,37 @@ function memoryStore(
   };
 }
 
-function mockSystem(light: boolean) {
-  const listeners = new Set<() => void>();
-  const query = {
-    matches: light,
-    addEventListener: (_: string, listener: () => void) =>
-      listeners.add(listener),
-    removeEventListener: (_: string, listener: () => void) =>
-      listeners.delete(listener),
-  };
-  vi.stubGlobal('matchMedia', () => query);
-  return {
-    change(next: boolean) {
-      query.matches = next;
-      listeners.forEach((listener) => listener());
-    },
-  };
+function prefersLight() {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query === '(prefers-color-scheme: light)',
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
 }
 
 describe('useTheme', () => {
   beforeEach(() => {
     delete document.documentElement.dataset.theme;
+    prefersLight();
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it('follows the system until the visitor chooses', () => {
-    const system = mockSystem(true);
+  it('is dark until the visitor chooses, even when the system is light', () => {
     const { result } = renderHook(() => useTheme(memoryStore()));
 
-    expect(result.current.theme).toBe('light');
-    act(() => system.change(false));
     expect(result.current.theme).toBe('dark');
   });
 
-  it('uses a saved choice over the system', () => {
-    mockSystem(true);
-    const { result } = renderHook(() => useTheme(memoryStore('dark')));
+  it('uses a saved choice', () => {
+    const { result } = renderHook(() => useTheme(memoryStore('light')));
 
-    expect(result.current.theme).toBe('dark');
+    expect(result.current.theme).toBe('light');
   });
 
   it('switches, applies and remembers the theme', () => {
-    const system = mockSystem(false);
     const store = memoryStore();
     const { result } = renderHook(() => useTheme(store));
 
@@ -73,8 +59,11 @@ describe('useTheme', () => {
     expect(document.documentElement.dataset.theme).toBe('light');
     expect(store.data.get(THEME_KEY)).toBe('light');
 
-    act(() => system.change(false));
-    expect(result.current.theme).toBe('light');
+    act(() => result.current.toggle());
+
+    expect(result.current.theme).toBe('dark');
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(store.data.get(THEME_KEY)).toBe('dark');
   });
 });
 

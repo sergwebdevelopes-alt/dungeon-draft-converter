@@ -3,6 +3,7 @@ import type { KeyValueStore } from '../storage/index.ts';
 type Theme = 'light' | 'dark';
 
 const THEME_KEY = 'lair-of-artificer:theme';
+const DEFAULT_THEME: Theme = 'dark';
 
 function isTheme(value: unknown): value is Theme {
   return value === 'light' || value === 'dark';
@@ -22,5 +23,5 @@ function oppositeOf(theme: Theme): Theme {
   return theme === 'dark' ? 'light' : 'dark';
 }
 
-export { THEME_KEY, oppositeOf, savedTheme, saveTheme };
+export { DEFAULT_THEME, THEME_KEY, oppositeOf, savedTheme, saveTheme };
 export type { Theme };
