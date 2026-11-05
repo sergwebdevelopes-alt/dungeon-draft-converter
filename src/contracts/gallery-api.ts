@@ -24,6 +24,12 @@ interface MapEntry {
 
 interface MapsResponse {
   maps: MapEntry[];
+  total: number;
+  tags: string[];
 }
 
-export type { MapEntry, MapImageUrls, MapsResponse, Squares };
+interface MapResponse {
+  map: MapEntry;
+}
+
+export type { MapEntry, MapImageUrls, MapResponse, MapsResponse, Squares };

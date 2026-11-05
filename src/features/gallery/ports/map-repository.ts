@@ -10,9 +10,23 @@ interface SyncCounts {
   removed: number;
 }
 
+interface MapsPageQuery {
+  tag?: string;
+  offset: number;
+  limit: number;
+}
+
+interface MapsPage {
+  maps: StoredMap[];
+  total: number;
+}
+
 interface MapRepository {
   listMaps(): Promise<StoredMap[]>;
+  listMapsPage(query: MapsPageQuery): Promise<MapsPage>;
+  listTags(): Promise<string[]>;
+  findMap(slug: string): Promise<StoredMap | null>;
   replaceMaps(maps: MapRecord[]): Promise<SyncCounts>;
 }
 
-export type { MapRepository, StoredMap, SyncCounts };
+export type { MapRepository, MapsPage, MapsPageQuery, StoredMap, SyncCounts };

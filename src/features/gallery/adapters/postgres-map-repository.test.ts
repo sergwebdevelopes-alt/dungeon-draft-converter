@@ -196,4 +196,81 @@ describe('createPostgresMapRepository', () => {
       ['1'],
     );
   });
+
+  function published(postId: string, year: number, tags: string[]): MapRecord {
+    return map({
+      postId,
+      slug: `map-${postId}`,
+      publishedAt: `${year}-01-01T00:00:00.000Z`,
+      tags,
+    });
+  }
+
+  const SHELF = [
+    published('1', 2021, ['Barovia']),
+    published('2', 2022, ['Waterdeep', 'Barovia']),
+    published('3', 2023, []),
+    published('4', 2024, ['Waterdeep']),
+    published('5', 2025, ['Ships', 'Waterdeep']),
+  ];
+
+  async function slugsOfPage(
+    query: Parameters<MapRepository['listMapsPage']>[0],
+  ) {
+    const page = await store.listMapsPage(query);
+
+    return { slugs: page.maps.map((m) => m.slug), total: page.total };
+  }
+
+  it('pages through the newest maps first and counts them all', async () => {
+    await store.replaceMaps(SHELF);
+
+    assert.deepEqual(await slugsOfPage({ offset: 0, limit: 2 }), {
+      slugs: ['map-5', 'map-4'],
+      total: 5,
+    });
+    assert.deepEqual(await slugsOfPage({ offset: 2, limit: 2 }), {
+      slugs: ['map-3', 'map-2'],
+      total: 5,
+    });
+    assert.deepEqual(await slugsOfPage({ offset: 4, limit: 2 }), {
+      slugs: ['map-1'],
+      total: 5,
+    });
+    assert.deepEqual(await slugsOfPage({ offset: 10, limit: 2 }), {
+      slugs: [],
+      total: 5,
+    });
+  });
+
+  it('pages through one collection with its own total', async () => {
+    await store.replaceMaps(SHELF);
+
+    assert.deepEqual(
+      await slugsOfPage({ tag: 'Waterdeep', offset: 1, limit: 5 }),
+      { slugs: ['map-4', 'map-2'], total: 3 },
+    );
+    assert.deepEqual(await slugsOfPage({ tag: 'Nope', offset: 0, limit: 5 }), {
+      slugs: [],
+      total: 0,
+    });
+  });
+
+  it('lists each collection once, in the order its newest map came out', async () => {
+    assert.deepEqual(await store.listTags(), []);
+
+    await store.replaceMaps(SHELF);
+
+    assert.deepEqual(await store.listTags(), ['Ships', 'Waterdeep', 'Barovia']);
+  });
+
+  it('finds a map by its slug', async () => {
+    await store.replaceMaps(SHELF);
+
+    const found = await store.findMap('map-2');
+
+    assert.equal(found?.postId, '2');
+    assert.deepEqual(found?.tags, ['Waterdeep', 'Barovia']);
+    assert.equal(await store.findMap('nope'), null);
+  });
 });

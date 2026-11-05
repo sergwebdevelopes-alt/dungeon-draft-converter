@@ -4,6 +4,7 @@ import type {
 } from '../../../infrastructure/database/database.ts';
 import type {
   MapRepository,
+  MapsPageQuery,
   StoredMap,
   SyncCounts,
 } from '../ports/map-repository.ts';
@@ -114,6 +115,39 @@ function toRow(map: MapRecord): Record<string, unknown> {
   };
 }
 
+const WITH_TAG = '($1::text IS NULL OR $1 = ANY(tags))';
+
+const TAGS_IN_ORDER_SEEN = `SELECT tag FROM (
+    SELECT t.tag, row_number() OVER (
+      ORDER BY m.published_at DESC, m.post_id, t.position
+    ) AS seen
+    FROM maps m, unnest(m.tags) WITH ORDINALITY AS t(tag, position)
+  ) tags
+  GROUP BY tag
+  ORDER BY min(seen)`;
+
+async function countMaps(db: Database, tag: string | null): Promise<number> {
+  const [{ total }] = await db.query<{ total: number }>(
+    `SELECT count(*)::int AS total FROM maps WHERE ${WITH_TAG}`,
+    [tag],
+  );
+
+  return total;
+}
+
+async function pageOfMaps(
+  db: Database,
+  tag: string | null,
+  { offset, limit }: MapsPageQuery,
+): Promise<StoredMap[]> {
+  const rows = await db.query<MapRow>(
+    `SELECT * FROM maps WHERE ${WITH_TAG} ORDER BY published_at DESC, post_id LIMIT $2 OFFSET $3`,
+    [tag, limit, offset],
+  );
+
+  return rows.map(toStoredMap);
+}
+
 function createPostgresMapRepository(db: Database): MapRepository {
   return {
     async listMaps() {
@@ -121,6 +155,31 @@ function createPostgresMapRepository(db: Database): MapRepository {
         'SELECT * FROM maps ORDER BY published_at DESC, post_id',
       );
       return rows.map(toStoredMap);
+    },
+
+    async listMapsPage(query) {
+      const tag = query.tag ?? null;
+      const [maps, total] = await Promise.all([
+        pageOfMaps(db, tag, query),
+        countMaps(db, tag),
+      ]);
+
+      return { maps, total };
+    },
+
+    async listTags() {
+      const rows = await db.query<{ tag: string }>(TAGS_IN_ORDER_SEEN);
+
+      return rows.map((row) => row.tag);
+    },
+
+    async findMap(slug) {
+      const [row] = await db.query<MapRow>(
+        'SELECT * FROM maps WHERE slug = $1',
+        [slug],
+      );
+
+      return row ? toStoredMap(row) : null;
     },
 
     async replaceMaps(maps) {

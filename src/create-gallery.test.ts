@@ -16,6 +16,9 @@ function stores(): GalleryStores {
   return {
     maps: {
       listMaps: () => Promise.resolve([]),
+      listMapsPage: () => Promise.resolve({ maps: [], total: 0 }),
+      listTags: () => Promise.resolve([]),
+      findMap: () => Promise.resolve(null),
       replaceMaps: () => Promise.resolve({ added: 0, updated: 0, removed: 0 }),
     },
     images: {

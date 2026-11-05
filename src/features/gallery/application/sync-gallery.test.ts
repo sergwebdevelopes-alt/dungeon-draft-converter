@@ -82,6 +82,9 @@ function fakeMapStore() {
   let stored: StoredMap[] = [];
   const store: MapRepository = {
     listMaps: () => Promise.resolve(stored),
+    listMapsPage: () => Promise.reject(new Error('Not used.')),
+    listTags: () => Promise.reject(new Error('Not used.')),
+    findMap: () => Promise.reject(new Error('Not used.')),
     replaceMaps(maps: MapRecord[]) {
       const before = new Map(
         stored.map((map) => [map.postId, comparable(map)]),

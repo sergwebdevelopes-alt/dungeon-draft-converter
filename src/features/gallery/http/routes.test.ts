@@ -9,15 +9,16 @@ import type { ImageStorage } from '../ports/image-storage.ts';
 import type { MapRepository, StoredMap } from '../ports/map-repository.ts';
 import type { PatreonTokenRepository } from '../ports/patreon-token-repository.ts';
 import type { GalleryStores } from '../ports/gallery-stores.ts';
+import type { PageSizes } from './parse-maps-query.ts';
 import { createRoutes, type WebhookLogEntry } from './routes.ts';
 
-function stored(postId: string, slug: string): StoredMap {
+function stored(postId: string, slug: string, tags: string[] = []): StoredMap {
   return {
     postId,
     slug,
     title: slug,
     description: '',
-    tags: [],
+    tags,
     patreonUrl: `https://www.patreon.com/posts/${postId}`,
     publishedAt: '2026-01-01T00:00:00.000Z',
     image: { url: 'u', width: 3, height: 2, mediaId: 'm' },
@@ -28,6 +29,20 @@ function stored(postId: string, slug: string): StoredMap {
 function gallery(maps: StoredMap[]): GalleryStores {
   const store: MapRepository = {
     listMaps: () => Promise.resolve(maps),
+    listMapsPage({ tag, offset, limit }) {
+      const matching = tag
+        ? maps.filter((map) => map.tags.includes(tag))
+        : maps;
+
+      return Promise.resolve({
+        maps: matching.slice(offset, offset + limit),
+        total: matching.length,
+      });
+    },
+    listTags: () =>
+      Promise.resolve([...new Set(maps.flatMap((map) => map.tags))]),
+    findMap: (slug) =>
+      Promise.resolve(maps.find((map) => map.slug === slug) ?? null),
     replaceMaps: () => Promise.resolve({ added: 0, updated: 0, removed: 0 }),
   };
   const images: ImageStorage = {
@@ -51,16 +66,45 @@ async function listen(app: express.Express): Promise<http.Server> {
   });
 }
 
-async function serve(stores: GalleryStores | undefined) {
+async function serve(stores: GalleryStores | undefined, pageSizes?: PageSizes) {
   const app = express();
   app.use(
     '/api',
-    createRoutes({ stores, sync: undefined, webhookSecret: undefined }),
+    createRoutes({
+      stores,
+      sync: undefined,
+      webhookSecret: undefined,
+      pageSizes,
+    }),
   );
+  app.use(errorHandler);
   const server = await listen(app);
   const { port } = server.address() as { port: number };
 
   return { server, url: `http://localhost:${port}/api/maps` };
+}
+
+const MAPS = [
+  stored('3', 'newest', ['Waterdeep']),
+  stored('2', 'new', ['Barovia', 'Waterdeep']),
+  stored('1', 'old', ['Barovia']),
+];
+
+interface PageBody {
+  maps: { slug: string }[];
+  total: number;
+  tags: string[];
+}
+
+async function pageAt(url: string): Promise<PageBody> {
+  const res = await fetch(url);
+  assert.equal(res.status, 200);
+
+  return (await res.json()) as PageBody;
+}
+
+function slugsOf(page: PageBody): string[] {
+  return page.maps.map((map) => map.slug);
 }
 
 describe('GET /api/maps', () => {
@@ -117,7 +161,83 @@ describe('GET /api/maps', () => {
 
     const res = await fetch(served.url);
 
-    assert.deepEqual(await res.json(), { maps: [] });
+    assert.deepEqual(await res.json(), { maps: [], total: 0, tags: [] });
+  });
+
+  it('gives one page with the total and every collection', async () => {
+    const served = await serve(gallery(MAPS));
+    servers.push(served.server);
+
+    const page = await pageAt(`${served.url}?offset=1&limit=1`);
+
+    assert.deepEqual(slugsOf(page), ['new']);
+    assert.equal(page.total, 3);
+    assert.deepEqual(page.tags, ['Waterdeep', 'Barovia']);
+  });
+
+  it('gives a page of one collection with its own total', async () => {
+    const served = await serve(gallery(MAPS));
+    servers.push(served.server);
+
+    const page = await pageAt(`${served.url}?tag=Barovia`);
+
+    assert.deepEqual(slugsOf(page), ['new', 'old']);
+    assert.equal(page.total, 2);
+  });
+
+  it('uses the default page size and refuses a larger one', async () => {
+    const served = await serve(gallery(MAPS), { pageSize: 2, maxPageSize: 3 });
+    servers.push(served.server);
+
+    const page = await pageAt(served.url);
+    const tooLarge = await fetch(`${served.url}?limit=4`);
+
+    assert.deepEqual(slugsOf(page), ['newest', 'new']);
+    assert.equal(tooLarge.status, 400);
+    assert.deepEqual(await tooLarge.json(), {
+      error: 'limit must be a whole number from 1 to 3.',
+    });
+  });
+});
+
+describe('GET /api/maps/:slug', () => {
+  const servers: http.Server[] = [];
+
+  after(() => {
+    for (const server of servers) {
+      server.closeAllConnections();
+      server.close();
+    }
+  });
+
+  it('gives one map with its image URLs', async () => {
+    const served = await serve(gallery(MAPS));
+    servers.push(served.server);
+
+    const res = await fetch(`${served.url}/new`);
+    const body = (await res.json()) as {
+      map: { slug: string; images: { view: string } };
+    };
+
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get('cache-control'), 'no-cache');
+    assert.equal(body.map.slug, 'new');
+    assert.equal(body.map.images.view, '/maps/2/m/view.webp');
+  });
+
+  it('answers 404 for an unknown map and without a database', async () => {
+    const withMaps = await serve(gallery(MAPS));
+    const withoutDatabase = await serve(undefined);
+    servers.push(withMaps.server, withoutDatabase.server);
+
+    for (const url of [`${withMaps.url}/nope`, `${withoutDatabase.url}/new`]) {
+      const res = await fetch(url);
+
+      assert.equal(res.status, 404, url);
+      assert.deepEqual(await res.json(), {
+        error: 'There is no map at this address.',
+      });
+    }
   });
 });
 

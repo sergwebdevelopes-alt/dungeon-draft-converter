@@ -1,9 +1,15 @@
 import express, { Router, type Request, type RequestHandler } from 'express';
+import { GALLERY_PAGE_SIZE, MAX_GALLERY_PAGE_SIZE } from '../../../config.ts';
 import { HttpError } from '../../../infrastructure/http-server/http-errors.ts';
 import type { GallerySync } from '../application/sync-gallery.ts';
 import type { GalleryStores } from '../ports/gallery-stores.ts';
-import type { MapEntry, MapsResponse } from '../../../contracts/gallery-api.ts';
+import type {
+  MapResponse,
+  MapsResponse,
+} from '../../../contracts/gallery-api.ts';
+import type { MapsPageQuery, StoredMap } from '../ports/map-repository.ts';
 import { toMapEntry } from './map-entry.ts';
+import { parseMapsQuery, type PageSizes } from './parse-maps-query.ts';
 import { isValidSignature } from './patreon-webhook-signature.ts';
 
 const MAX_WEBHOOK_BYTES = 1024 * 1024;
@@ -19,20 +25,46 @@ interface GalleryRoutesDeps {
   stores: GalleryStores | undefined;
   sync: GallerySync | undefined;
   webhookSecret: string | undefined;
+  pageSizes?: PageSizes;
   log?: (entry: WebhookLogEntry) => void;
 }
+
+const EMPTY_PAGE: MapsResponse = { maps: [], total: 0, tags: [] };
 
 function logToConsole(entry: WebhookLogEntry): void {
   console.log(JSON.stringify(entry));
 }
 
-async function listEntries({
-  maps,
-  images,
-}: GalleryStores): Promise<MapEntry[]> {
-  const stored = await maps.listMaps();
+function entryOf({ images }: GalleryStores, map: StoredMap) {
+  return toMapEntry(map, (key) => images.urlFor(key));
+}
 
-  return stored.map((map) => toMapEntry(map, (key) => images.urlFor(key)));
+async function listPage(
+  stores: GalleryStores,
+  query: MapsPageQuery,
+): Promise<MapsResponse> {
+  const [page, tags] = await Promise.all([
+    stores.maps.listMapsPage(query),
+    stores.maps.listTags(),
+  ]);
+
+  return {
+    maps: page.maps.map((map) => entryOf(stores, map)),
+    total: page.total,
+    tags,
+  };
+}
+
+async function findEntry(
+  stores: GalleryStores | undefined,
+  slug: string,
+): Promise<MapResponse> {
+  const map = stores ? await stores.maps.findMap(slug) : null;
+  if (!stores || !map) {
+    throw new HttpError(404, 'There is no map at this address.');
+  }
+
+  return { map: entryOf(stores, map) };
 }
 
 const readRawBody = express.raw({
@@ -66,15 +98,27 @@ function createRoutes({
   stores,
   sync,
   webhookSecret,
+  pageSizes = {
+    pageSize: GALLERY_PAGE_SIZE,
+    maxPageSize: MAX_GALLERY_PAGE_SIZE,
+  },
   log = logToConsole,
 }: GalleryRoutesDeps): Router {
   const router = Router();
 
-  router.get('/maps', async (_req, res) => {
-    const maps = stores ? await listEntries(stores) : [];
+  router.get('/maps', async (req, res) => {
+    const query = parseMapsQuery(req.query, pageSizes);
+    const page = stores ? await listPage(stores, query) : EMPTY_PAGE;
 
     res.set('Cache-Control', 'no-cache');
-    res.json({ maps } satisfies MapsResponse);
+    res.json(page satisfies MapsResponse);
+  });
+
+  router.get('/maps/:slug', async (req, res) => {
+    const found = await findEntry(stores, req.params.slug);
+
+    res.set('Cache-Control', 'no-cache');
+    res.json(found satisfies MapResponse);
   });
 
   router.post('/patreon/webhook', rawBody, (req, res) => {
