@@ -1,0 +1,12 @@
+services:
+  app:
+    image: ghcr.io/sergwebdevelopes-alt/dungeon-draft-converter:${APP_TAG:-latest}
+    build: !reset null
+    ports: !reset []
+    networks:
+      - default
+      - web
+
+networks:
+  web:
+    external: true

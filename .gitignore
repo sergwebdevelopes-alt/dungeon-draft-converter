@@ -6,3 +6,6 @@ source/
 .env
 .env.*
 !.env.example
+
+# Local deployment notes (server details)
+docs/deploy.md
