@@ -24,7 +24,7 @@ describe('openDatabase', () => {
       assert.deepEqual(
         log.mock.calls.map((call) => String(call.arguments[0])),
         [
-          'Database migrated: 001_gallery.sql, 002_deferred_slugs.sql, 003_drop_source.sql, 004_drop_image_choice_columns.sql.',
+          'Database migrated: 001_gallery.sql, 002_deferred_slugs.sql, 003_drop_source.sql, 004_drop_image_choice_columns.sql, 005_patreon_tokens.sql.',
           'Database is up to date.',
         ],
       );

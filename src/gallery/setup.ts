@@ -12,6 +12,9 @@ import type { ImageStore } from './image-store.ts';
 import { createLocalImageStore } from './local-image-store.ts';
 import type { MapStore } from './map-store.ts';
 import { createOfficialPatreonApi } from './patreon/official-patreon-api.ts';
+import { createPatreonAuth } from './patreon/patreon-auth.ts';
+import { createPostgresTokenStore } from './patreon/postgres-token-store.ts';
+import type { TokenStore } from './patreon/token-store.ts';
 import { createWebsitePostDetails } from './patreon/website-post-details.ts';
 import { createPostgresMapStore } from './postgres-map-store.ts';
 import {
@@ -23,6 +26,7 @@ import {
 interface GalleryStores {
   maps: MapStore;
   images: ImageStore;
+  tokens: TokenStore;
 }
 
 type SyncOptions = Pick<GallerySyncDeps, 'log' | 'signal'>;
@@ -34,6 +38,7 @@ function createGalleryStores(database: Database): GalleryStores {
       dir: GALLERY_DIR,
       baseUrl: GALLERY_IMAGES_URL,
     }),
+    tokens: createPostgresTokenStore(database),
   };
 }
 
@@ -47,14 +52,17 @@ function createGallerySyncFromSettings(
     GALLERY_REQUEST_INTERVAL_MS,
   );
 
+  const auth = createPatreonAuth(http, patreon, stores.tokens);
+
   return createGallerySync({
     patreon: createOfficialPatreonApi(http, {
-      token: patreon.creatorToken,
+      auth,
       campaignId: patreon.campaignId,
     }),
     details: createWebsitePostDetails(http, patreon.campaignId),
     http,
-    ...stores,
+    maps: stores.maps,
+    images: stores.images,
     render: renderGalleryImages,
     ...options,
   });

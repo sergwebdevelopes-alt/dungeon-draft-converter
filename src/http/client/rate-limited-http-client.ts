@@ -33,6 +33,11 @@ function createRateLimitedHttpClient(
       await waitForTurn(options);
       return client.getBytes(url, options);
     },
+
+    async post<T>(url: string, body?: unknown, options?: RequestOptions) {
+      await waitForTurn(options);
+      return client.post<T>(url, body, options);
+    },
   };
 }
 

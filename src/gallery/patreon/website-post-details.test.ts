@@ -24,6 +24,7 @@ function fakeHttp(answers: unknown[]) {
         : Promise.resolve(answer as T);
     },
     getBytes: () => Promise.reject(new Error('No downloads here.')),
+    post: () => Promise.reject(new Error('No posts here.')),
   };
 
   return { http, calls };

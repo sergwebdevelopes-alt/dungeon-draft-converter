@@ -37,13 +37,15 @@ Every conversion request writes one JSON line, without file names or IP addresse
 
 ### Gallery sync
 
-With the `PATREON_*` settings in `.env` (see `.env.example`), the server fills the gallery from Patreon: every public post in a Patreon collection becomes a map, with the post's main or ungridded image rendered as a card, a full view and a backdrop. Posts outside any collection (news, announcements) are left out, and a new collection appears without any setting. Collection names (without suffixes like `[In Progress]`) and the post's tags become the gallery's filter chips. It syncs at startup and then every `GALLERY_SYNC_INTERVAL_MINUTES` (default 60); in development (`npm run dev`) it skips the sync at startup, so file changes don't call Patreon. Only new or changed images are downloaded. If Patreon can't be reached, the gallery stays as it was until the next sync. Each sync writes one JSON line:
+With the `PATREON_*` settings in `.env` (see `.env.example`), the server fills the gallery from Patreon: every public post in a Patreon collection becomes a map, with the post's main or ungridded image rendered as a card, a full view and a backdrop. Posts outside any collection (news, announcements) are left out, and a new collection appears without any setting. Collection names (without suffixes like `[In Progress]`) become the gallery's filter chips. It syncs at startup and then every `GALLERY_SYNC_INTERVAL_MINUTES` (default 60); in development (`npm run dev`) it skips the sync at startup, so file changes don't call Patreon. Only new or changed images are downloaded. If Patreon can't be reached, the gallery stays as it was until the next sync. Each sync writes one JSON line:
 
 ```text
 {"event":"gallery-sync","result":"ok","posts":50,"maps":2,"failed":0,"added":1,"updated":0,"removed":0,"tookMs":12280}
 ```
 
 `failed` counts maps whose image couldn't be downloaded or rendered; they keep their previous version. To sync once right away: `npm run gallery:sync` locally, or `docker compose run --rm app node src/gallery/sync-now.ts` in Docker. It exits with code 1 if the sync failed.
+
+The creator access token expires after about a month. When Patreon refuses it, the server exchanges the refresh token for a new pair and keeps it in the database (`patreon_tokens`), because each refresh replaces the refresh token as well. `.env` only provides the first pair. If you put a new pair in `.env` (for example after creating new tokens on Patreon), the server notices that it differs from the pair it started from and switches to it.
 
 `GET /api/maps` lists the gallery, newest first.
 

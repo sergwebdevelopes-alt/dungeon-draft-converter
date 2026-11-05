@@ -31,6 +31,7 @@ function setUp(answer?: Error) {
   const downloads: string[] = [];
   const http: HttpClient = {
     get: () => Promise.reject(new Error('Not used.')),
+    post: () => Promise.reject(new Error('Not used.')),
     getBytes(url) {
       downloads.push(url);
       return answer

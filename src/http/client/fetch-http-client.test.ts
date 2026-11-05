@@ -16,6 +16,22 @@ describe('createFetchHttpClient', () => {
         res.end(JSON.stringify({ agent: req.headers['user-agent'] }));
         return;
       }
+      if (path === '/inspect') {
+        let body = '';
+        req.on('data', (chunk: Buffer) => (body += chunk.toString()));
+        req.on('end', () => {
+          res.setHeader('Content-Type', 'application/json');
+          res.end(
+            JSON.stringify({
+              method: req.method,
+              type: req.headers['content-type'] ?? null,
+              query: new URL(req.url ?? '/', 'http://localhost').search,
+              body,
+            }),
+          );
+        });
+        return;
+      }
       if (path === '/bytes') {
         res.end(Buffer.from([0, 1, 2, 255]));
         return;
@@ -50,6 +66,45 @@ describe('createFetchHttpClient', () => {
     );
 
     assert.deepEqual(body, { agent: 'lair-test' });
+  });
+
+  it('posts a JSON body and reads the JSON answer', async () => {
+    const answer = await createFetchHttpClient().post(`${base}/inspect`, {
+      grant: 'refresh',
+    });
+
+    assert.deepEqual(answer, {
+      method: 'POST',
+      type: 'application/json',
+      query: '',
+      body: '{"grant":"refresh"}',
+    });
+  });
+
+  it('posts without a body, keeping the query', async () => {
+    const answer = await createFetchHttpClient().post(
+      `${base}/inspect?grant_type=refresh_token`,
+    );
+
+    assert.deepEqual(answer, {
+      method: 'POST',
+      type: null,
+      query: '?grant_type=refresh_token',
+      body: '',
+    });
+  });
+
+  it('turns an error answer to a post into an HttpClientError without the query', async () => {
+    await assert.rejects(
+      createFetchHttpClient().post(`${base}/nope?client_secret=hidden`),
+      (error) => {
+        assert.ok(error instanceof HttpClientError);
+        assert.equal(error.status, 404);
+        assert.match(error.message, /^POST .*\/nope answered 404\.$/);
+        assert.doesNotMatch(error.message, /hidden/);
+        return true;
+      },
+    );
   });
 
   it('downloads a body as bytes', async () => {

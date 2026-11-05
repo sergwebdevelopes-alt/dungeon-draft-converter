@@ -29,7 +29,7 @@ src/
 │   ├── map-images.ts  makes sure a map's card/view/backdrop are stored: renders missing ones, keeps the previous version if that fails
 │   ├── setup.ts   builds the stores and the sync from settings (used by server.ts and sync-now.ts, the `gallery:sync` script)
 │   ├── model/     pure gallery rules: which posts count (public and in a collection), title, collection chips (collections.ts), slug, choosing the image, building a MapRecord (whose MapImage keeps only url, size and media ID), the public MapEntry (map-entry.ts), where images are stored (image-keys.ts), sync counts and folders (sync-plan.ts)
-│   └── patreon/   Patreon ports + adapters: official API v2 (post list) and the website's post details (collections, all images); I/O and translation only
+│   └── patreon/   Patreon ports + adapters: official API v2 (post list; refreshes the token on 401 through patreon-auth.ts) and the website's post details (collections, all images); TokenStore port + postgres-token-store.ts (the newest token pair; `seeded_from` = SHA-256 of the `.env` refresh token it started from, so a new `.env` pair wins); I/O and translation only
 ├── core/          image work: dd2vtt format, conversion, images, lighting, merge, gallery-images (card, view, backdrop)
 └── utils/         small shared helpers (format.ts, time.ts, object.ts, error.ts, single-flight.ts: one run at a time, once more if asked meanwhile)
 ```

@@ -4,6 +4,7 @@ import { after, before, describe, it } from 'node:test';
 import express from 'express';
 import type { ImageStore } from '../../gallery/image-store.ts';
 import type { MapStore, StoredMap } from '../../gallery/map-store.ts';
+import type { TokenStore } from '../../gallery/patreon/token-store.ts';
 import type { GalleryStores } from '../../gallery/setup.ts';
 import { mapsRouter } from './maps.ts';
 
@@ -32,7 +33,12 @@ function gallery(maps: StoredMap[]): GalleryStores {
     urlFor: (key) => `/maps/${key}`,
   };
 
-  return { maps: store, images };
+  const tokens: TokenStore = {
+    load: () => Promise.resolve(null),
+    save: () => Promise.resolve(),
+  };
+
+  return { maps: store, images, tokens };
 }
 
 async function listen(app: express.Express): Promise<http.Server> {

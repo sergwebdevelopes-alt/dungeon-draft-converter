@@ -3,8 +3,12 @@ import {
   PATREON_API_URL,
   PATREON_SITE_URL,
 } from '../../config.ts';
-import type { HttpClient } from '../../http/client/http-client.ts';
+import {
+  HttpClientError,
+  type HttpClient,
+} from '../../http/client/http-client.ts';
 import type { PatreonApi, PatreonPost } from './patreon-api.ts';
+import type { PatreonAuth } from './patreon-auth.ts';
 
 const POST_FIELDS = 'title,url,published_at,is_public';
 
@@ -24,7 +28,7 @@ interface PostPage {
 }
 
 interface PatreonAccount {
-  token: string;
+  auth: PatreonAuth;
   campaignId: string;
 }
 
@@ -47,11 +51,33 @@ function toPost({ id, attributes }: RawPost): PatreonPost {
   };
 }
 
+function isUnauthorized(error: unknown): boolean {
+  return error instanceof HttpClientError && error.status === 401;
+}
+
 function createOfficialPatreonApi(
   http: HttpClient,
-  { token, campaignId }: PatreonAccount,
+  { auth, campaignId }: PatreonAccount,
 ): PatreonApi {
-  const headers = { Authorization: `Bearer ${token}` };
+  function getPage(url: string, token: string, signal?: AbortSignal) {
+    const headers = { Authorization: `Bearer ${token}` };
+
+    return http.get<PostPage>(url, { headers, signal });
+  }
+
+  async function getPageWithFreshToken(
+    url: string,
+    signal?: AbortSignal,
+  ): Promise<PostPage> {
+    try {
+      return await getPage(url, await auth.accessToken(), signal);
+    } catch (error) {
+      if (!isUnauthorized(error)) {
+        throw error;
+      }
+      return getPage(url, await auth.refresh(), signal);
+    }
+  }
 
   return {
     async listPosts(signal) {
@@ -59,10 +85,7 @@ function createOfficialPatreonApi(
       let url: string | undefined = firstPageUrl(campaignId);
 
       while (url) {
-        const page: PostPage = await http.get<PostPage>(url, {
-          headers,
-          signal,
-        });
+        const page = await getPageWithFreshToken(url, signal);
         posts.push(...page.data.map(toPost));
         url = page.links?.next;
       }

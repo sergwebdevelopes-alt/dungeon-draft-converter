@@ -37,6 +37,10 @@ function fakeClient() {
       calls.push({ url, options });
       return Promise.resolve(Buffer.from(url));
     },
+    post<T>(url: string, body?: unknown, options?: RequestOptions) {
+      calls.push({ url, options });
+      return Promise.resolve({ url, body } as T);
+    },
   };
 
   return { client, calls };
@@ -58,6 +62,18 @@ describe('createRateLimitedHttpClient', () => {
       calls.map((call) => call.url),
       ['/a', '/b', '/c'],
     );
+  });
+
+  it('spaces posts too and passes the body through', async () => {
+    const clock = fakeClock();
+    const { client } = fakeClient();
+    const limited = createRateLimitedHttpClient(client, 1_000, clock);
+
+    await limited.get('/a');
+    const answer = await limited.post('/token', { a: 1 });
+
+    assert.deepEqual(clock.waits, [1_000]);
+    assert.deepEqual(answer, { url: '/token', body: { a: 1 } });
   });
 
   it('does not wait when the interval has already passed', async () => {

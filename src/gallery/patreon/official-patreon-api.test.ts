@@ -1,27 +1,52 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type {
-  HttpClient,
-  RequestOptions,
+import {
+  HttpClientError,
+  type HttpClient,
+  type RequestOptions,
 } from '../../http/client/http-client.ts';
 import { createOfficialPatreonApi } from './official-patreon-api.ts';
+import type { PatreonAuth } from './patreon-auth.ts';
 
 interface Call {
   url: string;
   options?: RequestOptions;
 }
 
-function fakeHttp(pages: unknown[]) {
+function fakeHttp(answers: unknown[]) {
   const calls: Call[] = [];
   const http: HttpClient = {
     get<T>(url: string, options?: RequestOptions) {
       calls.push({ url, options });
-      return Promise.resolve(pages.shift() as T);
+      const answer = answers.shift();
+      return answer instanceof Error
+        ? Promise.reject(answer)
+        : Promise.resolve(answer as T);
     },
     getBytes: () => Promise.reject(new Error('No downloads here.')),
+    post: () => Promise.reject(new Error('No posts here.')),
   };
 
   return { http, calls };
+}
+
+function fakeAuth(token = 'secret') {
+  let current = token;
+  let refreshes = 0;
+  const auth: PatreonAuth = {
+    accessToken: () => Promise.resolve(current),
+    refresh() {
+      refreshes += 1;
+      current = `fresh-${refreshes}`;
+      return Promise.resolve(current);
+    },
+  };
+
+  return { auth, refreshes: () => refreshes };
+}
+
+function bearer(call: Call): string | undefined {
+  return call.options?.headers?.Authorization;
 }
 
 function rawPost(id: string, isPublic: boolean | null = true) {
@@ -43,7 +68,7 @@ describe('createOfficialPatreonApi', () => {
       { data: [rawPost('2')] },
     ]);
     const api = createOfficialPatreonApi(http, {
-      token: 'secret',
+      auth: fakeAuth().auth,
       campaignId: '12754508',
     });
 
@@ -67,7 +92,7 @@ describe('createOfficialPatreonApi', () => {
     const signal = new AbortController().signal;
 
     await createOfficialPatreonApi(http, {
-      token: 'secret',
+      auth: fakeAuth().auth,
       campaignId: '1',
     }).listPosts(signal);
 
@@ -83,7 +108,7 @@ describe('createOfficialPatreonApi', () => {
     ]);
 
     const posts = await createOfficialPatreonApi(http, {
-      token: 't',
+      auth: fakeAuth().auth,
       campaignId: '1',
     }).listPosts();
 
@@ -95,5 +120,56 @@ describe('createOfficialPatreonApi', () => {
       posts.map((p) => p.isPublic),
       [true, false, false],
     );
+  });
+
+  it('refreshes the token once when Patreon answers 401, and retries that page', async () => {
+    const { http, calls } = fakeHttp([
+      { data: [rawPost('1')], links: { next: 'https://api.test/page-2' } },
+      new HttpClientError(401, 'Expired.'),
+      { data: [rawPost('2')] },
+    ]);
+    const { auth, refreshes } = fakeAuth();
+
+    const posts = await createOfficialPatreonApi(http, {
+      auth,
+      campaignId: '1',
+    }).listPosts();
+
+    assert.deepEqual(
+      posts.map((p) => p.id),
+      ['1', '2'],
+    );
+    assert.equal(refreshes(), 1);
+    assert.deepEqual(calls.map(bearer), [
+      'Bearer secret',
+      'Bearer secret',
+      'Bearer fresh-1',
+    ]);
+    assert.equal(calls[2].url, 'https://api.test/page-2');
+  });
+
+  it('fails when the fresh token is refused too', async () => {
+    const { http } = fakeHttp([
+      new HttpClientError(401, 'Expired.'),
+      new HttpClientError(401, 'Still refused.'),
+    ]);
+    const { auth, refreshes } = fakeAuth();
+
+    await assert.rejects(
+      createOfficialPatreonApi(http, { auth, campaignId: '1' }).listPosts(),
+      /Still refused/,
+    );
+    assert.equal(refreshes(), 1);
+  });
+
+  it('does not refresh for other errors', async () => {
+    const { http } = fakeHttp([new HttpClientError(403, 'Blocked.')]);
+    const { auth, refreshes } = fakeAuth();
+
+    await assert.rejects(
+      createOfficialPatreonApi(http, { auth, campaignId: '1' }).listPosts(),
+      /Blocked/,
+    );
+    assert.equal(refreshes(), 0);
   });
 });
