@@ -1,5 +1,5 @@
-import type { GallerySync } from '../gallery/sync.ts';
-import { startGallerySyncJob } from './gallery-sync-job.ts';
+import type { GallerySync } from '../features/gallery/application/sync-gallery.ts';
+import { startGallerySyncJob } from '../features/gallery/jobs/gallery-sync-job.ts';
 import type { Job } from '../infrastructure/scheduler/schedule.ts';
 import { startUploadCleanupJob } from './upload-cleanup-job.ts';
 

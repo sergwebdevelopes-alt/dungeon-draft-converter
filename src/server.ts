@@ -13,7 +13,7 @@ import { openDatabase } from './infrastructure/database/open-database.ts';
 import {
   createGalleryStores,
   createGallerySyncIfConfigured,
-} from './gallery/setup.ts';
+} from './create-gallery.ts';
 import { startJobs } from './jobs/index.ts';
 import { stopOnBadSettings } from './settings/stop-on-bad-settings.ts';
 

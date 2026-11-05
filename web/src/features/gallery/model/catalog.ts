@@ -1,5 +1,5 @@
-import type { MapEntry } from '../../../../../src/gallery/model/map-entry.ts';
-import type { Squares } from '../../../../../src/gallery/model/types.ts';
+import type { MapEntry } from '../../../../../src/features/gallery/http/map-entry.ts';
+import type { Squares } from '../../../../../src/features/gallery/domain/map-record.ts';
 
 type GriddedMap = MapEntry & { squares: Squares };
 

@@ -43,7 +43,7 @@ With the `PATREON_*` settings in `.env` (see `.env.example`), the server fills t
 {"event":"gallery-sync","result":"ok","posts":50,"maps":2,"failed":0,"added":1,"updated":0,"removed":0,"tookMs":12280}
 ```
 
-`failed` counts maps whose image couldn't be downloaded or rendered; they keep their previous version. To sync once right away: `npm run gallery:sync` locally, or `docker compose run --rm app node src/gallery/sync-now.ts` in Docker. It exits with code 1 if the sync failed.
+`failed` counts maps whose image couldn't be downloaded or rendered; they keep their previous version. To sync once right away: `npm run gallery:sync` locally, or `docker compose run --rm app node src/cli/sync-gallery-once.ts` in Docker. It exits with code 1 if the sync failed.
 
 The creator access token expires after about a month. When Patreon refuses it, the server exchanges the refresh token for a new pair and keeps it in the database (`patreon_tokens`), because each refresh replaces the refresh token as well. `.env` only provides the first pair. If you put a new pair in `.env` (for example after creating new tokens on Patreon), the server notices that it differs from the pair it started from and switches to it.
 

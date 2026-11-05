@@ -73,7 +73,7 @@ web/src/
 - Use the shared `Button`/`ButtonLink`, `Alert` and `Segmented` instead of repeating their classes.
 - Motion is imported only in `web/src/shared/ui/motion/`; features use its wrappers (`MotionProvider`, `Reveal`, `SharedFrame`, `Swipeable`).
 - Patreon post HTML is sanitised once, in the sync (the official adapter gets the sanitiser passed in), and stored as `maps.description`; the modal inserts it with `dangerouslySetInnerHTML` in `MapDescription.tsx`, the only place raw HTML is rendered.
-- The gallery loads `GET /api/maps`, filled by the Patreon sync (public posts in any Patreon collection; collection names become filter chips). The web `MapEntry` is the server's type from `src/gallery/model/map-entry.ts`; `subtitle` and `squares` are optional, so the grid choice and the converter teaser appear only for maps with squares. The modal draws its grid with `GridOverlay`, so no gridded image is needed.
+- The gallery loads `GET /api/maps`, filled by the Patreon sync (public posts in any Patreon collection; collection names become filter chips). The web `MapEntry` is the server's type from `src/features/gallery/http/map-entry.ts`; `subtitle` and `squares` are optional, so the grid choice and the converter teaser appear only for maps with squares. The modal draws its grid with `GridOverlay`, so no gridded image is needed.
 - Styling uses Tailwind with colour and font tokens in `web/src/styles.css`.
 
 ## Code style
@@ -93,7 +93,7 @@ web/src/
 - `npm run bench`: takes minutes; run it only when asked. `BENCH_TARGET=docker` measures the Docker image.
 - Docker: `docker compose up -d --build` (use `HOST_PORT=3001` when the dev server is on 3000). It needs `POSTGRES_USER` and `POSTGRES_PASSWORD` in `.env` (see `.env.example`; `POSTGRES_DB` defaults to the user). The database is configured by separate `POSTGRES_HOST/PORT/USER/PASSWORD/DB` settings, never a URL; compose sets `POSTGRES_HOST=postgres` for the app. The `app` container is named `dd-converter`; for test runs use a separate project (`-p`) with an override that renames containers and the image, so the user's container is never replaced.
 - `npm run db`: starts the dev Postgres (`127.0.0.1:5432`, for `npm run dev`; `POSTGRES_DEV_BIND=0.0.0.0` in `.env` publishes it on the local network) and the test Postgres (`127.0.0.1:5433`, for `npm test`) from `compose.dev.yml`, and waits until both are healthy.
-- `npm run gallery:sync`: runs one gallery sync against the database and Patreon settings in `.env` and exits (code 1 if it failed). In production: `docker compose run --rm app node src/gallery/sync-now.ts`. The dev server doesn't sync at startup.
+- `npm run gallery:sync`: runs one gallery sync against the database and Patreon settings in `.env` and exits (code 1 if it failed). In production: `docker compose run --rm app node src/cli/sync-gallery-once.ts`. The dev server doesn't sync at startup.
 - `npm run db:migrate`: applies pending migrations to the database in `.env` (`src/cli/migrate-database.ts`); the app also applies them at startup. In production: `docker compose run --rm app node src/cli/migrate-database.ts`. Migrations must work with the previous release's code (add first, remove in a later release).
 
 ## Before finishing a change

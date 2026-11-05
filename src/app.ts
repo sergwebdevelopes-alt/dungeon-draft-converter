@@ -15,14 +15,13 @@ import {
   errorHandler,
   notFound,
 } from './infrastructure/http-server/http-errors.ts';
-import { serveGalleryImages } from './http/gallery-images.ts';
+import { serveGalleryImages } from './features/gallery/http/serve-map-images.ts';
 import type { LogConversion } from './http/convert/conversion-log.ts';
 import { configRouter } from './http/routes/config.ts';
 import { healthRouter } from './infrastructure/http-server/health-route.ts';
-import type { GalleryStores } from './gallery/setup.ts';
-import type { GallerySync } from './gallery/sync.ts';
-import { mapsRouter } from './http/routes/maps.ts';
-import { patreonWebhookRouter } from './http/routes/patreon-webhook.ts';
+import type { GalleryStores } from './features/gallery/ports/gallery-stores.ts';
+import type { GallerySync } from './features/gallery/application/sync-gallery.ts';
+import * as gallery from './features/gallery/http/routes.ts';
 import { convertRouter } from './http/routes/convert.ts';
 import { queueRouter } from './http/routes/queue.ts';
 import {
@@ -60,10 +59,10 @@ async function createApp(
     healthRouter(isShuttingDown),
     configRouter(),
     queueRouter(queue),
-    mapsRouter(galleryStores),
-    patreonWebhookRouter({
-      secret: SETTINGS.patreon?.webhookSecret,
+    gallery.createRoutes({
+      stores: galleryStores,
       sync: gallerySync,
+      webhookSecret: SETTINGS.patreon?.webhookSecret,
     }),
     convertRouter(queue, pendingLimit, logConversion),
     notFound,
