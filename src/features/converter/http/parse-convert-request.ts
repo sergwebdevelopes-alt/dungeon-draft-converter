@@ -1,10 +1,8 @@
 import path from 'node:path';
 import type { Request } from 'express';
 import { MAX_LOGO_BYTES, MAX_MAP_NAME_LENGTH } from '../../../config.ts';
-import {
-  MAP_EXTENSION,
-  type LoadedMap,
-} from '../image-processing/read-dd2vtt-file.ts';
+import { MAP_EXTENSION } from '../image-processing/read-dd2vtt-file.ts';
+import type { LoadedMap } from '../domain/loaded-map.ts';
 import {
   checkLogoImage,
   checkLogoPercent,

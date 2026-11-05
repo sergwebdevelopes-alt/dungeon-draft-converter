@@ -115,6 +115,218 @@
           }
         ]
       }
+    },
+    {
+      "files": ["src/features/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^(\\.\\./)+(converter|gallery)/",
+                "message": "One feature never imports another."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/*/domain/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^[^.]",
+                "message": "The domain imports no packages or Node modules."
+              },
+              {
+                "group": [
+                  "**/application/**",
+                  "**/ports/**",
+                  "**/adapters/**",
+                  "**/http/**",
+                  "**/jobs/**",
+                  "**/image-processing/**",
+                  "**/infrastructure/**",
+                  "**/config.ts"
+                ],
+                "message": "The domain imports only other domain files, shared/ and contracts/."
+              },
+              {
+                "regex": "^(\\.\\./)+(converter|gallery)/",
+                "message": "One feature never imports another."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/*/domain/**/*.test.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "**/application/**",
+                  "**/ports/**",
+                  "**/adapters/**",
+                  "**/http/**",
+                  "**/jobs/**",
+                  "**/image-processing/**",
+                  "**/infrastructure/**",
+                  "**/config.ts"
+                ],
+                "message": "The domain imports only other domain files, shared/ and contracts/."
+              },
+              {
+                "regex": "^(\\.\\./)+(converter|gallery)/",
+                "message": "One feature never imports another."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/*/application/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "**/adapters/**",
+                  "**/http/**",
+                  "**/jobs/**",
+                  "**/image-processing/**",
+                  "**/infrastructure/**",
+                  "!**/infrastructure/http-client/http-client.ts",
+                  "**/config.ts"
+                ],
+                "message": "The application imports only its domain, its ports, shared/ and contracts/."
+              },
+              {
+                "regex": "^(\\.\\./)+(converter|gallery)/",
+                "message": "One feature never imports another."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/features/converter/application/convert-levels.ts",
+        "src/features/converter/application/convert-levels.test.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "**/adapters/**",
+                  "**/http/**",
+                  "**/jobs/**",
+                  "**/infrastructure/**",
+                  "!**/infrastructure/http-client/http-client.ts",
+                  "**/config.ts"
+                ],
+                "message": "The application imports only its domain, its ports, shared/ and contracts/."
+              },
+              {
+                "regex": "^(\\.\\./)+(converter|gallery)/",
+                "message": "One feature never imports another."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/infrastructure/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/features/**"],
+                "message": "infrastructure/ never imports a feature."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^[^.]",
+                "message": "shared/ imports no packages or Node modules."
+              },
+              {
+                "group": [
+                  "**/features/**",
+                  "**/infrastructure/**",
+                  "**/config.ts"
+                ],
+                "message": "shared/ imports no feature, infrastructure/ or config.ts."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/**/*.test.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "**/features/**",
+                  "**/infrastructure/**",
+                  "**/config.ts"
+                ],
+                "message": "shared/ imports no feature, infrastructure/ or config.ts."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/contracts/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": ".",
+                "message": "Contracts import nothing, so the web app never pulls in server code."
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

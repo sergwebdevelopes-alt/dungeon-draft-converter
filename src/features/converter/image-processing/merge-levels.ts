@@ -1,11 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 import sharp from 'sharp';
-import {
-  serializeDd2vtt,
-  type LoadedMap,
-  type MapImage,
-} from './read-dd2vtt-file.ts';
+import { serializeDd2vtt } from './read-dd2vtt-file.ts';
+import type { LoadedMap, MapImage } from '../domain/loaded-map.ts';
 import { MAX_INPUT_PIXELS, readMapImageSize } from './render-map-images.ts';
 import {
   bakeLighting,

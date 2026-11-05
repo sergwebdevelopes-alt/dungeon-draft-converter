@@ -1,4 +1,4 @@
-import type { LoadedMap } from '../image-processing/read-dd2vtt-file.ts';
+import type { LoadedMap } from './loaded-map.ts';
 
 interface Point {
   x: number;

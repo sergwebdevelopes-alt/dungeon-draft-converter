@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type { LoadedMap } from '../image-processing/read-dd2vtt-file.ts';
+import type { LoadedMap } from './loaded-map.ts';
 import {
   readPoint,
   readRawLights,

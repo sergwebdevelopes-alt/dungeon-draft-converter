@@ -5,7 +5,7 @@ import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import sharp from 'sharp';
 import { convertLevels, type ConversionFile } from './convert-levels.ts';
-import type { LoadedMap } from '../image-processing/read-dd2vtt-file.ts';
+import type { LoadedMap } from '../domain/loaded-map.ts';
 import { UnprocessableError } from '../../../shared/errors.ts';
 import { FORMAT_PRESETS } from '../image-processing/render-map-images.ts';
 

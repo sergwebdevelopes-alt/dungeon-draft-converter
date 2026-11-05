@@ -4,6 +4,7 @@ import { once } from 'events';
 import path from 'path';
 import { InvalidInputError } from '../../../shared/errors.ts';
 import { formatMegabytes } from '../../../shared/utils/format.ts';
+import type { LoadedMap, MapImage } from '../domain/loaded-map.ts';
 
 const QUOTE = 0x22;
 const BACKSLASH = 0x5c;
@@ -20,16 +21,6 @@ interface Dd2vttData {
     pixels_per_grid?: number;
   };
   image?: unknown;
-}
-
-type MapImage = string;
-
-interface LoadedMap {
-  fileNameWithExt: string;
-  fileNameWithoutExt: string;
-  image: MapImage;
-  pixelsPerGrid?: number;
-  metadata: Record<string, unknown>;
 }
 
 class InvalidMapFileError extends InvalidInputError {
@@ -360,4 +351,3 @@ export {
   readDd2vttStream,
   serializeDd2vtt,
 };
-export type { LoadedMap, MapImage };

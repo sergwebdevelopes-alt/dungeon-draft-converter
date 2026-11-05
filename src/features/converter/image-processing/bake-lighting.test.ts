@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import sharp from 'sharp';
-import type { LoadedMap } from './read-dd2vtt-file.ts';
+import type { LoadedMap } from '../domain/loaded-map.ts';
 import {
   bakeLighting,
   hasBakedLighting,

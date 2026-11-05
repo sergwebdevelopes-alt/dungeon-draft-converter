@@ -13,8 +13,8 @@ import {
   InvalidMapFileError,
   MAP_EXTENSION,
   readDd2vttStream,
-  type LoadedMap,
 } from '../../image-processing/read-dd2vtt-file.ts';
+import type { LoadedMap } from '../../domain/loaded-map.ts';
 import { formatMegabytes } from '../../../../shared/utils/format.ts';
 import { HttpError } from '../../../../infrastructure/http-server/http-errors.ts';
 import { createMulterMultipartParser } from '../../adapters/multer-multipart-parser.ts';

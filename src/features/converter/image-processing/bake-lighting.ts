@@ -1,10 +1,7 @@
 import fs from 'fs/promises';
 import sharp, { type Sharp } from 'sharp';
-import {
-  newImagePath,
-  type LoadedMap,
-  type MapImage,
-} from './read-dd2vtt-file.ts';
+import { newImagePath } from './read-dd2vtt-file.ts';
+import type { LoadedMap, MapImage } from '../domain/loaded-map.ts';
 import {
   readPoint,
   readRawLights,

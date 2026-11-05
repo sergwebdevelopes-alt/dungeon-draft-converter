@@ -18,7 +18,8 @@ import {
   type OutputFile,
 } from './render-map-images.ts';
 import type { FormatPreset } from '../../../contracts/converter-api.ts';
-import { newImagePath, type LoadedMap } from './read-dd2vtt-file.ts';
+import { newImagePath } from './read-dd2vtt-file.ts';
+import type { LoadedMap } from '../domain/loaded-map.ts';
 
 async function makeTinyPng(file: string): Promise<void> {
   await sharp({

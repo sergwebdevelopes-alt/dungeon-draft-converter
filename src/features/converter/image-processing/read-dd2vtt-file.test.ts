@@ -8,8 +8,8 @@ import {
   newImagePath,
   readDd2vttStream,
   serializeDd2vtt,
-  type LoadedMap,
 } from './read-dd2vtt-file.ts';
+import type { LoadedMap } from '../domain/loaded-map.ts';
 
 const IMAGE_BYTES = Buffer.from('fake png data');
 

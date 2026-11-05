@@ -4,10 +4,8 @@ import {
   makeImages,
   type ImageOptions,
 } from '../image-processing/render-map-images.ts';
-import {
-  MAP_EXTENSION,
-  type LoadedMap,
-} from '../image-processing/read-dd2vtt-file.ts';
+import { MAP_EXTENSION } from '../image-processing/read-dd2vtt-file.ts';
+import type { LoadedMap } from '../domain/loaded-map.ts';
 import { UnprocessableError } from '../../../shared/errors.ts';
 import { mergeLevels } from '../image-processing/merge-levels.ts';
 

@@ -25,9 +25,10 @@ The back end mirrors the front end: features under `src/features/`, technology u
 
 `domain ← application ← adapters / http / jobs ← composition root`
 
-- The domain imports only other domain files and `shared/`.
-- The application imports only its domain, its ports and `shared/`.
-- `infrastructure/` and `shared/` never import a feature, and one feature never imports another.
+- The domain imports only other domain files, `shared/` and `contracts/`: no packages, no Node modules, no `config.ts`.
+- The application imports only its domain, its ports, `shared/` and `contracts/`, plus the `HttpClient` port in `infrastructure/http-client/http-client.ts`.
+- `infrastructure/` and `shared/` never import a feature; `shared/` imports no packages, `infrastructure/` or `config.ts`; `contracts/` imports nothing; one feature never imports another.
+- oxlint enforces these rules with `no-restricted-imports` overrides in `.oxlintrc.json`, so a wrong import fails `npm run lint`. A later override replaces an earlier one, so each folder's list repeats the "one feature never imports another" pattern, which names the features (`(converter|gallery)`).
 
 ### Tree
 
@@ -43,7 +44,7 @@ src/
 ├── contracts/           what the server and the web app exchange; imports nothing: converter-api (presets, variants, logo limits, ConfigResponse, QueuePosition), gallery-api (MapEntry, MapsResponse, Squares), grid-stroke
 ├── features/
 │   ├── converter/       .dd2vtt → VTT and print images
-│   │   ├── domain/            dd2vtt-metadata
+│   │   ├── domain/            dd2vtt-metadata, loaded-map
 │   │   ├── application/       convert-levels, conversion-queue (parallel slots, FIFO line, positions), pending-limit, check-limit
 │   │   ├── image-processing/  sharp-based: read-dd2vtt-file, render-map-images, bake-lighting, merge-levels, draw-grid
 │   │   ├── ports/             zip-writer, multipart-parser
@@ -65,7 +66,7 @@ src/
 └── shared/              helpers any layer may use, without I/O or libraries: errors.ts, utils/ (format, time, object, error-message, single-flight)
 ```
 
-- **Known exception:** `features/converter/image-processing/` uses `sharp` directly, and `application/convert-levels.ts` imports it. A follow-up may put it behind ports.
+- **Known exception:** `features/converter/image-processing/` uses `sharp` directly, and `application/convert-levels.ts` imports it (allowed in `.oxlintrc.json` for that file only). A follow-up may put it behind ports.
 - **The gallery's details:**
   - The official adapter refreshes the Patreon token on 401 through `patreon-token-refresher.ts`.
   - The newest token pair is stored in Postgres. `seeded_from` is the SHA-256 of the `.env` refresh token it started from, so a new `.env` pair wins.
@@ -88,6 +89,7 @@ src/
 2. Put its endpoints in `http/routes.ts`, exporting `createRoutes(deps)`, and mount it in `app.ts` as `import * as <feature> from './features/<feature>/http/routes.ts'`.
 3. Build its adapters in the composition root (a `create-<feature>.ts` if it needs settings) and pass them in. Add its jobs to `start-jobs.ts`.
 4. Tests go next to each file. Route tests go in `http/routes.test.ts`, one `describe` per endpoint.
+5. Add its name to the feature list in the `.oxlintrc.json` "One feature never imports another" patterns.
 
 ### Adding a port and its adapter
 
