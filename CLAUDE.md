@@ -9,40 +9,90 @@ Web app that converts Dungeondraft `.dd2vtt` exports into VTT- and print-ready i
 
 ## Architecture
 
+The back end mirrors the front end: features under `src/features/`, technology under `src/infrastructure/`, small helpers under `src/shared/`, and the startup files directly in `src/`.
+
+### The words, in this project's terms
+
+- **Domain** (`features/<feature>/domain/`): pure rules and data shapes. No I/O, no libraries, no `config.ts`; settings are passed in. Example: `gallery/domain/post-to-map-record.ts` (a public post in a collection becomes a map).
+- **Application** (`application/`): use cases, the steps of what a feature does, using the domain and reaching the outside only through ports. Example: `gallery/application/sync-gallery.ts`.
+- **Port** (`ports/`): an interface we define for something a use case needs from outside. Example: `gallery/ports/map-repository.ts`.
+- **Adapter** (`adapters/`): one implementation of a port with one technology, named `<technology>-<port>.ts`. It is the only file that imports that library. Example: `gallery/adapters/postgres-map-repository.ts`, `converter/adapters/fflate-zip-writer.ts`.
+- **Entry points:** where work starts. A feature's `http/routes.ts` (all its endpoints, `createRoutes(deps)`), its `jobs/`, and the scripts in `src/cli/`.
+- **Composition root:** `server.ts`, `app.ts`, `create-gallery.ts`, `start-jobs.ts` and `cli/`, the only code that knows every piece. It builds the adapters and hands them in.
+
+### Dependency rule
+
+`domain ← application ← adapters / http / jobs ← composition root`
+
+- The domain imports only other domain files and `shared/`.
+- The application imports only its domain, its ports and `shared/`.
+- `infrastructure/` and `shared/` never import a feature, and one feature never imports another.
+
+### Tree
+
 ```
 src/
-├── server.ts      startup only: settings check, database, the one gallery sync (shared by the hourly job and the Patreon webhook), jobs, http server, listen, SIGTERM
-├── app.ts         builds the Express app and wires dependencies (queue, routes)
-├── config.ts      every process.env read and every limit
-├── settings/      read-settings.ts: validated settings (Zod) for database, Patreon, gallery; stop-on-bad-settings.ts
-├── http/          incoming requests (Express): routes, request parsing, errors, zip streaming
-│   ├── upload/    upload rules, per-request temp folder, multipart port + multer adapter
-│   └── client/    outgoing HTTP: HttpClient port (get, getBytes, timeout, abort) + fetch adapter (the only server file using fetch) + rate-limited client (a minimum time between requests)
-├── jobs/          scheduled work: schedule() (timer, optional run at start, stop), upload cleanup, gallery sync (schedules the shared sync; reads its interval from config.ts); startJobs({ gallerySync }) starts them all
-├── queue/         PendingLimit (busy limit) and ConversionQueue (parallel slots, FIFO line, positions; cancel via AbortSignal)
-├── zip/           zip port + fflate adapter
-├── html/          SanitizeHtml port + sanitize-html adapter (the only file importing sanitize-html): keeps p, br, strong/b, em/i, lists and https links (new tab, rel=noopener noreferrer nofollow); drops every other tag's markup, all attributes and empty paragraphs
-├── db/           Database port (query, transaction, exclusive lock) + pg adapter (the only file importing pg); openDatabase (connect + migrate); migrate.ts (the `db:migrate` script); migrations runner + migrations/*.sql; LOCKS (every advisory lock key)
-├── gallery/       the gallery feature
-│   ├── map-store.ts + postgres-map-store.ts   MapStore port + adapter (SQL through the Database port); replaceMaps saves the whole gallery in one transaction and returns what it added, changed and removed
-│   ├── image-store.ts + local-image-store.ts  ImageStore port + folder adapter (GALLERY_DIR, served at /maps by http/gallery-images.ts)
-│   ├── sync.ts    one sync: Patreon posts → maps, images via map-images.ts, gallery saved in one transaction; runs through utils/single-flight.ts
-│   ├── map-images.ts  makes sure a map's card/view/backdrop are stored: renders missing ones, keeps the previous version if that fails
-│   ├── setup.ts   builds the stores and the sync from settings: createGallerySyncIfConfigured (server.ts; a stoppable sync, or none without database or Patreon settings) and createGallerySyncFromSettings (sync-now.ts, the `gallery:sync` script)
-│   ├── model/     pure gallery rules: which posts count (public and in a collection), title, collection chips (collections.ts), slug, choosing the image, building a MapRecord (whose MapImage keeps only url, size and media ID), the public MapEntry (map-entry.ts), where images are stored (image-keys.ts), which posts become maps and which image folders go (sync-plan.ts)
-│   └── patreon/   webhook-signature.ts (HMAC-MD5 check for POST /api/patreon/webhook in http/routes/patreon-webhook.ts); Patreon ports + adapters: official API v2 (post list; refreshes the token on 401 through patreon-auth.ts) and the website's post details (collections, all images); TokenStore port + postgres-token-store.ts (the newest token pair; `seeded_from` = SHA-256 of the `.env` refresh token it started from, so a new `.env` pair wins); I/O and translation only
-├── core/          image work: dd2vtt format, conversion, images, lighting, merge, gallery-images (card, view, backdrop)
-└── utils/         small shared helpers (format.ts, time.ts, object.ts, error.ts, single-flight.ts: one run at a time, once more if asked meanwhile)
+├── server.ts            start: settings check, database, the one gallery sync, jobs, HTTP server, SIGTERM
+├── app.ts               the Express app: shared middleware, then health + converter.createRoutes + gallery.createRoutes under /api
+├── create-gallery.ts    gallery stores and the stoppable sync from settings (none without database or Patreon settings)
+├── start-jobs.ts        starts every scheduled job
+├── config.ts            every process.env read and every limit
+├── cli/                 migrate-database.ts (npm run db:migrate), sync-gallery-once.ts (npm run gallery:sync)
+├── settings/            read-settings.ts (Zod, the only file importing zod), stop-on-bad-settings.ts
+├── features/
+│   ├── converter/       .dd2vtt → VTT and print images
+│   │   ├── domain/            dd2vtt-metadata, grid-stroke (also used by the web app)
+│   │   ├── application/       convert-levels, conversion-queue (parallel slots, FIFO line, positions), pending-limit, check-limit
+│   │   ├── image-processing/  sharp-based: read-dd2vtt-file, render-map-images, bake-lighting, merge-levels, draw-grid
+│   │   ├── ports/             zip-writer, multipart-parser
+│   │   ├── adapters/          fflate-zip-writer, multer-multipart-parser
+│   │   ├── http/              routes (/config, /queue/:ticket, /convert), convert-handler, parse-convert-request, conversion-log, stream-zip, upload/
+│   │   └── jobs/              upload-cleanup-job
+│   └── gallery/         Patreon posts → the public map gallery
+│       ├── domain/            map-record, post-to-map-record, parse-post-title, choose-map-image, collection-chips, map-slugs, map-image-keys, gallery-sync-plan, choose-patreon-tokens, patreon-post, patreon-tokens, tidy-text
+│       ├── application/       sync-gallery (Patreon posts → maps, saved in one transaction, one run at a time), prepare-map-images (renders missing images, keeps the previous version if that fails)
+│       ├── ports/             map-repository, image-storage, map-image-renderer, patreon-posts, patreon-post-details, patreon-token-repository, html-sanitizer, gallery-stores
+│       ├── adapters/          postgres-map-repository, postgres-patreon-token-repository, local-image-storage, sharp-map-image-renderer, patreon-api-posts, patreon-website-post-details, patreon-token-refresher, sanitize-html-sanitizer
+│       ├── http/              routes (/maps, /patreon/webhook), map-entry (the /api/maps shape), patreon-webhook-signature, serve-map-images (/maps/*)
+│       └── jobs/              gallery-sync-job
+├── infrastructure/      technology used by several features
+│   ├── database/        Database port + pg adapter (the only file importing pg), open-database, run-migrations, migrations/*.sql, advisory-locks, test-database
+│   ├── http-client/     HttpClient port (get, getBytes, post, timeout, abort) + fetch adapter (the only server file using fetch) + rate-limited client
+│   ├── http-server/     Express middleware: http-errors, security, refuse-work-during-shutdown, cache-control, serve-precompressed, serve-web-app, http-methods, health-route
+│   └── scheduler/       schedule() (timer, optional run at start, stop)
+└── shared/              helpers any layer may use, without I/O or libraries: errors.ts, utils/ (format, time, object, error-message, single-flight)
 ```
 
-- `core/`, `queue/` and `gallery/` never import Express or multer.
-- `settings/read-settings.ts` validates the database and gallery settings with a Zod schema behind `readSettings(env) → { settings, problems }` (the only file importing zod); `config.ts` calls it with `process.env`, and `server.ts` and `cli/migrate-database.ts` stop with the list of problems if any (`settings/stop-on-bad-settings.ts`). Patreon settings are all or nothing.
-- `process.env` is read only in `config.ts`. Settings and limits (sizes, timeouts, folders) live there; facts about formats and output (file extensions, zip folder names, image encoding constants) stay next to the code that produces them.
-- URLs of outside services, page sizes, user agents, tags, IDs and other values someone might want to change also live in `config.ts`, never as constants inside an adapter. Request details that are part of an API's contract (field lists, query parameter names) stay in the adapter.
-- Outgoing HTTP goes through `src/infrastructure/http-client/` (`HttpClient`, `HttpClientError`, `isAbortError`). Adapters receive the client as an argument, never `fetch` itself.
-- Server features follow the front end's split. `<feature>/model/` holds pure TypeScript: data in, data out, no network, files, database or `config.ts` imports (settings are passed in). Adapters only fetch and translate into our types, with no business rules. Orchestration that joins adapters and model lives next to `model/` (e.g. `gallery/sync.ts`).
-- Core errors extend `InvalidInputError` (→ 400) or `UnprocessableError` (→ 422) from `shared/errors.ts`; `infrastructure/http-server/http-errors.ts` maps them by kind. HTTP-only errors use `HttpError`.
-- Dependencies are passed in (for example `createApp` creates the `ConversionQueue` and hands it to the routes), not kept in module-level globals.
+- **Known exception:** `features/converter/image-processing/` uses `sharp` directly, and `application/convert-levels.ts` imports it. A follow-up may put it behind ports.
+- **The gallery's details:**
+  - The official adapter refreshes the Patreon token on 401 through `patreon-token-refresher.ts`.
+  - The newest token pair is stored in Postgres. `seeded_from` is the SHA-256 of the `.env` refresh token it started from, so a new `.env` pair wins.
+  - Post HTML is sanitised once, in the sync.
+- **Settings:** `settings/read-settings.ts` validates the database and gallery settings with a Zod schema behind `readSettings(env) → { settings, problems }`. `config.ts` calls it with `process.env`. `server.ts` and `cli/migrate-database.ts` stop with the list of problems if any. Patreon settings are all or nothing.
+- **`config.ts`:**
+  - `process.env` is read only there.
+  - Settings and limits live there (sizes, timeouts, folders), and so do outside services' URLs, page sizes, user agents, tags, IDs and other values someone might want to change.
+  - Facts about formats and output stay next to the code that produces them (file extensions, zip folder names, image encoding constants), and so do details that are part of an API's contract (field lists, query parameter names).
+- **Outgoing HTTP** goes through `infrastructure/http-client/` (`HttpClient`, `HttpClientError`, `isAbortError`). Adapters receive the client as an argument, never `fetch` itself.
+- **Adapters only translate:** they fetch and translate into our types, with no business rules.
+- **Errors:** they extend `InvalidInputError` (→ 400) or `UnprocessableError` (→ 422) from `shared/errors.ts`, and `infrastructure/http-server/http-errors.ts` maps them by kind. HTTP-only errors use `HttpError`.
+- **Dependencies are passed in**, not kept in module-level globals. For example, `createApp` creates the `ConversionQueue` and hands it to `converter.createRoutes`.
+- **Imports stay relative.** Node runs the `.ts` files directly and ignores tsconfig `paths`.
+- **No barrels:** no `index.ts` files.
+
+### Adding a feature
+
+1. Create `src/features/<feature>/` with only the subfolders it needs: `domain/`, `application/`, `ports/`, `adapters/`, `http/`, `jobs/`.
+2. Put its endpoints in `http/routes.ts`, exporting `createRoutes(deps)`, and mount it in `app.ts` as `import * as <feature> from './features/<feature>/http/routes.ts'`.
+3. Build its adapters in the composition root (a `create-<feature>.ts` if it needs settings) and pass them in. Add its jobs to `start-jobs.ts`.
+4. Tests go next to each file. Route tests go in `http/routes.test.ts`, one `describe` per endpoint.
+
+### Adding a port and its adapter
+
+1. Write the interface in `ports/<name>.ts` with only the methods the use case needs. Its data shapes live in `domain/`.
+2. Implement it in `adapters/<technology>-<name>.ts`, the only file that imports that library.
+3. The use case receives the port as an argument and never imports the adapter. The composition root creates the adapter and passes it in.
+4. Test the use case with a fake of the port, and the adapter against the real technology where possible (for example the test Postgres).
 
 ### Front end (`web/`)
 
