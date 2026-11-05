@@ -389,9 +389,6 @@ async function makeImages(
 }
 
 export {
-  JPEG_QUALITY,
-  WEBP_QUALITY,
-  MAX_OUTPUT_PIXELS,
   MAX_INPUT_PIXELS,
   LOGO_LIMITS,
   MapTooLargeError,
@@ -403,7 +400,6 @@ export {
   FORMAT_PRESETS,
   VARIANTS,
   readMapImageSize,
-  convertImage,
   makeImages,
 };
 export type { LogoOptions, ImageOptions, MapImages, OutputFile };

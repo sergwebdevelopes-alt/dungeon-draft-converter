@@ -21,11 +21,5 @@ class HttpClientError extends Error {
   }
 }
 
-const ABORT_ERRORS = new Set(['AbortError', 'TimeoutError']);
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && ABORT_ERRORS.has(error.name);
-}
-
-export { HttpClientError, isAbortError };
+export { HttpClientError };
 export type { HttpClient, RequestOptions };

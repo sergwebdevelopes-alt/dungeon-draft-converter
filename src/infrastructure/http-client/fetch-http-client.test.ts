@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { after, before, describe, it } from 'node:test';
 import { createFetchHttpClient } from './fetch-http-client.ts';
-import { HttpClientError, isAbortError } from './http-client.ts';
+import { HttpClientError } from './http-client.ts';
 
 describe('createFetchHttpClient', () => {
   let server: http.Server;
@@ -151,8 +151,8 @@ describe('createFetchHttpClient', () => {
     await assert.rejects(
       createFetchHttpClient(20).get(`${base}/slow`),
       (error) => {
-        assert.ok(isAbortError(error));
-        assert.equal((error as DOMException).name, 'TimeoutError');
+        assert.ok(error instanceof DOMException);
+        assert.equal(error.name, 'TimeoutError');
         return true;
       },
     );
@@ -166,8 +166,8 @@ describe('createFetchHttpClient', () => {
     controller.abort();
 
     await assert.rejects(request, (error) => {
-      assert.ok(isAbortError(error));
-      assert.equal((error as DOMException).name, 'AbortError');
+      assert.ok(error instanceof DOMException);
+      assert.equal(error.name, 'AbortError');
       return true;
     });
   });

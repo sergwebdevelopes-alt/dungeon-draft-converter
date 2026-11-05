@@ -91,4 +91,4 @@ function servePrecompressed(rootDir: string): RequestHandler {
   };
 }
 
-export { preferredEncodings, servePrecompressed };
+export { servePrecompressed };

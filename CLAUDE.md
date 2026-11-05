@@ -76,7 +76,7 @@ src/
   - `process.env` is read only there.
   - Settings and limits live there (sizes, timeouts, folders), and so do outside services' URLs, page sizes, user agents, tags, IDs and other values someone might want to change.
   - Facts about formats and output stay next to the code that produces them (file extensions, zip folder names, image encoding constants), and so do details that are part of an API's contract (field lists, query parameter names).
-- **Outgoing HTTP** goes through `infrastructure/http-client/` (`HttpClient`, `HttpClientError`, `isAbortError`). Adapters receive the client as an argument, never `fetch` itself.
+- **Outgoing HTTP** goes through `infrastructure/http-client/` (`HttpClient`, `HttpClientError`). Adapters receive the client as an argument, never `fetch` itself.
 - **Adapters only translate:** they fetch and translate into our types, with no business rules.
 - **Errors:** they extend `InvalidInputError` (→ 400) or `UnprocessableError` (→ 422) from `shared/errors.ts`, and `infrastructure/http-server/http-errors.ts` maps them by kind. HTTP-only errors use `HttpError`.
 - **Dependencies are passed in**, not kept in module-level globals. For example, `createApp` creates the `ConversionQueue` and hands it to `converter.createRoutes`.
