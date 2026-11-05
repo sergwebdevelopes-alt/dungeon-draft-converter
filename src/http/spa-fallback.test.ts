@@ -25,11 +25,10 @@ describe('spaFallback', () => {
   before(async () => {
     tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'spa-'));
     const dir = path.join(tmp, 'web');
-    await fs.mkdir(path.join(dir, 'maps', 'cave'), { recursive: true });
+    await fs.mkdir(path.join(dir, 'converter'), { recursive: true });
     await fs.mkdir(path.join(dir, 'assets'));
     await fs.writeFile(path.join(dir, 'index.html'), INDEX_HTML);
-    await fs.writeFile(path.join(dir, 'maps', 'cave', 'card.webp'), 'image');
-    await fs.writeFile(path.join(dir, 'maps', 'catalog.json'), '{"maps":[]}');
+    await fs.writeFile(path.join(dir, 'converter', 'preview.webp'), 'image');
 
     const script = path.join(dir, 'assets', 'index-abc.js');
     await fs.writeFile(script, SCRIPT);
@@ -73,14 +72,14 @@ describe('spaFallback', () => {
   });
 
   it('serves the page for a route that shares its name with a folder', async () => {
-    const res = await fetch(`${base}/maps`, { redirect: 'manual' });
+    const res = await fetch(`${base}/converter`, { redirect: 'manual' });
 
     assert.equal(res.status, 200);
     assert.equal(await res.text(), INDEX_HTML);
   });
 
   it('still serves files from that folder', async () => {
-    const res = await fetch(`${base}/maps/cave/card.webp`);
+    const res = await fetch(`${base}/converter/preview.webp`);
 
     assert.equal(res.status, 200);
     assert.equal(await res.text(), 'image');
@@ -142,8 +141,7 @@ describe('spaFallback', () => {
   it('caches build files for good and other files briefly', async () => {
     const cases = [
       ['/assets/index-abc.js', 'public, max-age=31536000, immutable'],
-      ['/maps/cave/card.webp', 'public, max-age=86400'],
-      ['/maps/catalog.json', 'no-cache'],
+      ['/converter/preview.webp', 'public, max-age=86400'],
       ['/converter', 'no-cache'],
     ];
 

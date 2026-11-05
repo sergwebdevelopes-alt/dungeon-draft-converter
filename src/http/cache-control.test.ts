@@ -10,23 +10,27 @@ describe('cacheControlFor', () => {
     );
   });
 
-  it('keeps versioned gallery images for a year', () => {
+  it('keeps gallery images for a year, as each image version has its own folder', () => {
     assert.equal(
-      cacheControlFor('/maps/cave/717019350/card.webp'),
+      cacheControlFor('/maps/166553789/717019350/card.webp'),
       'public, max-age=31536000, immutable',
     );
   });
 
-  it('keeps gallery images and icons for a day, as they can be rebuilt', () => {
-    assert.equal(
-      cacheControlFor('/maps/cave/card.webp'),
-      'public, max-age=86400',
-    );
+  it('keeps icons for a day, as they can change', () => {
     assert.equal(cacheControlFor('/favicon.ico'), 'public, max-age=86400');
+    assert.equal(cacheControlFor('/icon-192.png'), 'public, max-age=86400');
+    assert.equal(cacheControlFor('/maps-preview.png'), 'public, max-age=86400');
   });
 
-  it('checks pages, the catalog and the theme script on every visit', () => {
-    for (const urlPath of ['/', '/maps/catalog.json', '/theme.js']) {
+  it('checks pages, the gallery page and the theme script on every visit', () => {
+    for (const urlPath of [
+      '/',
+      '/maps',
+      '/maps/166553789/notes.txt',
+      '/converter',
+      '/theme.js',
+    ]) {
       assert.equal(cacheControlFor(urlPath), 'no-cache', urlPath);
     }
   });

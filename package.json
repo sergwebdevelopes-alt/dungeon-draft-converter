@@ -13,7 +13,6 @@
     "dev": "node --import dotenv/config --watch-path=src src/server.ts",
     "build": "vite build && node scripts/precompress.ts",
     "bench": "node scripts/bench.ts",
-    "gallery": "node scripts/build-gallery.ts",
     "db": "docker compose -f compose.yml -f compose.dev.yml up -d --wait postgres postgres-test",
     "db:migrate": "node --import dotenv/config src/db/migrate.ts",
     "gallery:sync": "node --import dotenv/config src/gallery/sync-now.ts"
