@@ -9,6 +9,7 @@ Object.assign(process.env, {
   GALLERY_REQUEST_INTERVAL_SECONDS: '2',
   CONVERSION_TIMEOUT_SECONDS: '90',
   PATREON_WEBSITE_USER_AGENT: 'Lair test agent',
+  PATREON_WEBSITE_API_URL: ' https://relay.example.workers.dev/api// ',
 });
 
 const config = await import('./config.ts');
@@ -31,5 +32,12 @@ describe('config', () => {
 
   it('uses the given User-Agent for the Patreon website', () => {
     assert.equal(config.PATREON_WEBSITE_USER_AGENT, 'Lair test agent');
+  });
+
+  it('reads the Patreon website API address without trailing slashes', () => {
+    assert.equal(
+      config.PATREON_WEBSITE_API_URL,
+      'https://relay.example.workers.dev/api',
+    );
   });
 });

@@ -149,6 +149,31 @@ describe('readSettings', () => {
     assert.deepEqual(problemFor('5'), []);
   });
 
+  it('reads the key for the Patreon relay, and leaves it out when empty', () => {
+    const withKey = readSettings({
+      ...DATABASE,
+      ...PATREON,
+      PATREON_RELAY_KEY: ' k3y ',
+    });
+    const empty = readSettings({
+      ...DATABASE,
+      ...PATREON,
+      PATREON_RELAY_KEY: '  ',
+    });
+    const none = readSettings({ ...DATABASE, ...PATREON });
+
+    assert.deepEqual(withKey.problems, []);
+    assert.equal(withKey.settings.patreon?.relayKey, 'k3y');
+    assert.equal(
+      empty.settings.patreon && 'relayKey' in empty.settings.patreon,
+      false,
+    );
+    assert.equal(
+      none.settings.patreon && 'relayKey' in none.settings.patreon,
+      false,
+    );
+  });
+
   it('ignores the old GALLERY_SYNC_TOKEN, even a short one', () => {
     const { settings, problems } = readSettings({
       ...DATABASE,

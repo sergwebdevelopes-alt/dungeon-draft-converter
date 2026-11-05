@@ -25,6 +25,14 @@ const HEADERS = {
   Accept: 'application/json',
 };
 
+interface WebsiteOptions {
+  relayKey?: string;
+}
+
+function headersFor({ relayKey }: WebsiteOptions): Record<string, string> {
+  return relayKey ? { ...HEADERS, 'X-Relay-Key': relayKey } : HEADERS;
+}
+
 interface RawFile {
   url?: string;
   width?: number;
@@ -176,7 +184,10 @@ function toDetails(
 function createPatreonWebsitePostDetails(
   http: HttpClient,
   campaignId: string,
+  options: WebsiteOptions = {},
 ): PatreonPostDetails {
+  const headers = headersFor(options);
+
   return {
     async listDetails({ stopWhen, signal }: ListOptions = {}) {
       const all: PostDetails[] = [];
@@ -184,7 +195,7 @@ function createPatreonWebsitePostDetails(
 
       while (url) {
         const page: RawResponse<RawPost[]> = await http.get(url, {
-          headers: HEADERS,
+          headers,
           signal,
         });
         const included = readIncluded(page.included);
@@ -200,7 +211,7 @@ function createPatreonWebsitePostDetails(
     async details(postId, signal) {
       try {
         const page = await http.get<RawResponse<RawPost>>(postUrl(postId), {
-          headers: HEADERS,
+          headers,
           signal,
         });
         return toDetails(page.data, readIncluded(page.included));

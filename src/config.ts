@@ -49,7 +49,9 @@ const HTTP_CLIENT_TIMEOUT_MS =
 
 const PATREON_SITE_URL = 'https://www.patreon.com';
 const PATREON_API_URL = `${PATREON_SITE_URL}/api/oauth2/v2`;
-const PATREON_WEBSITE_API_URL = `${PATREON_SITE_URL}/api`;
+const PATREON_WEBSITE_API_URL =
+  process.env.PATREON_WEBSITE_API_URL?.trim().replace(/\/+$/, '') ||
+  `${PATREON_SITE_URL}/api`;
 const PATREON_TOKEN_URL = `${PATREON_SITE_URL}/api/oauth2/token`;
 const PATREON_API_PAGE_SIZE = 50;
 const PATREON_WEBSITE_PAGE_SIZE = 20;

@@ -59,7 +59,9 @@ function createGallerySyncFromSettings(
       campaignId: patreon.campaignId,
       sanitize: sanitizeWithSanitizeHtml,
     }),
-    details: createPatreonWebsitePostDetails(http, patreon.campaignId),
+    details: createPatreonWebsitePostDetails(http, patreon.campaignId, {
+      relayKey: patreon.relayKey,
+    }),
     fetchImage: createHttpMapImageSource(http),
     maps: stores.maps,
     images: stores.images,

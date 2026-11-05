@@ -8,6 +8,7 @@ interface PatreonSettings {
   creatorToken: string;
   refreshToken: string;
   webhookSecret?: string;
+  relayKey?: string;
 }
 
 interface GallerySettings {
@@ -71,6 +72,7 @@ const envSchema = z
     PATREON_CREATOR_TOKEN: optionalText,
     PATREON_REFRESH_TOKEN: optionalText,
     PATREON_WEBHOOK_SECRET: optionalText,
+    PATREON_RELAY_KEY: optionalText,
     GALLERY_SYNC_INTERVAL_MINUTES: wholeNumber(5),
   })
   .superRefine((env, ctx) => {
@@ -123,6 +125,7 @@ function patreonOf(env: ParsedEnv): PatreonSettings | undefined {
     PATREON_CREATOR_TOKEN: creatorToken,
     PATREON_REFRESH_TOKEN: refreshToken,
     PATREON_WEBHOOK_SECRET: webhookSecret,
+    PATREON_RELAY_KEY: relayKey,
   } = env;
   if (
     !campaignId ||
@@ -141,6 +144,7 @@ function patreonOf(env: ParsedEnv): PatreonSettings | undefined {
     creatorToken,
     refreshToken,
     ...(webhookSecret ? { webhookSecret } : {}),
+    ...(relayKey ? { relayKey } : {}),
   };
 }
 

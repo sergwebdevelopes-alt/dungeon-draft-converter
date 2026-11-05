@@ -192,6 +192,42 @@ describe('createPatreonWebsitePostDetails', () => {
     assert.equal(calls[0].options?.signal, signal);
   });
 
+  it('sends the relay key with every request when it has one', async () => {
+    const { http, calls } = fakeHttp([
+      {
+        data: [rawPost('19')],
+        links: { next: 'https://relay.test/api/posts?page=2' },
+      },
+      { data: [rawPost('18')] },
+      { data: rawPost('19') },
+    ]);
+    const source = createPatreonWebsitePostDetails(http, '1', {
+      relayKey: 'secret-key',
+    });
+
+    await source.listDetails();
+    await source.details('19');
+
+    assert.equal(calls.length, 3);
+    assert.equal(calls[1].url, 'https://relay.test/api/posts?page=2');
+    for (const call of calls) {
+      assert.equal(call.options?.headers?.['X-Relay-Key'], 'secret-key');
+      assert.match(call.options?.headers?.['User-Agent'] ?? '', /Mozilla/);
+    }
+  });
+
+  it('sends no relay key without one', async () => {
+    const { http, calls } = fakeHttp([{ data: [] }, { data: rawPost('19') }]);
+    const source = createPatreonWebsitePostDetails(http, '1');
+
+    await source.listDetails();
+    await source.details('19');
+
+    for (const call of calls) {
+      assert.equal(call.options?.headers?.['X-Relay-Key'], undefined);
+    }
+  });
+
   it('reads one post, and gives null for a post that does not exist', async () => {
     const { http, calls } = fakeHttp([
       {

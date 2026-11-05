@@ -55,7 +55,7 @@
   },
   "overrides": [
     {
-      "files": ["**/*.js"],
+      "files": ["**/*.js", "**/*.mjs"],
       "rules": {
         "typescript/await-thenable": "off",
         "typescript/no-array-delete": "off",

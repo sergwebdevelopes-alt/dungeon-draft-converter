@@ -6,6 +6,7 @@ for (const name of [
   'MAX_TOTAL_UPLOAD_MB',
   'MAX_PENDING_CONVERSIONS',
   'GALLERY_REQUEST_INTERVAL_SECONDS',
+  'PATREON_WEBSITE_API_URL',
 ]) {
   delete process.env[name];
 }
@@ -19,6 +20,10 @@ describe('config without settings', () => {
     assert.equal(config.MAX_TOTAL_UPLOAD_BYTES, 400 * 1024 * 1024);
     assert.equal(config.MAX_PENDING_CONVERSIONS, 10);
     assert.equal(config.GALLERY_REQUEST_INTERVAL_MS, 1000);
+  });
+
+  it('reads the Patreon website API directly when no address is given', () => {
+    assert.equal(config.PATREON_WEBSITE_API_URL, 'https://www.patreon.com/api');
   });
 
   it('uses a desktop Chrome User-Agent when none is given', () => {
