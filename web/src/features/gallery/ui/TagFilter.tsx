@@ -12,7 +12,7 @@ function TagFilter({ tags, active, onChange }: TagFilterProps) {
     <div
       role="group"
       aria-label="Filter maps"
-      className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:w-fit sm:rounded-full sm:bg-surface/70 sm:p-1 sm:ring-1 sm:ring-line"
+      className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:w-fit sm:flex-wrap sm:rounded-[26px] sm:bg-surface/70 sm:p-1 sm:ring-1 sm:ring-line"
     >
       <button
         type="button"
