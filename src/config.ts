@@ -2,6 +2,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { readSettings } from './settings/read-settings.ts';
 
+function numberFromEnv(name: string, fallback: number): number {
+  const value = process.env[name]?.trim();
+
+  return value ? Number(value) : fallback;
+}
+
 const ROOT_DIR = path.join(import.meta.dirname, '..');
 const WEB_DIST_DIR = path.join(ROOT_DIR, 'web/dist');
 const UPLOAD_ROOT = os.tmpdir();
@@ -10,11 +16,12 @@ const GALLERY_DIR = path.resolve(
 );
 const GALLERY_IMAGES_URL = '/maps';
 
-const PORT = Number(process.env.PORT ?? 3000);
+const PORT = numberFromEnv('PORT', 3000);
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
-const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
-const MAX_TOTAL_UPLOAD_BYTES = 400 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = numberFromEnv('MAX_UPLOAD_MB', 200) * 1024 * 1024;
+const MAX_TOTAL_UPLOAD_BYTES =
+  numberFromEnv('MAX_TOTAL_UPLOAD_MB', 400) * 1024 * 1024;
 const MULTIPART_OVERHEAD_BYTES = 1024 * 1024;
 const MAX_LEVELS = 10;
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
@@ -23,23 +30,22 @@ const MAX_MAP_NAME_LENGTH = 100;
 const STALE_UPLOAD_DIR_MS = 2 * 60 * 60 * 1000;
 const STALE_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
 
-const MAX_PENDING_CONVERSIONS = 10;
-const MAX_PARALLEL_CONVERSIONS = Number(
-  process.env.MAX_PARALLEL_CONVERSIONS ?? 1,
-);
+const MAX_PENDING_CONVERSIONS = numberFromEnv('MAX_PENDING_CONVERSIONS', 10);
+const MAX_PARALLEL_CONVERSIONS = numberFromEnv('MAX_PARALLEL_CONVERSIONS', 1);
 const CONVERSION_TIMEOUT_MS =
-  Number(process.env.CONVERSION_TIMEOUT_SECONDS ?? 300) * 1000;
-const MAX_PARALLEL_IMAGES = Number(process.env.MAX_PARALLEL_IMAGES ?? 2);
-const SHARP_CONCURRENCY = Number(process.env.SHARP_CONCURRENCY ?? 0);
+  numberFromEnv('CONVERSION_TIMEOUT_SECONDS', 300) * 1000;
+const MAX_PARALLEL_IMAGES = numberFromEnv('MAX_PARALLEL_IMAGES', 2);
+const SHARP_CONCURRENCY = numberFromEnv('SHARP_CONCURRENCY', 0);
 const SHUTDOWN_TIMEOUT_MS =
-  Number(process.env.SHUTDOWN_TIMEOUT_SECONDS ?? 300) * 1000;
+  numberFromEnv('SHUTDOWN_TIMEOUT_SECONDS', 300) * 1000;
 
-const GALLERY_REQUEST_INTERVAL_MS = 1000;
+const GALLERY_REQUEST_INTERVAL_MS =
+  numberFromEnv('GALLERY_REQUEST_INTERVAL_SECONDS', 1) * 1000;
 const GALLERY_PAGE_SIZE = 24;
 const MAX_GALLERY_PAGE_SIZE = 48;
 
 const HTTP_CLIENT_TIMEOUT_MS =
-  Number(process.env.HTTP_CLIENT_TIMEOUT_SECONDS ?? 30) * 1000;
+  numberFromEnv('HTTP_CLIENT_TIMEOUT_SECONDS', 30) * 1000;
 
 const PATREON_SITE_URL = 'https://www.patreon.com';
 const PATREON_API_URL = `${PATREON_SITE_URL}/api/oauth2/v2`;
@@ -48,6 +54,7 @@ const PATREON_TOKEN_URL = `${PATREON_SITE_URL}/api/oauth2/token`;
 const PATREON_API_PAGE_SIZE = 50;
 const PATREON_WEBSITE_PAGE_SIZE = 20;
 const PATREON_WEBSITE_USER_AGENT =
+  process.env.PATREON_WEBSITE_USER_AGENT ||
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0 Safari/537.36';
 
 const { settings: SETTINGS, problems: SETTINGS_PROBLEMS } = readSettings(

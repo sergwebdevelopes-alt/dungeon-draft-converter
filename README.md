@@ -102,27 +102,33 @@ In the web app you can upload up to 10 maps of the same size and grid, for examp
 
 The web app rejects:
 
-- maps over 200 MB each, or over 400 MB for all files together
+- maps over 200 MB each, or over 400 MB for all files together (`MAX_UPLOAD_MB`, `MAX_TOTAL_UPLOAD_MB`)
 - more than 10 maps at once
 - map images that aren't PNG, JPG or WebP
 - map images over 200 megapixels, and outputs over 250 megapixels
 
-Big maps need a lot of memory: a 12800×8800 map takes about 1.4 GB to convert at 140 px per square, and up to about 1.9 GB when you pick several formats, which is why Docker gets 4 GB. By default the web app converts one map at a time (see `MAX_PARALLEL_CONVERSIONS`), making up to 2 of its images in parallel. Up to 10 requests can be in progress at once (uploading, waiting or converting); beyond that it answers "busy, try again". While a request waits, the page shows how many maps are ahead of it. A conversion that takes longer than 5 minutes is stopped.
+Big maps need a lot of memory: a 12800×8800 map takes about 1.4 GB to convert at 140 px per square, and up to about 1.9 GB when you pick several formats, which is why Docker gets 4 GB. By default the web app converts one map at a time (see `MAX_PARALLEL_CONVERSIONS`), making up to 2 of its images in parallel. Up to 10 requests can be in progress at once (uploading, waiting or converting; `MAX_PENDING_CONVERSIONS`); beyond that it answers "busy, try again". While a request waits, the page shows how many maps are ahead of it. A conversion that takes longer than 5 minutes is stopped.
 
 Waiting uploads are kept on disk, not in memory: each request takes up to about 1 GB of temporary disk space (the upload plus its decoded image). The map being converted also writes uncompressed working images, up to about 2 GB for the largest maps. Leave about 12 GB free.
 
 ## Server settings
 
-Environment variables, all optional:
+Environment variables, all optional. Leave a variable out or empty to use its default.
 
-| Variable                     | Default   | What it does                                                                                                   |
-| ---------------------------- | --------- | -------------------------------------------------------------------------------------------------------------- |
-| `PORT`                       | `3000`    | Port the server listens on (in Docker, set `HOST_PORT` instead)                                                |
-| `CONVERSION_TIMEOUT_SECONDS` | `300`     | Stop a conversion that takes longer                                                                            |
-| `MAX_PARALLEL_CONVERSIONS`   | `1`       | Maps converted at the same time; each can use up to about 2 GB of memory, so raise it only with more than 4 GB |
-| `MAX_PARALLEL_IMAGES`        | `2`       | Images of one map made at the same time; more is not faster and uses more memory                               |
-| `SHARP_CONCURRENCY`          | all cores | Threads per image; fewer uses less memory but is slower                                                        |
-| `SHUTDOWN_TIMEOUT_SECONDS`   | `300`     | On stop, how long to wait for running and waiting conversions to finish                                        |
+| Variable                           | Default          | What it does                                                                                                      |
+| ---------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `PORT`                             | `3000`           | Port the server listens on (in Docker, set `HOST_PORT` instead)                                                   |
+| `CONVERSION_TIMEOUT_SECONDS`       | `300`            | Stop a conversion that takes longer                                                                               |
+| `MAX_PARALLEL_CONVERSIONS`         | `1`              | Maps converted at the same time; each can use up to about 2 GB of memory, so raise it only with more than 4 GB    |
+| `MAX_PARALLEL_IMAGES`              | `2`              | Images of one map made at the same time; more is not faster and uses more memory                                  |
+| `SHARP_CONCURRENCY`                | all cores        | Threads per image; fewer uses less memory but is slower                                                           |
+| `SHUTDOWN_TIMEOUT_SECONDS`         | `300`            | On stop, how long to wait for running and waiting conversions to finish                                           |
+| `MAX_PENDING_CONVERSIONS`          | `10`             | Requests in progress at once (uploading, waiting or converting); beyond that the server answers "busy, try again" |
+| `MAX_UPLOAD_MB`                    | `200`            | Largest map file                                                                                                  |
+| `MAX_TOTAL_UPLOAD_MB`              | `400`            | Largest upload for all files of one conversion together                                                           |
+| `HTTP_CLIENT_TIMEOUT_SECONDS`      | `30`             | Stop a request to Patreon that takes longer                                                                       |
+| `GALLERY_REQUEST_INTERVAL_SECONDS` | `1`              | Pause between requests to Patreon during a gallery sync                                                           |
+| `PATREON_WEBSITE_USER_AGENT`       | a desktop Chrome | User-Agent for reading post descriptions from the Patreon website; change it if Patreon starts refusing them      |
 
 The Docker image also uses jemalloc with `MALLOC_CONF` set to return freed memory to the system quickly.
 

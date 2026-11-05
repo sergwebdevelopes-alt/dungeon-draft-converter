@@ -28,7 +28,6 @@ describe('readSettings', () => {
       ...PATREON,
       PATREON_WEBHOOK_SECRET: 'hook',
       GALLERY_SYNC_INTERVAL_MINUTES: '15',
-      GALLERY_SYNC_TOKEN: 'x'.repeat(32),
     });
 
     assert.deepEqual(problems, []);
@@ -50,7 +49,6 @@ describe('readSettings', () => {
       },
       gallery: {
         syncIntervalMinutes: 15,
-        syncToken: 'x'.repeat(32),
       },
     });
   });
@@ -72,7 +70,6 @@ describe('readSettings', () => {
       POSTGRES_PASSWORD: 'pw',
       PATREON_CAMPAIGN_ID: '',
       GALLERY_SYNC_INTERVAL_MINUTES: '   ',
-      GALLERY_SYNC_TOKEN: '',
     });
 
     assert.deepEqual(problems, []);
@@ -152,17 +149,25 @@ describe('readSettings', () => {
     assert.deepEqual(problemFor('5'), []);
   });
 
+  it('ignores the old GALLERY_SYNC_TOKEN, even a short one', () => {
+    const { settings, problems } = readSettings({
+      ...DATABASE,
+      GALLERY_SYNC_TOKEN: 'short',
+    });
+
+    assert.deepEqual(problems, []);
+    assert.deepEqual(settings.gallery, { syncIntervalMinutes: 60 });
+  });
+
   it('lists every problem at once and falls back to the defaults', () => {
     const { settings, problems } = readSettings({
       POSTGRES_USER: 'artificer',
       POSTGRES_PORT: 'five',
-      GALLERY_SYNC_TOKEN: 'short',
       PATREON_CLIENT_ID: 'client',
     });
 
     assert.deepEqual(problems, [
       'POSTGRES_PORT must be a whole number.',
-      'GALLERY_SYNC_TOKEN must be at least 32 characters long.',
       'Database settings are incomplete: set POSTGRES_USER and POSTGRES_PASSWORD together.',
       'Patreon settings are incomplete: set PATREON_CAMPAIGN_ID, PATREON_CLIENT_SECRET, PATREON_CREATOR_TOKEN, PATREON_REFRESH_TOKEN.',
     ]);

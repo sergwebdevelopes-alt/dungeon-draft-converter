@@ -12,7 +12,6 @@ interface PatreonSettings {
 
 interface GallerySettings {
   syncIntervalMinutes: number;
-  syncToken?: string;
 }
 
 interface Settings {
@@ -73,9 +72,6 @@ const envSchema = z
     PATREON_REFRESH_TOKEN: optionalText,
     PATREON_WEBHOOK_SECRET: optionalText,
     GALLERY_SYNC_INTERVAL_MINUTES: wholeNumber(5),
-    GALLERY_SYNC_TOKEN: optionalText.pipe(
-      z.string().min(32, 'must be at least 32 characters long').optional(),
-    ),
   })
   .superRefine((env, ctx) => {
     if (Boolean(env.POSTGRES_USER) !== Boolean(env.POSTGRES_PASSWORD)) {
@@ -159,7 +155,6 @@ function toSettings(env: ParsedEnv): Settings {
     gallery: {
       syncIntervalMinutes:
         env.GALLERY_SYNC_INTERVAL_MINUTES ?? gallery.syncIntervalMinutes,
-      ...(env.GALLERY_SYNC_TOKEN ? { syncToken: env.GALLERY_SYNC_TOKEN } : {}),
     },
   };
 }
