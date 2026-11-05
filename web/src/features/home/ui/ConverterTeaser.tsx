@@ -1,7 +1,9 @@
+import type { CSSProperties, ReactNode } from 'react';
 import { ButtonLink } from '../../../shared/ui/Button.tsx';
 import { Container } from '../../../shared/ui/Container.tsx';
 import { GridOverlay } from '../../../shared/ui/GridOverlay.tsx';
 import type { GriddedMap } from '../../gallery/index.ts';
+import { teaserCoverWidth, teaserFrameRatio } from '../model/teaser-frame.ts';
 
 const STATS = [
   { value: 'JPG · WebP', label: 'Formats', accent: true },
@@ -28,21 +30,43 @@ function Stats() {
   );
 }
 
+function coverStyle({ width, height }: GriddedMap): CSSProperties {
+  return {
+    aspectRatio: `${width} / ${height}`,
+    width: teaserCoverWidth({ width, height }),
+  };
+}
+
+function Cover({ map, children }: { map: GriddedMap; children: ReactNode }) {
+  return (
+    <div
+      className="absolute top-1/2 left-1/2 -translate-1/2"
+      style={coverStyle(map)}
+    >
+      {children}
+    </div>
+  );
+}
+
 function GridWipe({ map }: { map: GriddedMap }) {
   return (
     <div
       className="relative overflow-hidden rounded-3xl shadow-2xl ring-1 ring-line"
-      style={{ aspectRatio: `${map.width} / ${map.height}` }}
+      style={{ aspectRatio: teaserFrameRatio(map), containerType: 'size' }}
     >
-      <img
-        src={map.images.view}
-        alt={`${map.title}, shown without and with a grid`}
-        loading="lazy"
-        decoding="async"
-        className="absolute inset-0 size-full object-cover"
-      />
+      <Cover map={map}>
+        <img
+          src={map.images.view}
+          alt={`${map.title}, shown without and with a grid`}
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 size-full"
+        />
+      </Cover>
       <div className="absolute inset-0 animate-wipe motion-reduce:animate-none motion-reduce:[clip-path:inset(0_0_0_50%)]">
-        <GridOverlay columns={map.squares.x} rows={map.squares.y} />
+        <Cover map={map}>
+          <GridOverlay columns={map.squares.x} rows={map.squares.y} />
+        </Cover>
       </div>
       <div
         aria-hidden="true"

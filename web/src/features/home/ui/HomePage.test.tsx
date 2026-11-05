@@ -141,6 +141,20 @@ describe('HomePage', () => {
     ).toHaveAttribute('href', '/converter');
   });
 
+  it('frames a wide map at 4:3 and lays its image and grid over the whole map', async () => {
+    await renderHome(api([entry('inn', 'Blue Water Inn', 62, 28), ...MAPS]));
+
+    const image = screen.getByRole('img', {
+      name: 'Blue Water Inn, shown without and with a grid',
+    });
+    const cover = image.parentElement;
+    const frame = cover?.parentElement;
+    const gridCover = frame?.querySelector('svg')?.parentElement;
+    expect(frame?.style.aspectRatio).toBe(`${4 / 3} / 1`);
+    expect(cover?.style.aspectRatio).toBe('6200 / 2800');
+    expect(gridCover?.getAttribute('style')).toBe(cover?.getAttribute('style'));
+  });
+
   it('names the image formats the converter makes', async () => {
     await renderHome();
 
