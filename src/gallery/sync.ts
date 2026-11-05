@@ -4,15 +4,10 @@ import { messageOf } from '../utils/error.ts';
 import { withoutUndefined } from '../utils/object.ts';
 import { singleFlight } from '../utils/single-flight.ts';
 import type { ImageStore } from './image-store.ts';
-import type { MapStore, StoredMap } from './map-store.ts';
+import type { MapStore, StoredMap, SyncCounts } from './map-store.ts';
 import { createMapImages, type MapImages } from './map-images.ts';
 import { withUniqueSlugs } from './model/slug.ts';
-import {
-  foldersToRemove,
-  galleryMaps,
-  syncCounts,
-  type SyncCounts,
-} from './model/sync-plan.ts';
+import { foldersToRemove, galleryMaps } from './model/sync-plan.ts';
 import type { MapRecord } from './model/types.ts';
 import type { PatreonApi } from './patreon/patreon-api.ts';
 import type { PostDetailsSource } from './patreon/post-details.ts';
@@ -102,7 +97,7 @@ function createGallerySync({
     const { ready, failed } = await prepareAll(wanted, previous, mapImages);
 
     const next = withUniqueSlugs(ready);
-    await maps.replaceMaps(next);
+    const counts = await maps.replaceMaps(next);
 
     for (const folder of foldersToRemove(previous, next)) {
       await images.removeFolder(folder);
@@ -112,7 +107,7 @@ function createGallerySync({
       posts: posts.length,
       maps: next.length,
       failed,
-      ...syncCounts(previous, next),
+      ...counts,
     };
   }
 

@@ -78,13 +78,31 @@ function fakeHttp(broken: Set<string>) {
   return { http, downloads };
 }
 
+function comparable(map: MapRecord): string {
+  return JSON.stringify({ ...map, checkedAt: undefined });
+}
+
 function fakeMapStore() {
   let stored: StoredMap[] = [];
   const store: MapStore = {
     listMaps: () => Promise.resolve(stored),
     replaceMaps(maps: MapRecord[]) {
+      const before = new Map(
+        stored.map((map) => [map.postId, comparable(map)]),
+      );
+      const kept = new Set(maps.map((map) => map.postId));
+      const counts = {
+        added: maps.filter((map) => !before.has(map.postId)).length,
+        updated: maps.filter(
+          (map) =>
+            before.has(map.postId) &&
+            before.get(map.postId) !== comparable(map),
+        ).length,
+        removed: stored.filter((map) => !kept.has(map.postId)).length,
+      };
+
       stored = maps.map((map) => ({ ...map, checkedAt: 'now' }));
-      return Promise.resolve();
+      return Promise.resolve(counts);
     },
   };
 

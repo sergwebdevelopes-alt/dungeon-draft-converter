@@ -24,7 +24,7 @@ function stored(postId: string, slug: string): StoredMap {
 function gallery(maps: StoredMap[]): GalleryStores {
   const store: MapStore = {
     listMaps: () => Promise.resolve(maps),
-    replaceMaps: () => Promise.resolve(),
+    replaceMaps: () => Promise.resolve({ added: 0, updated: 0, removed: 0 }),
   };
   const images: ImageStore = {
     has: () => Promise.resolve(true),

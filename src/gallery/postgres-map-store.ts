@@ -1,5 +1,5 @@
-import type { Database } from '../db/database.ts';
-import type { MapStore, StoredMap } from './map-store.ts';
+import type { Database, Queryable } from '../db/database.ts';
+import type { MapStore, StoredMap, SyncCounts } from './map-store.ts';
 import type { MapRecord } from './model/types.ts';
 
 interface MapRow {
@@ -35,7 +35,33 @@ function upsertSql(columns: string[]): string {
   return `INSERT INTO maps (${columns.join(', ')}, checked_at, updated_at)
     VALUES (${placeholders.join(', ')}, now(), now())
     ON CONFLICT (post_id) DO UPDATE SET
-      ${[...updates, 'checked_at = now()', updatedAt].join(',\n      ')}`;
+      ${[...updates, 'checked_at = now()', updatedAt].join(',\n      ')}
+    RETURNING updated_at = now() AS changed`;
+}
+
+async function storedIds(tx: Queryable): Promise<Set<string>> {
+  const rows = await tx.query<{ post_id: string }>('SELECT post_id FROM maps');
+
+  return new Set(rows.map((row) => row.post_id));
+}
+
+async function saveMap(tx: Queryable, map: MapRecord): Promise<boolean> {
+  const row = toRow(map);
+  const [{ changed }] = await tx.query<{ changed: boolean }>(
+    upsertSql(Object.keys(row)),
+    Object.values(row),
+  );
+
+  return changed;
+}
+
+async function removeOthers(tx: Queryable, maps: MapRecord[]): Promise<number> {
+  const removed = await tx.query(
+    'DELETE FROM maps WHERE NOT (post_id = ANY($1)) RETURNING post_id',
+    [maps.map((map) => map.postId)],
+  );
+
+  return removed.length;
 }
 
 function toStoredMap(row: MapRow): StoredMap {
@@ -88,15 +114,21 @@ function createPostgresMapStore(db: Database): MapStore {
     },
 
     async replaceMaps(maps) {
-      await db.transaction(async (tx) => {
+      return db.transaction(async (tx): Promise<SyncCounts> => {
+        const before = await storedIds(tx);
+        const counts = { added: 0, updated: 0, removed: 0 };
+
         for (const map of maps) {
-          const row = toRow(map);
-          await tx.query(upsertSql(Object.keys(row)), Object.values(row));
+          const changed = await saveMap(tx, map);
+          if (!before.has(map.postId)) {
+            counts.added += 1;
+          } else if (changed) {
+            counts.updated += 1;
+          }
         }
 
-        await tx.query('DELETE FROM maps WHERE NOT (post_id = ANY($1))', [
-          maps.map((map) => map.postId),
-        ]);
+        counts.removed = await removeOthers(tx, maps);
+        return counts;
       });
     },
   };

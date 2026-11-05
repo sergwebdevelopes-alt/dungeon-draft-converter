@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { PatreonPost } from '../patreon/patreon-api.ts';
 import type { PostDetails } from '../patreon/post-details.ts';
-import { foldersToRemove, galleryMaps, syncCounts } from './sync-plan.ts';
+import { foldersToRemove, galleryMaps } from './sync-plan.ts';
 import type { MapRecord } from './types.ts';
 
 function post(id: string, overrides: Partial<PatreonPost> = {}): PatreonPost {
@@ -72,39 +72,6 @@ describe('foldersToRemove', () => {
         [map('1'), map('2', 'new')],
       ),
       ['2/m2', '3/m3'],
-    );
-  });
-});
-
-describe('syncCounts', () => {
-  it('counts added, changed and removed maps', () => {
-    const previous = [map('1'), map('2'), map('3'), map('5')];
-    const next = [
-      map('1'),
-      map('2', 'm2', { title: 'Renamed' }),
-      map('4'),
-      map('5', 'new image'),
-    ];
-
-    assert.deepEqual(syncCounts(previous, next), {
-      added: 1,
-      updated: 2,
-      removed: 1,
-    });
-  });
-
-  it('ignores the stored check time and the date format', () => {
-    const stored = {
-      ...map('1', 'm1', { publishedAt: '2026-01-01T00:00:00.000Z' }),
-      checkedAt: '2026-11-04T00:00:00.000Z',
-    };
-
-    assert.deepEqual(
-      syncCounts(
-        [stored],
-        [map('1', 'm1', { publishedAt: '2026-01-01T00:00:00.000+00:00' })],
-      ),
-      { added: 0, updated: 0, removed: 0 },
     );
   });
 });

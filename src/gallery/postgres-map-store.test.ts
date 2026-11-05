@@ -101,6 +101,27 @@ describe('createPostgresMapStore', () => {
     assert.notEqual(changed.updatedAt, '2020');
   });
 
+  it('counts the maps it added, changed and removed', async () => {
+    assert.deepEqual(await store.replaceMaps([]), {
+      added: 0,
+      updated: 0,
+      removed: 0,
+    });
+    await store.replaceMaps([
+      map({ postId: '1', slug: 'a' }),
+      map({ postId: '2', slug: 'b' }),
+      map({ postId: '3', slug: 'c' }),
+    ]);
+
+    const counts = await store.replaceMaps([
+      map({ postId: '1', slug: 'a' }),
+      map({ postId: '2', slug: 'b', title: 'Renamed' }),
+      map({ postId: '4', slug: 'd' }),
+    ]);
+
+    assert.deepEqual(counts, { added: 1, updated: 1, removed: 1 });
+  });
+
   it('lists the newest maps first', async () => {
     await store.replaceMaps([
       map({
