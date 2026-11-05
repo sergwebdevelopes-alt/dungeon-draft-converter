@@ -10,7 +10,10 @@ import {
   SHUTDOWN_TIMEOUT_MS,
 } from './config.ts';
 import { openDatabase } from './db/open-database.ts';
-import { createGalleryStores } from './gallery/setup.ts';
+import {
+  createGalleryStores,
+  createGallerySyncIfConfigured,
+} from './gallery/setup.ts';
 import { startJobs } from './jobs/index.ts';
 import { stopOnBadSettings } from './settings/stop-on-bad-settings.ts';
 
@@ -20,7 +23,8 @@ const database = SETTINGS.database
   ? await openDatabase(SETTINGS.database)
   : null;
 const galleryStores = database ? createGalleryStores(database) : undefined;
-const jobs = startJobs({ galleryStores });
+const gallerySync = createGallerySyncIfConfigured(galleryStores);
+const jobs = startJobs({ gallerySync });
 
 if (SHARP_CONCURRENCY > 0) {
   sharp.concurrency(SHARP_CONCURRENCY);
@@ -34,6 +38,7 @@ server.on(
   await createApp(server, {
     isShuttingDown: () => shuttingDown,
     galleryStores,
+    gallerySync,
   }),
 );
 
@@ -52,6 +57,7 @@ function stopNow(): void {
 function stopGracefully(): void {
   shuttingDown = true;
   jobs.stop();
+  gallerySync?.stop();
   console.log(
     `SIGTERM received: finishing running requests (up to ${SHUTDOWN_TIMEOUT_MS / 1000} s).`,
   );

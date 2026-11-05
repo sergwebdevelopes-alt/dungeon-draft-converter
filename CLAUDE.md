@@ -11,14 +11,14 @@ Web app that converts Dungeondraft `.dd2vtt` exports into VTT- and print-ready i
 
 ```
 src/
-├── server.ts      startup only: settings check, database, jobs, http server, listen, SIGTERM
+├── server.ts      startup only: settings check, database, the one gallery sync (shared by the hourly job and the Patreon webhook), jobs, http server, listen, SIGTERM
 ├── app.ts         builds the Express app and wires dependencies (queue, routes)
 ├── config.ts      every process.env read and every limit
 ├── settings/      read-settings.ts: validated settings (Zod) for database, Patreon, gallery; stop-on-bad-settings.ts
 ├── http/          incoming requests (Express): routes, request parsing, errors, zip streaming
 │   ├── upload/    upload rules, per-request temp folder, multipart port + multer adapter
 │   └── client/    outgoing HTTP: HttpClient port (get, getBytes, timeout, abort) + fetch adapter (the only server file using fetch) + rate-limited client (a minimum time between requests)
-├── jobs/          scheduled work: schedule() (timer, optional run at start, stop), upload cleanup, gallery sync (reads its settings from config.ts); startJobs({ galleryStores }) starts them all
+├── jobs/          scheduled work: schedule() (timer, optional run at start, stop), upload cleanup, gallery sync (schedules the shared sync; reads its interval from config.ts); startJobs({ gallerySync }) starts them all
 ├── queue/         PendingLimit (busy limit) and ConversionQueue (parallel slots, FIFO line, positions; cancel via AbortSignal)
 ├── zip/           zip port + fflate adapter
 ├── db/           Database port (query, transaction, exclusive lock) + pg adapter (the only file importing pg); openDatabase (connect + migrate); migrate.ts (the `db:migrate` script); migrations runner + migrations/*.sql; LOCKS (every advisory lock key)
@@ -27,9 +27,9 @@ src/
 │   ├── image-store.ts + local-image-store.ts  ImageStore port + folder adapter (GALLERY_DIR, served at /maps by http/gallery-images.ts)
 │   ├── sync.ts    one sync: Patreon posts → maps, images via map-images.ts, gallery saved in one transaction; runs through utils/single-flight.ts
 │   ├── map-images.ts  makes sure a map's card/view/backdrop are stored: renders missing ones, keeps the previous version if that fails
-│   ├── setup.ts   builds the stores and the sync from settings (used by server.ts and sync-now.ts, the `gallery:sync` script)
+│   ├── setup.ts   builds the stores and the sync from settings: createGallerySyncIfConfigured (server.ts; a stoppable sync, or none without database or Patreon settings) and createGallerySyncFromSettings (sync-now.ts, the `gallery:sync` script)
 │   ├── model/     pure gallery rules: which posts count (public and in a collection), title, collection chips (collections.ts), slug, choosing the image, building a MapRecord (whose MapImage keeps only url, size and media ID), the public MapEntry (map-entry.ts), where images are stored (image-keys.ts), sync counts and folders (sync-plan.ts)
-│   └── patreon/   Patreon ports + adapters: official API v2 (post list; refreshes the token on 401 through patreon-auth.ts) and the website's post details (collections, all images); TokenStore port + postgres-token-store.ts (the newest token pair; `seeded_from` = SHA-256 of the `.env` refresh token it started from, so a new `.env` pair wins); I/O and translation only
+│   └── patreon/   webhook-signature.ts (HMAC-MD5 check for POST /api/patreon/webhook in http/routes/patreon-webhook.ts); Patreon ports + adapters: official API v2 (post list; refreshes the token on 401 through patreon-auth.ts) and the website's post details (collections, all images); TokenStore port + postgres-token-store.ts (the newest token pair; `seeded_from` = SHA-256 of the `.env` refresh token it started from, so a new `.env` pair wins); I/O and translation only
 ├── core/          image work: dd2vtt format, conversion, images, lighting, merge, gallery-images (card, view, backdrop)
 └── utils/         small shared helpers (format.ts, time.ts, object.ts, error.ts, single-flight.ts: one run at a time, once more if asked meanwhile)
 ```

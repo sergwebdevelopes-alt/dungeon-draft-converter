@@ -47,6 +47,12 @@ With the `PATREON_*` settings in `.env` (see `.env.example`), the server fills t
 
 The creator access token expires after about a month. When Patreon refuses it, the server exchanges the refresh token for a new pair and keeps it in the database (`patreon_tokens`), because each refresh replaces the refresh token as well. `.env` only provides the first pair. If you put a new pair in `.env` (for example after creating new tokens on Patreon), the server notices that it differs from the pair it started from and switches to it.
 
+To update the gallery as soon as you publish, change or delete a post, add a webhook on Patreon once the site has a public HTTPS address: in your Patreon creator settings, register `https://<your-domain>/api/patreon/webhook` for the post events (`posts:publish`, `posts:update`, `posts:delete`), and put the webhook's secret in `PATREON_WEBHOOK_SECRET`. Patreon signs each delivery with that secret; the server checks the signature (401 if it's wrong), answers 202 and starts a sync in the background. Events other than posts are accepted and ignored, and several deliveries during a sync lead to one more sync, not one each. Without `PATREON_WEBHOOK_SECRET` the address answers 404, and the hourly sync still keeps the gallery up to date. Each delivery writes one JSON line:
+
+```text
+{"event":"patreon-webhook","trigger":"posts:publish","result":"sync"}
+```
+
 `GET /api/maps` lists the gallery, newest first.
 
 `GET /api/health` answers `{"ok":true}` (200) while the server is running and `{"ok":false}` (503) while it shuts down, for uptime monitors.

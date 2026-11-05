@@ -1,18 +1,40 @@
 import assert from 'node:assert/strict';
-import { describe, it, mock } from 'node:test';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 import { startGallerySyncJob } from './gallery-sync-job.ts';
 
 describe('startGallerySyncJob', () => {
-  it('stays off without a database', () => {
-    const log = mock.method(console, 'log', () => undefined);
+  beforeEach(() => {
+    mock.timers.enable({ apis: ['setInterval'] });
+    mock.method(console, 'log', () => undefined);
+  });
 
-    try {
-      const job = startGallerySyncJob(undefined);
-      job.stop();
+  afterEach(() => {
+    mock.timers.reset();
+    mock.restoreAll();
+  });
 
-      assert.match(String(log.mock.calls[0].arguments[0]), /sync is off/);
-    } finally {
-      log.mock.restore();
-    }
+  it('does nothing without a sync', () => {
+    const job = startGallerySyncJob(undefined);
+
+    mock.timers.tick(24 * 60 * 60 * 1000);
+    job.stop();
+  });
+
+  it('runs the given sync every interval, and not at startup in dev', () => {
+    let runs = 0;
+    const job = startGallerySyncJob({
+      run() {
+        runs += 1;
+        return Promise.resolve();
+      },
+    });
+
+    assert.equal(runs, 0);
+    mock.timers.tick(60 * 60 * 1000);
+    assert.equal(runs, 1);
+
+    job.stop();
+    mock.timers.tick(60 * 60 * 1000);
+    assert.equal(runs, 1);
   });
 });

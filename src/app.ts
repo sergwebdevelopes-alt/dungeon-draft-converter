@@ -8,6 +8,7 @@ import {
   MAX_PARALLEL_CONVERSIONS,
   MAX_PENDING_CONVERSIONS,
   ROOT_DIR,
+  SETTINGS,
   WEB_DIST_DIR,
 } from './config.ts';
 import { errorHandler, notFound } from './http/errors.ts';
@@ -16,7 +17,9 @@ import type { LogConversion } from './http/convert/conversion-log.ts';
 import { configRouter } from './http/routes/config.ts';
 import { healthRouter } from './http/routes/health.ts';
 import type { GalleryStores } from './gallery/setup.ts';
+import type { GallerySync } from './gallery/sync.ts';
 import { mapsRouter } from './http/routes/maps.ts';
+import { patreonWebhookRouter } from './http/routes/patreon-webhook.ts';
 import { convertRouter } from './http/routes/convert.ts';
 import { queueRouter } from './http/routes/queue.ts';
 import { blockCrossSiteRequests, securityHeaders } from './http/security.ts';
@@ -28,11 +31,12 @@ interface AppOptions {
   isShuttingDown: () => boolean;
   logConversion?: LogConversion;
   galleryStores?: GalleryStores;
+  gallerySync?: GallerySync;
 }
 
 async function createApp(
   server: http.Server,
-  { isShuttingDown, logConversion, galleryStores }: AppOptions,
+  { isShuttingDown, logConversion, galleryStores, gallerySync }: AppOptions,
 ): Promise<express.Express> {
   const queue = new ConversionQueue({ maxParallel: MAX_PARALLEL_CONVERSIONS });
   const pendingLimit = new PendingLimit(MAX_PENDING_CONVERSIONS);
@@ -51,6 +55,10 @@ async function createApp(
     configRouter(),
     queueRouter(queue),
     mapsRouter(galleryStores),
+    patreonWebhookRouter({
+      secret: SETTINGS.patreon?.webhookSecret,
+      sync: gallerySync,
+    }),
     convertRouter(queue, pendingLimit, logConversion),
     notFound,
   );

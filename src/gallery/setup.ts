@@ -2,6 +2,7 @@ import {
   GALLERY_DIR,
   GALLERY_IMAGES_URL,
   GALLERY_REQUEST_INTERVAL_MS,
+  SETTINGS,
 } from '../config.ts';
 import { renderGalleryImages } from '../core/gallery-images.ts';
 import type { Database } from '../db/database.ts';
@@ -27,6 +28,10 @@ interface GalleryStores {
   maps: MapStore;
   images: ImageStore;
   tokens: TokenStore;
+}
+
+interface ManagedGallerySync extends GallerySync {
+  stop(): void;
 }
 
 type SyncOptions = Pick<GallerySyncDeps, 'log' | 'signal'>;
@@ -68,5 +73,29 @@ function createGallerySyncFromSettings(
   });
 }
 
-export { createGalleryStores, createGallerySyncFromSettings };
-export type { GalleryStores };
+function createGallerySyncIfConfigured(
+  stores: GalleryStores | undefined,
+): ManagedGallerySync | undefined {
+  const { patreon } = SETTINGS;
+  if (!stores || !patreon) {
+    console.log('No database or Patreon settings: the gallery sync is off.');
+    return undefined;
+  }
+
+  const stopping = new AbortController();
+  const sync = createGallerySyncFromSettings(stores, patreon, {
+    signal: stopping.signal,
+  });
+
+  return {
+    run: () => sync.run(),
+    stop: () => stopping.abort(),
+  };
+}
+
+export {
+  createGalleryStores,
+  createGallerySyncFromSettings,
+  createGallerySyncIfConfigured,
+};
+export type { GalleryStores, ManagedGallerySync };

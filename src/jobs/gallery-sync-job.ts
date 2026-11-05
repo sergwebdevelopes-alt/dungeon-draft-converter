@@ -1,25 +1,16 @@
 import { IS_PRODUCTION, SETTINGS } from '../config.ts';
-import {
-  createGallerySyncFromSettings,
-  type GalleryStores,
-} from '../gallery/setup.ts';
+import type { GallerySync } from '../gallery/sync.ts';
 import { schedule, type Job } from './schedule.ts';
 
 const NO_JOB: Job = { stop: () => undefined };
 
-function startGallerySyncJob(galleryStores: GalleryStores | undefined): Job {
-  const { patreon } = SETTINGS;
-  if (!galleryStores || !patreon) {
-    console.log('No database or Patreon settings: the gallery sync is off.');
+function startGallerySyncJob(gallerySync: GallerySync | undefined): Job {
+  if (!gallerySync) {
     return NO_JOB;
   }
 
-  const stopping = new AbortController();
-  const sync = createGallerySyncFromSettings(galleryStores, patreon, {
-    signal: stopping.signal,
-  });
   const { syncIntervalMinutes } = SETTINGS.gallery;
-  const job = schedule(() => sync.run(), {
+  const job = schedule(() => gallerySync.run(), {
     everyMs: syncIntervalMinutes * 60 * 1000,
     atStart: IS_PRODUCTION,
   });
@@ -30,12 +21,7 @@ function startGallerySyncJob(galleryStores: GalleryStores | undefined): Job {
     );
   }
 
-  return {
-    stop() {
-      job.stop();
-      stopping.abort();
-    },
-  };
+  return job;
 }
 
 export { startGallerySyncJob };
