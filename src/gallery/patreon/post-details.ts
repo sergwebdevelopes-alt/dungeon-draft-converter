@@ -10,7 +10,7 @@ interface PostImage {
 interface PostDetails {
   postId: string;
   publishedAt: string;
-  tags: string[];
+  collections: string[];
   images: PostImage[];
 }
 

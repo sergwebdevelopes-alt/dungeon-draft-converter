@@ -16,21 +16,26 @@ interface MapRow {
   image_width: number;
   image_height: number;
   image_media_id: string;
-  image_is_main: boolean;
-  image_file_name: string | null;
   checked_at: Date;
+}
+
+function changedSql(fields: string[]): string {
+  const before = fields.map((field) => `maps.${field}`);
+  const after = fields.map((field) => `EXCLUDED.${field}`);
+
+  return `(${before.join(', ')}) IS DISTINCT FROM (${after.join(', ')})`;
 }
 
 function upsertSql(columns: string[]): string {
   const placeholders = columns.map((_, i) => `$${i + 1}`);
-  const updates = columns
-    .filter((column) => column !== 'post_id')
-    .map((column) => `${column} = EXCLUDED.${column}`);
+  const fields = columns.filter((column) => column !== 'post_id');
+  const updates = fields.map((field) => `${field} = EXCLUDED.${field}`);
+  const updatedAt = `updated_at = CASE WHEN ${changedSql(fields)} THEN now() ELSE maps.updated_at END`;
 
   return `INSERT INTO maps (${columns.join(', ')}, checked_at, updated_at)
     VALUES (${placeholders.join(', ')}, now(), now())
     ON CONFLICT (post_id) DO UPDATE SET
-      ${[...updates, 'checked_at = now()', 'updated_at = now()'].join(',\n      ')}`;
+      ${[...updates, 'checked_at = now()', updatedAt].join(',\n      ')}`;
 }
 
 function toStoredMap(row: MapRow): StoredMap {
@@ -50,8 +55,6 @@ function toStoredMap(row: MapRow): StoredMap {
       width: row.image_width,
       height: row.image_height,
       mediaId: row.image_media_id,
-      isMain: row.image_is_main,
-      ...(row.image_file_name ? { fileName: row.image_file_name } : {}),
     },
     checkedAt: row.checked_at.toISOString(),
   };
@@ -72,8 +75,6 @@ function toRow(map: MapRecord): Record<string, unknown> {
     image_width: map.image.width,
     image_height: map.image.height,
     image_media_id: map.image.mediaId,
-    image_is_main: map.image.isMain,
-    image_file_name: map.image.fileName ?? null,
   };
 }
 

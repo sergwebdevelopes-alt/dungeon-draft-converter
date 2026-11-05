@@ -1,13 +1,13 @@
-import type { PostImage } from '../patreon/post-details.ts';
-
-interface GalleryRules {
-  tag: string;
-  genericTags: string[];
-}
-
 interface Squares {
   x: number;
   y: number;
+}
+
+interface MapImage {
+  url: string;
+  width: number;
+  height: number;
+  mediaId: string;
 }
 
 interface MapRecord {
@@ -19,7 +19,7 @@ interface MapRecord {
   squares?: Squares;
   patreonUrl: string;
   publishedAt: string;
-  image: PostImage;
+  image: MapImage;
 }
 
-export type { GalleryRules, MapRecord, Squares };
+export type { MapImage, MapRecord, Squares };

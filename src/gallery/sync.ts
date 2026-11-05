@@ -13,7 +13,7 @@ import {
   syncCounts,
   type SyncCounts,
 } from './model/sync-plan.ts';
-import type { GalleryRules, MapRecord } from './model/types.ts';
+import type { MapRecord } from './model/types.ts';
 import type { PatreonApi } from './patreon/patreon-api.ts';
 import type { PostDetailsSource } from './patreon/post-details.ts';
 
@@ -34,7 +34,6 @@ interface GallerySyncDeps {
   maps: MapStore;
   images: ImageStore;
   render: (original: Buffer) => Promise<GalleryImages>;
-  rules: GalleryRules;
   log?: (entry: GallerySyncLogEntry) => void;
   signal?: AbortSignal;
   now?: () => number;
@@ -88,7 +87,6 @@ function createGallerySync({
   maps,
   images,
   render,
-  rules,
   log = logToConsole,
   signal,
   now = Date.now,
@@ -100,7 +98,7 @@ function createGallerySync({
     const allDetails = await details.listDetails({ signal });
     const previous = await maps.listMaps();
 
-    const wanted = galleryMaps(posts, allDetails, rules);
+    const wanted = galleryMaps(posts, allDetails);
     const { ready, failed } = await prepareAll(wanted, previous, mapImages);
 
     const next = withUniqueSlugs(ready);

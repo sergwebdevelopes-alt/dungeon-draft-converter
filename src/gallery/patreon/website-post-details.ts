@@ -16,8 +16,8 @@ import type {
 
 const DETAIL_FIELDS = {
   'fields[post]': 'post_file,published_at',
-  include: 'user_defined_tags,media',
-  'fields[post_tag]': 'value',
+  include: 'media,collections',
+  'fields[collection]': 'title',
   'fields[media]': 'file_name,mimetype,metadata,image_urls',
 };
 
@@ -40,8 +40,8 @@ interface RawPost {
     post_file?: RawFile | null;
   };
   relationships?: {
-    user_defined_tags?: { data?: { id: string }[] };
     media?: { data?: { id: string }[] };
+    collections?: { data?: { id: string }[] };
   };
 }
 
@@ -49,7 +49,7 @@ interface RawIncluded {
   id: string;
   type: string;
   attributes: {
-    value?: string;
+    title?: string;
     file_name?: string;
     mimetype?: string;
     metadata?: { dimensions?: { w?: number; h?: number } } | null;
@@ -64,7 +64,7 @@ interface RawResponse<T> {
 }
 
 interface Included {
-  tags: Map<string, string>;
+  collections: Map<string, string>;
   media: Map<string, RawIncluded['attributes']>;
 }
 
@@ -92,8 +92,11 @@ function byType(included: RawIncluded[], type: string) {
 
 function readIncluded(included: RawIncluded[] = []): Included {
   return {
-    tags: new Map(
-      byType(included, 'post_tag').map((t) => [t.id, t.attributes.value ?? '']),
+    collections: new Map(
+      byType(included, 'collection').map((c) => [
+        c.id,
+        c.attributes.title ?? '',
+      ]),
     ),
     media: new Map(byType(included, 'media').map((m) => [m.id, m.attributes])),
   };
@@ -153,13 +156,20 @@ function imagesOf(post: RawPost, media: Included['media']): PostImage[] {
   return [...main, ...attached];
 }
 
-function toDetails(post: RawPost, { tags, media }: Included): PostDetails {
-  const tagIds = post.relationships?.user_defined_tags?.data ?? [];
+function collectionsOf(post: RawPost, names: Included['collections']) {
+  const refs = post.relationships?.collections?.data ?? [];
 
+  return refs.flatMap(({ id }) => names.get(id) ?? []);
+}
+
+function toDetails(
+  post: RawPost,
+  { collections, media }: Included,
+): PostDetails {
   return {
     postId: post.id,
     publishedAt: post.attributes.published_at ?? '',
-    tags: tagIds.flatMap(({ id }) => tags.get(id) ?? []),
+    collections: collectionsOf(post, collections),
     images: imagesOf(post, media),
   };
 }

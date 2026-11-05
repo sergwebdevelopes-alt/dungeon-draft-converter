@@ -2,7 +2,7 @@ import type { PatreonPost } from '../patreon/patreon-api.ts';
 import type { PostDetails } from '../patreon/post-details.ts';
 import { imageFolder } from './image-keys.ts';
 import { postToMap } from './post-to-map.ts';
-import type { GalleryRules, MapRecord } from './types.ts';
+import type { MapRecord } from './types.ts';
 
 interface SyncCounts {
   added: number;
@@ -13,12 +13,11 @@ interface SyncCounts {
 function galleryMaps(
   posts: PatreonPost[],
   details: PostDetails[],
-  rules: GalleryRules,
 ): MapRecord[] {
   const detailsById = new Map(details.map((d) => [d.postId, d]));
 
   return posts.flatMap((post) => {
-    const map = postToMap(post, detailsById.get(post.id), rules);
+    const map = postToMap(post, detailsById.get(post.id));
     return map ? [map] : [];
   });
 }

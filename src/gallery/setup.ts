@@ -1,9 +1,7 @@
 import {
   GALLERY_DIR,
-  GALLERY_GENERIC_TAGS,
   GALLERY_IMAGES_URL,
   GALLERY_REQUEST_INTERVAL_MS,
-  SETTINGS,
 } from '../config.ts';
 import { renderGalleryImages } from '../core/gallery-images.ts';
 import type { Database } from '../db/database.ts';
@@ -58,7 +56,6 @@ function createGallerySyncFromSettings(
     http,
     ...stores,
     render: renderGalleryImages,
-    rules: { tag: SETTINGS.gallery.tag, genericTags: GALLERY_GENERIC_TAGS },
     ...options,
   });
 }

@@ -11,7 +11,6 @@ interface PatreonSettings {
 }
 
 interface GallerySettings {
-  tag: string;
   syncIntervalMinutes: number;
   syncToken?: string;
 }
@@ -25,7 +24,7 @@ interface Settings {
 type Env = Record<string, string | undefined>;
 
 const DEFAULTS: Settings = {
-  gallery: { tag: 'portfolio', syncIntervalMinutes: 60 },
+  gallery: { syncIntervalMinutes: 60 },
 };
 
 const DATABASE_DEFAULTS = { host: '127.0.0.1', port: 5432 };
@@ -73,7 +72,6 @@ const envSchema = z
     PATREON_CREATOR_TOKEN: optionalText,
     PATREON_REFRESH_TOKEN: optionalText,
     PATREON_WEBHOOK_SECRET: optionalText,
-    GALLERY_TAG: optionalText,
     GALLERY_SYNC_INTERVAL_MINUTES: wholeNumber(5),
     GALLERY_SYNC_TOKEN: optionalText.pipe(
       z.string().min(32, 'must be at least 32 characters long').optional(),
@@ -159,7 +157,6 @@ function toSettings(env: ParsedEnv): Settings {
     ...(database ? { database } : {}),
     ...(patreon ? { patreon } : {}),
     gallery: {
-      tag: env.GALLERY_TAG ?? gallery.tag,
       syncIntervalMinutes:
         env.GALLERY_SYNC_INTERVAL_MINUTES ?? gallery.syncIntervalMinutes,
       ...(env.GALLERY_SYNC_TOKEN ? { syncToken: env.GALLERY_SYNC_TOKEN } : {}),

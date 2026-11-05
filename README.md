@@ -37,7 +37,7 @@ Every conversion request writes one JSON line, without file names or IP addresse
 
 ### Gallery sync
 
-With the `PATREON_*` settings in `.env` (see `.env.example`), the server fills the gallery from Patreon: every public post tagged `portfolio` (`GALLERY_TAG`) becomes a map, with the post's main or ungridded image rendered as a card, a full view and a backdrop. It syncs at startup and then every `GALLERY_SYNC_INTERVAL_MINUTES` (default 60); in development (`npm run dev`) it skips the sync at startup, so file changes don't call Patreon. Only new or changed images are downloaded. If Patreon can't be reached, the gallery stays as it was until the next sync. Each sync writes one JSON line:
+With the `PATREON_*` settings in `.env` (see `.env.example`), the server fills the gallery from Patreon: every public post in a Patreon collection becomes a map, with the post's main or ungridded image rendered as a card, a full view and a backdrop. Posts outside any collection (news, announcements) are left out, and a new collection appears without any setting. Collection names (without suffixes like `[In Progress]`) and the post's tags become the gallery's filter chips. It syncs at startup and then every `GALLERY_SYNC_INTERVAL_MINUTES` (default 60); in development (`npm run dev`) it skips the sync at startup, so file changes don't call Patreon. Only new or changed images are downloaded. If Patreon can't be reached, the gallery stays as it was until the next sync. Each sync writes one JSON line:
 
 ```text
 {"event":"gallery-sync","result":"ok","posts":50,"maps":2,"failed":0,"added":1,"updated":0,"removed":0,"tookMs":12280}
@@ -131,6 +131,8 @@ npm run dev
 Starts the server on http://localhost:3000 with hot reload: Vite runs inside Express, so the API and the page share one port. Use `PORT=3001 npm run dev` to change it.
 
 `npm test` · `npm run typecheck` · `npm run lint` · `npm run format` · `npm run build`
+
+`npm run db` starts the dev Postgres on `127.0.0.1:5432`, reachable only from this computer. To open it from another computer on your network (for example in a database tool), set `POSTGRES_DEV_BIND=0.0.0.0` in `.env` and run `npm run db` again; then anyone on that network can reach it with the database password, so use a strong one.
 
 `npm test` reads `.env.testing`, which points at the test Postgres started by `npm run db` (`127.0.0.1:5433`, user/password `test`, data kept in memory). The database tests run in their own temporary databases there; without it they fail with a message to start it.
 

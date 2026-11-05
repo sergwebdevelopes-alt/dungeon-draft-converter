@@ -46,26 +46,6 @@ const PATREON_API_PAGE_SIZE = 50;
 const PATREON_WEBSITE_PAGE_SIZE = 20;
 const PATREON_WEBSITE_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0 Safari/537.36';
-const GALLERY_GENERIC_TAGS = [
-  'battle map',
-  'battlemap',
-  'battlemaps',
-  'dnd',
-  'dnd maps',
-  'dndart',
-  'dndmaps',
-  'dungeondraft',
-  'foundry',
-  'foundryvtt',
-  'free',
-  'map',
-  'maps',
-  'roll20',
-  'rpg',
-  'rpgmaps',
-  'ttrpg',
-  'vtt',
-];
 
 const { settings: SETTINGS, problems: SETTINGS_PROBLEMS } = readSettings(
   process.env,
@@ -74,7 +54,6 @@ const { settings: SETTINGS, problems: SETTINGS_PROBLEMS } = readSettings(
 export {
   CONVERSION_TIMEOUT_MS,
   GALLERY_DIR,
-  GALLERY_GENERIC_TAGS,
   GALLERY_IMAGES_URL,
   GALLERY_REQUEST_INTERVAL_MS,
   HTTP_CLIENT_TIMEOUT_MS,
