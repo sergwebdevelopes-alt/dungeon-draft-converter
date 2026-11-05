@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   captionOf,
-  filterMaps,
   findMap,
   hasSquares,
   neighbour,
-  tagsOf,
   type MapEntry,
 } from './catalog.ts';
 
@@ -23,24 +21,6 @@ function entry(slug: string, tags: MapEntry['tags'] = ['Interior']): MapEntry {
 
 const LIST = [entry('a'), entry('b', ['Outdoor']), entry('c')];
 
-describe('tagsOf', () => {
-  it('lists each tag once, in the order maps use them', () => {
-    expect(
-      tagsOf([
-        entry('a', ['Underground']),
-        entry('b', ['Interior', 'Underground']),
-      ]),
-    ).toEqual(['Underground', 'Interior']);
-  });
-});
-
-describe('filterMaps', () => {
-  it('keeps every map without a tag and only matching ones with a tag', () => {
-    expect(filterMaps(LIST, null)).toBe(LIST);
-    expect(filterMaps(LIST, 'Outdoor').map((m) => m.slug)).toEqual(['b']);
-  });
-});
-
 describe('findMap', () => {
   it('finds a map by slug', () => {
     expect(findMap(LIST, 'b')?.slug).toBe('b');
@@ -50,15 +30,21 @@ describe('findMap', () => {
 });
 
 describe('neighbour', () => {
-  it('steps forward and back, wrapping at the ends', () => {
-    expect(neighbour(LIST, 'a', 1)?.slug).toBe('b');
-    expect(neighbour(LIST, 'c', 1)?.slug).toBe('a');
-    expect(neighbour(LIST, 'a', -1)?.slug).toBe('c');
+  it('steps forward and back, wrapping at the ends when asked to', () => {
+    expect(neighbour(LIST, 'a', 1, true)?.slug).toBe('b');
+    expect(neighbour(LIST, 'c', 1, true)?.slug).toBe('a');
+    expect(neighbour(LIST, 'a', -1, true)?.slug).toBe('c');
+  });
+
+  it('stops at the ends when the list is not complete', () => {
+    expect(neighbour(LIST, 'b', 1, false)?.slug).toBe('c');
+    expect(neighbour(LIST, 'c', 1, false)).toBeNull();
+    expect(neighbour(LIST, 'a', -1, false)).toBeNull();
   });
 
   it('has no neighbour for a single or unknown map', () => {
-    expect(neighbour([entry('a')], 'a', 1)).toBeNull();
-    expect(neighbour(LIST, 'nope', 1)).toBeNull();
+    expect(neighbour([entry('a')], 'a', 1, true)).toBeNull();
+    expect(neighbour(LIST, 'nope', 1, true)).toBeNull();
   });
 });
 

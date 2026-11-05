@@ -23,26 +23,24 @@ function findMap(maps: MapEntry[], slug: string | null): MapEntry | null {
   return maps.find((map) => map.slug === slug) ?? null;
 }
 
-function filterMaps(maps: MapEntry[], tag: string | null): MapEntry[] {
-  return tag ? maps.filter((map) => map.tags.includes(tag)) : maps;
-}
-
-function tagsOf(maps: MapEntry[]): string[] {
-  return [...new Set(maps.flatMap((map) => map.tags))];
-}
-
 function neighbour(
   maps: MapEntry[],
   slug: string,
   step: 1 | -1,
+  wrap: boolean,
 ): MapEntry | null {
   const index = maps.findIndex((map) => map.slug === slug);
   if (index === -1 || maps.length < 2) {
     return null;
   }
 
-  return maps[(index + step + maps.length) % maps.length];
+  const next = index + step;
+  if (wrap) {
+    return maps[(next + maps.length) % maps.length];
+  }
+
+  return maps[next] ?? null;
 }
 
-export { captionOf, filterMaps, findMap, hasSquares, neighbour, tagsOf };
+export { captionOf, findMap, hasSquares, neighbour };
 export type { GriddedMap, MapEntry };

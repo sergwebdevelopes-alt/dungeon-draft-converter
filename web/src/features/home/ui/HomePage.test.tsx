@@ -56,11 +56,17 @@ const SITE_WITH_PLANS: SiteConfig = {
   },
 };
 
-function api(maps: MapEntry[] | null = MAPS): GalleryApi {
+function api(
+  maps: MapEntry[] | null = MAPS,
+  total = maps?.length ?? 0,
+): GalleryApi {
   return {
-    fetchMaps: () =>
-      maps ? Promise.resolve(maps) : new Promise<MapEntry[]>(() => undefined),
-    prefetchMaps: () => Promise.resolve(),
+    fetchPage: () =>
+      maps
+        ? Promise.resolve({ maps, total, tags: [] })
+        : new Promise(() => undefined),
+    fetchMap: () => Promise.resolve(null),
+    prefetchFirstPage: () => Promise.resolve(),
   };
 }
 
@@ -120,6 +126,14 @@ describe('HomePage', () => {
     ]);
     expect(
       latest.getByRole('link', { name: 'See all 7 maps' }),
+    ).toHaveAttribute('href', '/maps');
+  });
+
+  it('counts every map on the server, not just the first page', async () => {
+    await renderHome(api(MAPS, 47));
+
+    expect(
+      screen.getByRole('link', { name: 'See all 47 maps' }),
     ).toHaveAttribute('href', '/maps');
   });
 

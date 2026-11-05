@@ -106,7 +106,7 @@ web/src/
 ├── shared/
 │   ├── http/      HttpClient port + fetch adapter (only file using fetch); index.ts exports the `http` instance
 │   ├── storage/   KeyValueStore port + localStorage adapter; index.ts exports `storage`
-│   ├── lib/       small helpers and hooks: format, save-file, abortable, useObjectUrl, useFileDrop, useElapsed, useRotation
+│   ├── lib/       small helpers and hooks: format, save-file, abortable, useObjectUrl, useFileDrop, useElapsed, useRotation, useNearViewport
 │   ├── theme/     light/dark choice (storage port) + toggle; web/public/theme.js applies a saved choice before React starts
 │   ├── ui/        shared presentational components (Button/ButtonLink, Alert, Segmented, GridOverlay, …)
 │   └── config/    site.ts (site name, nav, links, membership plans)
@@ -127,7 +127,7 @@ web/src/
 - Use the shared `Button`/`ButtonLink`, `Alert` and `Segmented` instead of repeating their classes.
 - Motion is imported only in `web/src/shared/ui/motion/`; features use its wrappers (`MotionProvider`, `Reveal`, `SharedFrame`, `Swipeable`).
 - Patreon post HTML is sanitised once, in the sync (the official adapter gets the sanitiser passed in), and stored as `maps.description`; the modal inserts it with `dangerouslySetInnerHTML` in `MapDescription.tsx`, the only place raw HTML is rendered.
-- The gallery loads `GET /api/maps`, filled by the Patreon sync (public posts in any Patreon collection; collection names become filter chips). The web `MapEntry` comes from `src/contracts/gallery-api.ts`; `subtitle` and `squares` are optional, so the grid choice and the converter teaser appear only for maps with squares. The modal draws its grid with `GridOverlay`, so no gridded image is needed.
+- The gallery loads `GET /api/maps`, filled by the Patreon sync (public posts in any Patreon collection; collection names become filter chips). It loads page by page (`?tag=&offset=&limit=`, answering `{ maps, total, tags }`): 21 maps first, then 24 at a time as the visitor scrolls (`model/map-pages.ts`, `useMapPages`), with a "Show more maps" button as the fallback. The collection filter runs on the server. A link to a map that is not loaded yet uses `GET /api/maps/:slug`. The home page and the gallery share the first page, loaded once. The web `MapEntry` comes from `src/contracts/gallery-api.ts`; `subtitle` and `squares` are optional, so the grid choice and the converter teaser appear only for maps with squares. The modal draws its grid with `GridOverlay`, so no gridded image is needed.
 - Styling uses Tailwind with colour and font tokens in `web/src/styles.css`.
 
 ## Code style

@@ -17,7 +17,7 @@ import { MapViewer } from './MapViewer.tsx';
 interface MapModalProps {
   map: MapEntry;
   morph: boolean;
-  position: { index: number; total: number };
+  position?: { index: number; total: number };
   neighbours: MapEntry[];
   onClose: () => void;
   onPrevious: () => void;
@@ -95,7 +95,7 @@ function MapModal({
   const dialogRef = useModalDialog();
   const titleId = useId();
   const [showGrid, setShowGrid] = useState(false);
-  const canMove = position.total > 1;
+  const canMove = position !== undefined && position.total > 1;
 
   useArrowKeys(canMove, onPrevious, onNext);
   usePreload(neighbours);
@@ -149,11 +149,15 @@ function MapModal({
             </>
           )}
 
-          <p className="justify-self-center rounded-full bg-black/60 px-3 py-1 text-sm text-white tabular-nums">
-            {position.index + 1} of {position.total}
-          </p>
+          {position && (
+            <p className="justify-self-center rounded-full bg-black/60 px-3 py-1 text-sm text-white tabular-nums">
+              {position.index + 1} of {position.total}
+            </p>
+          )}
           <p role="status" className="sr-only">
-            {map.title}, {position.index + 1} of {position.total}
+            {position
+              ? `${map.title}, ${position.index + 1} of ${position.total}`
+              : map.title}
           </p>
         </Swipeable>
 

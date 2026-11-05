@@ -7,7 +7,7 @@ import { NotFoundPage } from './NotFoundPage.tsx';
 import { PageChange } from './PageChange.tsx';
 
 const HomePage = lazy(async () => {
-  void galleryApi.prefetchMaps();
+  void galleryApi.prefetchFirstPage();
 
   return {
     default: (await import('../features/home/ui/HomePage.tsx')).HomePage,
@@ -20,7 +20,7 @@ const ConverterPage = lazy(async () => ({
 }));
 
 const GalleryPage = lazy(async () => {
-  void galleryApi.prefetchMaps();
+  void galleryApi.prefetchFirstPage();
 
   return {
     default: (await import('../features/gallery/ui/GalleryPage.tsx'))

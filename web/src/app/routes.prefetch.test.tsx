@@ -5,8 +5,9 @@ import { SITE } from '../shared/config/site.ts';
 import { AppRoutes } from './routes.tsx';
 
 const galleryApi = vi.hoisted(() => ({
-  fetchMaps: vi.fn(() => Promise.resolve([])),
-  prefetchMaps: vi.fn(() => Promise.resolve()),
+  fetchPage: vi.fn(() => Promise.resolve({ maps: [], total: 0, tags: [] })),
+  fetchMap: vi.fn(() => Promise.resolve(null)),
+  prefetchFirstPage: vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock('../features/gallery/api.ts', () => ({ galleryApi }));
@@ -22,6 +23,6 @@ describe('AppRoutes page loading', () => {
     await screen.findByRole('heading', {
       name: 'Battle maps for epic adventures',
     });
-    expect(galleryApi.prefetchMaps).toHaveBeenCalled();
+    expect(galleryApi.prefetchFirstPage).toHaveBeenCalled();
   });
 });
