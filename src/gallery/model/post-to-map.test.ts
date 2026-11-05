@@ -17,6 +17,7 @@ function post(overrides: Partial<PatreonPost> = {}): PatreonPost {
   return {
     id: '166553789',
     title: '[Battlemap] Tser Falls [Curse of Strahd]',
+    description: '<p>A roaring waterfall.</p>',
     url: 'https://www.patreon.com/LairofArtificer/posts/battlemap-tser-166553789',
     publishedAt: '2025-07-01T10:00:00.000+00:00',
     isPublic: true,
@@ -41,6 +42,7 @@ describe('postToMap', () => {
       slug: 'tser-falls',
       title: 'Tser Falls',
       subtitle: 'Curse of Strahd',
+      description: '<p>A roaring waterfall.</p>',
       squares: { x: 60, y: 40 },
       tags: ['Curse of Strahd'],
       patreonUrl:

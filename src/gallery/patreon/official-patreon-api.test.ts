@@ -45,6 +45,8 @@ function fakeAuth(token = 'secret') {
   return { auth, refreshes: () => refreshes };
 }
 
+const keepHtml = (html: string) => html;
+
 function bearer(call: Call): string | undefined {
   return call.options?.headers?.Authorization;
 }
@@ -54,6 +56,7 @@ function rawPost(id: string, isPublic: boolean | null = true) {
     id,
     attributes: {
       title: `Post ${id}`,
+      content: `<p>Story of post ${id}.</p>`,
       url: `/LairofArtificer/posts/post-${id}`,
       published_at: '2026-10-19T08:26:58.000+00:00',
       is_public: isPublic,
@@ -70,6 +73,7 @@ describe('createOfficialPatreonApi', () => {
     const api = createOfficialPatreonApi(http, {
       auth: fakeAuth().auth,
       campaignId: '12754508',
+      sanitize: keepHtml,
     });
 
     const posts = await api.listPosts();
@@ -82,7 +86,7 @@ describe('createOfficialPatreonApi', () => {
     assert.match(calls[0].url, /\/campaigns\/12754508\/posts\?/);
     assert.match(
       calls[0].url,
-      /fields%5Bpost%5D=title%2Curl%2Cpublished_at%2Cis_public/,
+      /fields%5Bpost%5D=title%2Ccontent%2Curl%2Cpublished_at%2Cis_public/,
     );
     assert.equal(calls[1].url, 'https://api.test/page-2');
   });
@@ -94,6 +98,7 @@ describe('createOfficialPatreonApi', () => {
     await createOfficialPatreonApi(http, {
       auth: fakeAuth().auth,
       campaignId: '1',
+      sanitize: keepHtml,
     }).listPosts(signal);
 
     assert.deepEqual(calls[0].options, {
@@ -110,6 +115,7 @@ describe('createOfficialPatreonApi', () => {
     const posts = await createOfficialPatreonApi(http, {
       auth: fakeAuth().auth,
       campaignId: '1',
+      sanitize: keepHtml,
     }).listPosts();
 
     assert.equal(
@@ -133,6 +139,7 @@ describe('createOfficialPatreonApi', () => {
     const posts = await createOfficialPatreonApi(http, {
       auth,
       campaignId: '1',
+      sanitize: keepHtml,
     }).listPosts();
 
     assert.deepEqual(
@@ -156,7 +163,11 @@ describe('createOfficialPatreonApi', () => {
     const { auth, refreshes } = fakeAuth();
 
     await assert.rejects(
-      createOfficialPatreonApi(http, { auth, campaignId: '1' }).listPosts(),
+      createOfficialPatreonApi(http, {
+        auth,
+        campaignId: '1',
+        sanitize: keepHtml,
+      }).listPosts(),
       /Still refused/,
     );
     assert.equal(refreshes(), 1);
@@ -167,9 +178,43 @@ describe('createOfficialPatreonApi', () => {
     const { auth, refreshes } = fakeAuth();
 
     await assert.rejects(
-      createOfficialPatreonApi(http, { auth, campaignId: '1' }).listPosts(),
+      createOfficialPatreonApi(http, {
+        auth,
+        campaignId: '1',
+        sanitize: keepHtml,
+      }).listPosts(),
       /Blocked/,
     );
     assert.equal(refreshes(), 0);
+  });
+
+  it('passes each post text through the sanitiser into the description', async () => {
+    const { http } = fakeHttp([
+      {
+        data: [
+          rawPost('1'),
+          {
+            ...rawPost('2'),
+            attributes: { ...rawPost('2').attributes, content: null },
+          },
+        ],
+      },
+    ]);
+    const seen: string[] = [];
+
+    const posts = await createOfficialPatreonApi(http, {
+      auth: fakeAuth().auth,
+      campaignId: '1',
+      sanitize: (html) => {
+        seen.push(html);
+        return `clean:${html}`;
+      },
+    }).listPosts();
+
+    assert.deepEqual(seen, ['<p>Story of post 1.</p>', '']);
+    assert.deepEqual(
+      posts.map((p) => p.description),
+      ['clean:<p>Story of post 1.</p>', 'clean:'],
+    );
   });
 });

@@ -22,6 +22,7 @@ function post(id: string, title = `Map ${id}`): PatreonPost {
   return {
     id,
     title,
+    description: '',
     url: `https://www.patreon.com/posts/${id}`,
     publishedAt: `2026-01-0${id}T00:00:00.000Z`,
     isPublic: true,

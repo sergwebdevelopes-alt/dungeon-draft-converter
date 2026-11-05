@@ -13,6 +13,7 @@ const APP_MIGRATIONS = [
   '003_drop_source.sql',
   '004_drop_image_choice_columns.sql',
   '005_patreon_tokens.sql',
+  '006_map_description.sql',
 ];
 
 async function migrationsDir(files: Record<string, string>): Promise<string> {

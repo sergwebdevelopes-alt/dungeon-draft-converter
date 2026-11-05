@@ -8,6 +8,7 @@ function map(postId: string, slug: string, publishedAt: string): MapRecord {
     postId,
     slug,
     title: slug,
+    description: '',
     tags: [],
     patreonUrl: '',
     publishedAt,

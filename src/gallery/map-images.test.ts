@@ -14,6 +14,7 @@ function map(mediaId = 'm1'): MapRecord {
     postId: '1',
     slug: 'cave',
     title: 'Cave',
+    description: '',
     tags: [],
     patreonUrl: 'https://www.patreon.com/posts/1',
     publishedAt: '2026-01-01T00:00:00.000Z',

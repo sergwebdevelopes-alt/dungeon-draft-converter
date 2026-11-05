@@ -7,6 +7,7 @@ interface MapRow {
   slug: string;
   title: string;
   subtitle: string | null;
+  description: string;
   tags: string[];
   squares_x: number | null;
   squares_y: number | null;
@@ -70,6 +71,7 @@ function toStoredMap(row: MapRow): StoredMap {
     slug: row.slug,
     title: row.title,
     ...(row.subtitle ? { subtitle: row.subtitle } : {}),
+    description: row.description,
     tags: row.tags,
     ...(row.squares_x && row.squares_y
       ? { squares: { x: row.squares_x, y: row.squares_y } }
@@ -92,6 +94,7 @@ function toRow(map: MapRecord): Record<string, unknown> {
     slug: map.slug,
     title: map.title,
     subtitle: map.subtitle ?? null,
+    description: map.description,
     tags: map.tags,
     squares_x: map.squares?.x ?? null,
     squares_y: map.squares?.y ?? null,

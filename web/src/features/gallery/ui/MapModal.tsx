@@ -11,6 +11,7 @@ import { ButtonLink } from '../../../shared/ui/Button.tsx';
 import { Segmented } from '../../../shared/ui/Segmented.tsx';
 import { Reveal, Swipeable } from '../../../shared/ui/motion/index.ts';
 import { captionOf, type MapEntry } from '../model/catalog.ts';
+import { MapDescription } from './MapDescription.tsx';
 import { MapViewer } from './MapViewer.tsx';
 
 interface MapModalProps {
@@ -156,7 +157,7 @@ function MapModal({
           </p>
         </Swipeable>
 
-        <div className="grid content-start gap-5 border-t border-line p-4 sm:p-6 lg:border-t-0 lg:border-l">
+        <div className="grid content-start gap-5 border-t border-line p-4 sm:p-6 lg:min-h-0 lg:overflow-y-auto lg:border-t-0 lg:border-l">
           <div className="grid min-h-[5.25rem] content-start gap-1 pr-12">
             <h2
               id={titleId}
@@ -188,6 +189,8 @@ function MapModal({
           )}
 
           <ButtonLink href={map.patreonUrl}>Get it on Patreon</ButtonLink>
+
+          {map.description && <MapDescription html={map.description} />}
         </div>
 
         <button

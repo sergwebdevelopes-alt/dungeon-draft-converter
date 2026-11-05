@@ -44,11 +44,13 @@ const UNSIZED: MapEntry = {
   subtitle: undefined,
 };
 
-const MAPS = [
-  entry('cave', 'Ice Cave', ['Underground']),
-  entry('inn', 'Blue Inn', ['Interior']),
-  UNSIZED,
-];
+const DESCRIBED: MapEntry = {
+  ...entry('inn', 'Blue Inn', ['Interior']),
+  description:
+    '<p>A <strong>safe haven</strong> in Vallaki.</p><ul><li>Three floors</li><li>VTT files</li></ul>',
+};
+
+const MAPS = [entry('cave', 'Ice Cave', ['Underground']), DESCRIBED, UNSIZED];
 
 let navigateBack: () => void = () => undefined;
 
@@ -247,6 +249,29 @@ describe('GalleryPage', () => {
     expect(
       within(modal).getByRole('button', { name: 'With grid' }),
     ).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('shows the description of a map from Patreon', async () => {
+    await renderGallery('/maps?map=inn');
+    const description = within(dialog()!).getByRole('region', {
+      name: 'Description',
+    });
+
+    expect(description).toHaveTextContent('A safe haven in Vallaki.');
+    expect(within(description).getByText('safe haven').tagName).toBe('STRONG');
+    expect(
+      within(description)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['Three floors', 'VTT files']);
+  });
+
+  it('shows no description when the post has none', async () => {
+    await renderGallery('/maps?map=cave');
+
+    expect(
+      within(dialog()!).queryByRole('region', { name: 'Description' }),
+    ).toBeNull();
   });
 
   it('shows a map without a known size without the grid choice', async () => {

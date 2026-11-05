@@ -7,15 +7,17 @@ import {
   HttpClientError,
   type HttpClient,
 } from '../../http/client/http-client.ts';
+import type { SanitizeHtml } from '../../html/html-sanitizer.ts';
 import type { PatreonApi, PatreonPost } from './patreon-api.ts';
 import type { PatreonAuth } from './patreon-auth.ts';
 
-const POST_FIELDS = 'title,url,published_at,is_public';
+const POST_FIELDS = 'title,content,url,published_at,is_public';
 
 interface RawPost {
   id: string;
   attributes: {
     title: string | null;
+    content: string | null;
     url: string;
     published_at: string | null;
     is_public: boolean | null;
@@ -30,6 +32,7 @@ interface PostPage {
 interface PatreonAccount {
   auth: PatreonAuth;
   campaignId: string;
+  sanitize: SanitizeHtml;
 }
 
 function firstPageUrl(campaignId: string): string {
@@ -41,10 +44,14 @@ function firstPageUrl(campaignId: string): string {
   return `${PATREON_API_URL}/campaigns/${campaignId}/posts?${query}`;
 }
 
-function toPost({ id, attributes }: RawPost): PatreonPost {
+function toPost(
+  { id, attributes }: RawPost,
+  sanitize: SanitizeHtml,
+): PatreonPost {
   return {
     id,
     title: attributes.title ?? '',
+    description: sanitize(attributes.content ?? ''),
     url: new URL(attributes.url, PATREON_SITE_URL).href,
     publishedAt: attributes.published_at ?? '',
     isPublic: attributes.is_public === true,
@@ -57,7 +64,7 @@ function isUnauthorized(error: unknown): boolean {
 
 function createOfficialPatreonApi(
   http: HttpClient,
-  { auth, campaignId }: PatreonAccount,
+  { auth, campaignId, sanitize }: PatreonAccount,
 ): PatreonApi {
   function getPage(url: string, token: string, signal?: AbortSignal) {
     const headers = { Authorization: `Bearer ${token}` };
@@ -86,7 +93,7 @@ function createOfficialPatreonApi(
 
       while (url) {
         const page = await getPageWithFreshToken(url, signal);
-        posts.push(...page.data.map(toPost));
+        posts.push(...page.data.map((post) => toPost(post, sanitize)));
         url = page.links?.next;
       }
 

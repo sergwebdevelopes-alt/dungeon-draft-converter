@@ -15,6 +15,7 @@ interface MapRecord {
   slug: string;
   title: string;
   subtitle?: string;
+  description: string;
   tags: string[];
   squares?: Squares;
   patreonUrl: string;

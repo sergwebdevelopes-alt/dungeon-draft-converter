@@ -21,6 +21,7 @@ src/
 ├── jobs/          scheduled work: schedule() (timer, optional run at start, stop), upload cleanup, gallery sync (schedules the shared sync; reads its interval from config.ts); startJobs({ gallerySync }) starts them all
 ├── queue/         PendingLimit (busy limit) and ConversionQueue (parallel slots, FIFO line, positions; cancel via AbortSignal)
 ├── zip/           zip port + fflate adapter
+├── html/          SanitizeHtml port + sanitize-html adapter (the only file importing sanitize-html): keeps p, br, strong/b, em/i, lists and https links (new tab, rel=noopener noreferrer nofollow); drops every other tag's markup, all attributes and empty paragraphs
 ├── db/           Database port (query, transaction, exclusive lock) + pg adapter (the only file importing pg); openDatabase (connect + migrate); migrate.ts (the `db:migrate` script); migrations runner + migrations/*.sql; LOCKS (every advisory lock key)
 ├── gallery/       the gallery feature
 │   ├── map-store.ts + postgres-map-store.ts   MapStore port + adapter (SQL through the Database port); replaceMaps saves the whole gallery in one transaction and returns what it added, changed and removed
@@ -71,6 +72,7 @@ web/src/
 - The web app imports only types from the server's `src/`, plus `src/core/grid-stroke.ts` (the export grid style); ESLint enforces this.
 - Use the shared `Button`/`ButtonLink`, `Alert` and `Segmented` instead of repeating their classes.
 - Motion is imported only in `web/src/shared/ui/motion/`; features use its wrappers (`MotionProvider`, `Reveal`, `SharedFrame`, `Swipeable`).
+- Patreon post HTML is sanitised once, in the sync (the official adapter gets the sanitiser passed in), and stored as `maps.description`; the modal inserts it with `dangerouslySetInnerHTML` in `MapDescription.tsx`, the only place raw HTML is rendered.
 - The gallery loads `GET /api/maps`, filled by the Patreon sync (public posts in any Patreon collection; collection names become filter chips). The web `MapEntry` is the server's type from `src/gallery/model/map-entry.ts`; `subtitle` and `squares` are optional, so the grid choice and the converter teaser appear only for maps with squares. The modal draws its grid with `GridOverlay`, so no gridded image is needed.
 - Styling uses Tailwind with colour and font tokens in `web/src/styles.css`.
 

@@ -9,6 +9,7 @@ function post(id: string, overrides: Partial<PatreonPost> = {}): PatreonPost {
   return {
     id,
     title: `Map ${id}`,
+    description: '',
     url: `https://www.patreon.com/posts/${id}`,
     publishedAt: '2026-01-01T00:00:00.000Z',
     isPublic: true,
@@ -42,6 +43,7 @@ function map(
     postId,
     slug: `map-${postId}`,
     title: `Map ${postId}`,
+    description: '',
     tags: [],
     patreonUrl: `https://www.patreon.com/posts/${postId}`,
     publishedAt: '2026-01-01T00:00:00.000Z',

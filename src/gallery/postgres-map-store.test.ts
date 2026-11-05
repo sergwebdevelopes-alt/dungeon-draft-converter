@@ -11,6 +11,7 @@ function map(overrides: Partial<MapRecord> = {}): MapRecord {
     postId: '166553789',
     slug: 'tser-falls',
     title: 'Tser Falls',
+    description: '<p>A <strong>roaring</strong> waterfall.</p>',
     subtitle: 'Curse of Strahd',
     tags: ['Barovia', 'Curse of Strahd'],
     squares: { x: 60, y: 40 },
@@ -111,15 +112,17 @@ describe('createPostgresMapStore', () => {
       map({ postId: '1', slug: 'a' }),
       map({ postId: '2', slug: 'b' }),
       map({ postId: '3', slug: 'c' }),
+      map({ postId: '5', slug: 'e' }),
     ]);
 
     const counts = await store.replaceMaps([
       map({ postId: '1', slug: 'a' }),
       map({ postId: '2', slug: 'b', title: 'Renamed' }),
+      map({ postId: '3', slug: 'c', description: '<p>New story.</p>' }),
       map({ postId: '4', slug: 'd' }),
     ]);
 
-    assert.deepEqual(counts, { added: 1, updated: 1, removed: 1 });
+    assert.deepEqual(counts, { added: 1, updated: 2, removed: 1 });
   });
 
   it('lists the newest maps first', async () => {

@@ -9,6 +9,7 @@ function map(overrides: Partial<MapRecord> = {}): MapRecord {
     slug: 'tser-falls',
     title: 'Tser Falls',
     subtitle: 'Curse of Strahd',
+    description: '<p>A <strong>roaring</strong> waterfall.</p>',
     tags: ['Barovia'],
     squares: { x: 60, y: 40 },
     patreonUrl: 'https://www.patreon.com/posts/tser-166553789',
@@ -31,6 +32,7 @@ describe('toMapEntry', () => {
       slug: 'tser-falls',
       title: 'Tser Falls',
       subtitle: 'Curse of Strahd',
+      description: '<p>A <strong>roaring</strong> waterfall.</p>',
       tags: ['Barovia'],
       squares: { x: 60, y: 40 },
       width: 8400,
@@ -44,13 +46,14 @@ describe('toMapEntry', () => {
     });
   });
 
-  it('leaves out a missing subtitle and size', () => {
+  it('leaves out a missing subtitle, size and description', () => {
     const entry = toMapEntry(
-      map({ subtitle: undefined, squares: undefined }),
+      map({ subtitle: undefined, squares: undefined, description: '' }),
       urlFor,
     );
 
     assert.equal('subtitle' in entry, false);
     assert.equal('squares' in entry, false);
+    assert.equal('description' in entry, false);
   });
 });

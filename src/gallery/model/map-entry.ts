@@ -5,6 +5,7 @@ interface MapEntry {
   slug: string;
   title: string;
   subtitle?: string;
+  description?: string;
   tags: string[];
   squares?: Squares;
   width: number;
@@ -29,6 +30,7 @@ function toMapEntry(map: MapRecord, urlFor: (key: string) => string): MapEntry {
     slug: map.slug,
     title: map.title,
     ...(map.subtitle ? { subtitle: map.subtitle } : {}),
+    ...(map.description ? { description: map.description } : {}),
     tags: map.tags,
     ...(map.squares ? { squares: map.squares } : {}),
     width: map.image.width,

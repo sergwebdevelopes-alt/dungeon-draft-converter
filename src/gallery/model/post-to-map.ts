@@ -32,6 +32,7 @@ function postToMap(
     slug: slugify(parsed.title),
     ...parsed,
     ...(squares ? { squares } : {}),
+    description: post.description,
     tags: collectionChips(details.collections),
     patreonUrl: post.url,
     publishedAt: post.publishedAt,

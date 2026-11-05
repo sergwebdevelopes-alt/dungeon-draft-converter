@@ -7,6 +7,7 @@ const MAP: MapRecord = {
   postId: '166553789',
   slug: 'tser-falls',
   title: 'Tser Falls',
+  description: '',
   tags: [],
   patreonUrl: 'https://www.patreon.com/posts/tser-166553789',
   publishedAt: '2025-07-01T10:00:00.000Z',

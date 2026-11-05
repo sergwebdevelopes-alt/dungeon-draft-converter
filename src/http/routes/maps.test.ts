@@ -13,6 +13,7 @@ function stored(postId: string, slug: string): StoredMap {
     postId,
     slug,
     title: slug,
+    description: '',
     tags: [],
     patreonUrl: `https://www.patreon.com/posts/${postId}`,
     publishedAt: '2026-01-01T00:00:00.000Z',

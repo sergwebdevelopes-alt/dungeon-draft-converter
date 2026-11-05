@@ -8,6 +8,7 @@ import { renderGalleryImages } from '../core/gallery-images.ts';
 import type { Database } from '../db/database.ts';
 import { createFetchHttpClient } from '../http/client/fetch-http-client.ts';
 import { createRateLimitedHttpClient } from '../http/client/rate-limited-http-client.ts';
+import { sanitizeWithLibrary } from '../html/sanitize-html-sanitizer.ts';
 import type { PatreonSettings } from '../settings/read-settings.ts';
 import type { ImageStore } from './image-store.ts';
 import { createLocalImageStore } from './local-image-store.ts';
@@ -63,6 +64,7 @@ function createGallerySyncFromSettings(
     patreon: createOfficialPatreonApi(http, {
       auth,
       campaignId: patreon.campaignId,
+      sanitize: sanitizeWithLibrary,
     }),
     details: createWebsitePostDetails(http, patreon.campaignId),
     http,
