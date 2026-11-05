@@ -7,6 +7,7 @@ import {
 import { renderGalleryImages } from './features/gallery/adapters/sharp-map-image-renderer.ts';
 import type { Database } from './infrastructure/database/database.ts';
 import { createFetchHttpClient } from './infrastructure/http-client/fetch-http-client.ts';
+import { createHttpMapImageSource } from './features/gallery/adapters/http-map-image-source.ts';
 import { createRateLimitedHttpClient } from './infrastructure/http-client/rate-limited-http-client.ts';
 import { sanitizeWithLibrary } from './features/gallery/adapters/sanitize-html-sanitizer.ts';
 import type { PatreonSettings } from './settings/read-settings.ts';
@@ -59,7 +60,7 @@ function createGallerySyncFromSettings(
       sanitize: sanitizeWithLibrary,
     }),
     details: createWebsitePostDetails(http, patreon.campaignId),
-    http,
+    fetchImage: createHttpMapImageSource(http),
     maps: stores.maps,
     images: stores.images,
     render: renderGalleryImages,

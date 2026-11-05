@@ -26,7 +26,7 @@ The back end mirrors the front end: features under `src/features/`, technology u
 `domain ← application ← adapters / http / jobs ← composition root`
 
 - The domain imports only other domain files, `shared/` and `contracts/`: no packages, no Node modules, no `config.ts`.
-- The application imports only its domain, its ports, `shared/` and `contracts/`, plus the `HttpClient` port in `infrastructure/http-client/http-client.ts`.
+- The application imports only its domain, its ports, `shared/` and `contracts/`.
 - `infrastructure/` and `shared/` never import a feature; `shared/` imports no packages, `infrastructure/` or `config.ts`; `contracts/` imports nothing; one feature never imports another.
 - oxlint enforces these rules with `no-restricted-imports` overrides in `.oxlintrc.json`, so a wrong import fails `npm run lint`. A later override replaces an earlier one, so each folder's list repeats the "one feature never imports another" pattern, which names the features (`(converter|gallery)`).
 
@@ -54,8 +54,8 @@ src/
 │   └── gallery/         Patreon posts → the public map gallery
 │       ├── domain/            map-record, post-to-map-record, parse-post-title, choose-map-image, collection-chips, map-slugs, map-image-keys, gallery-sync-plan, choose-patreon-tokens, patreon-post, patreon-tokens, tidy-text
 │       ├── application/       sync-gallery (Patreon posts → maps, saved in one transaction, one run at a time), prepare-map-images (renders missing images, keeps the previous version if that fails)
-│       ├── ports/             map-repository, image-storage, map-image-renderer, patreon-posts, patreon-post-details, patreon-token-repository, html-sanitizer, gallery-stores
-│       ├── adapters/          postgres-map-repository, postgres-patreon-token-repository, local-image-storage, sharp-map-image-renderer, patreon-api-posts, patreon-website-post-details, patreon-token-refresher, sanitize-html-sanitizer
+│       ├── ports/             map-repository, image-storage, map-image-renderer, map-image-source, patreon-posts, patreon-post-details, patreon-token-repository, html-sanitizer, gallery-stores
+│       ├── adapters/          postgres-map-repository, postgres-patreon-token-repository, local-image-storage, sharp-map-image-renderer, http-map-image-source, patreon-api-posts, patreon-website-post-details, patreon-token-refresher, sanitize-html-sanitizer
 │       ├── http/              routes (/maps, /patreon/webhook), map-entry (the /api/maps shape), patreon-webhook-signature, serve-map-images (/maps/*)
 │       └── jobs/              gallery-sync-job
 ├── infrastructure/      technology used by several features

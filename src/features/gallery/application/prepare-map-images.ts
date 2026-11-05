@@ -1,15 +1,12 @@
 import type { RenderMapImages } from '../ports/map-image-renderer.ts';
-import {
-  isAbortError,
-  type HttpClient,
-} from '../../../infrastructure/http-client/http-client.ts';
+import type { FetchMapImage } from '../ports/map-image-source.ts';
 import { messageOf } from '../../../shared/utils/error-message.ts';
 import type { ImageStore } from '../ports/image-storage.ts';
 import { IMAGE_NAMES, imageKey } from '../domain/map-image-keys.ts';
 import type { MapRecord } from '../domain/map-record.ts';
 
 interface MapImagesDeps {
-  http: HttpClient;
+  fetchImage: FetchMapImage;
   images: ImageStore;
   render: RenderMapImages;
   signal?: AbortSignal;
@@ -25,7 +22,7 @@ interface MapImages {
 }
 
 function createMapImages({
-  http,
+  fetchImage,
   images,
   render,
   signal,
@@ -41,7 +38,7 @@ function createMapImages({
   }
 
   async function renderImages(map: MapRecord): Promise<void> {
-    const original = await http.getBytes(map.image.url, { signal });
+    const original = await fetchImage(map.image.url, signal);
     const rendered = await render(original);
 
     for (const name of IMAGE_NAMES) {
@@ -59,7 +56,7 @@ function createMapImages({
         await renderImages(map);
         return { map, failed: false };
       } catch (error) {
-        if (isAbortError(error)) {
+        if (signal?.aborted) {
           throw error;
         }
         console.error(

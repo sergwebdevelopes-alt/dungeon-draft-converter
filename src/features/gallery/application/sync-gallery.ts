@@ -1,8 +1,5 @@
 import type { RenderMapImages } from '../ports/map-image-renderer.ts';
-import {
-  isAbortError,
-  type HttpClient,
-} from '../../../infrastructure/http-client/http-client.ts';
+import type { FetchMapImage } from '../ports/map-image-source.ts';
 import { messageOf } from '../../../shared/utils/error-message.ts';
 import { withoutUndefined } from '../../../shared/utils/object.ts';
 import { singleFlight } from '../../../shared/utils/single-flight.ts';
@@ -32,7 +29,7 @@ interface GallerySyncLogEntry extends Partial<SyncCounts> {
 interface GallerySyncDeps {
   patreon: PatreonApi;
   details: PostDetailsSource;
-  http: HttpClient;
+  fetchImage: FetchMapImage;
   maps: MapStore;
   images: ImageStore;
   render: RenderMapImages;
@@ -85,7 +82,7 @@ async function prepareAll(
 function createGallerySync({
   patreon,
   details,
-  http,
+  fetchImage,
   maps,
   images,
   render,
@@ -93,7 +90,7 @@ function createGallerySync({
   signal,
   now = Date.now,
 }: GallerySyncDeps): GallerySync {
-  const mapImages = createMapImages({ http, images, render, signal });
+  const mapImages = createMapImages({ fetchImage, images, render, signal });
 
   async function syncOnce(): Promise<SyncResult> {
     const posts = await patreon.listPosts(signal);
@@ -130,11 +127,13 @@ function createGallerySync({
         tookMs: now() - startedAt,
       });
     } catch (error) {
+      const cancelled = signal?.aborted === true;
+
       log(
         withoutUndefined({
           event: 'gallery-sync',
-          result: isAbortError(error) ? 'cancelled' : 'failed',
-          error: isAbortError(error) ? undefined : messageOf(error),
+          result: cancelled ? 'cancelled' : 'failed',
+          error: cancelled ? undefined : messageOf(error),
           tookMs: now() - startedAt,
         }),
       );

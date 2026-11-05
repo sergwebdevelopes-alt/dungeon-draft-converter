@@ -1,10 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { GalleryImages } from '../ports/map-image-renderer.ts';
-import {
-  HttpClientError,
-  type HttpClient,
-} from '../../../infrastructure/http-client/http-client.ts';
+import type { FetchMapImage } from '../ports/map-image-source.ts';
 import type { ImageStore } from '../ports/image-storage.ts';
 import type { MapStore, StoredMap } from '../ports/map-repository.ts';
 import type { MapRecord } from '../domain/map-record.ts';
@@ -65,20 +62,16 @@ function fakePatreon(state: FakePatreon) {
   return { patreon, source };
 }
 
-function fakeHttp(broken: Set<string>) {
+function fakeImageSource(broken: Set<string>) {
   const downloads: string[] = [];
-  const http: HttpClient = {
-    get: () => Promise.reject(new Error('Not used.')),
-    post: () => Promise.reject(new Error('Not used.')),
-    getBytes(url) {
-      downloads.push(url);
-      return broken.has(url)
-        ? Promise.reject(new HttpClientError(404, 'Gone.'))
-        : Promise.resolve(Buffer.from(url));
-    },
+  const fetchImage: FetchMapImage = (url) => {
+    downloads.push(url);
+    return broken.has(url)
+      ? Promise.reject(new Error('Gone.'))
+      : Promise.resolve(Buffer.from(url));
   };
 
-  return { http, downloads };
+  return { fetchImage, downloads };
 }
 
 function comparable(map: MapRecord): string {
@@ -142,21 +135,22 @@ function render(original: Buffer): Promise<GalleryImages> {
   });
 }
 
-function setUp(state: FakePatreon) {
+function setUp(state: FakePatreon, signal?: AbortSignal) {
   const { patreon, source } = fakePatreon(state);
   const broken = new Set<string>();
-  const { http, downloads } = fakeHttp(broken);
+  const { fetchImage, downloads } = fakeImageSource(broken);
   const maps = fakeMapStore();
   const { images, files } = fakeImageStore();
   const logs: GallerySyncLogEntry[] = [];
   const sync = createGallerySync({
     patreon,
     details: source,
-    http,
+    fetchImage,
     maps: maps.store,
     images,
     render,
     log: (entry) => logs.push(entry),
+    signal,
     now: () => 0,
   });
 
@@ -275,7 +269,7 @@ describe('createGallerySync', () => {
     const { sync, maps, files, logs } = setUp(state);
     await sync.run();
 
-    state.error = new HttpClientError(403, 'Blocked.');
+    state.error = new Error('Blocked.');
     await sync.run();
 
     assert.equal(maps.stored().length, 1);
@@ -294,13 +288,36 @@ describe('createGallerySync', () => {
       details: [details('1')],
       error: new DOMException('Stopped.', 'AbortError'),
     };
-    const { sync, maps, logs } = setUp(state);
+    const controller = new AbortController();
+    controller.abort();
+    const { sync, maps, logs } = setUp(state, controller.signal);
 
     await sync.run();
 
     assert.deepEqual(maps.stored(), []);
     assert.deepEqual(logs, [
       { event: 'gallery-sync', result: 'cancelled', tookMs: 0 },
+    ]);
+  });
+
+  it('logs a Patreon timeout as a failed sync with its message', async () => {
+    const state: FakePatreon = {
+      posts: [post('1')],
+      details: [details('1')],
+      error: new DOMException('Too slow.', 'TimeoutError'),
+    };
+    const { sync, maps, logs } = setUp(state);
+
+    await sync.run();
+
+    assert.deepEqual(maps.stored(), []);
+    assert.deepEqual(logs, [
+      {
+        event: 'gallery-sync',
+        result: 'failed',
+        error: 'Too slow.',
+        tookMs: 0,
+      },
     ]);
   });
 

@@ -1,10 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it, mock } from 'node:test';
 import type { GalleryImages } from '../ports/map-image-renderer.ts';
-import {
-  HttpClientError,
-  type HttpClient,
-} from '../../../infrastructure/http-client/http-client.ts';
+import type { FetchMapImage } from '../ports/map-image-source.ts';
 import type { ImageStore } from '../ports/image-storage.ts';
 import { createMapImages } from './prepare-map-images.ts';
 import type { MapRecord } from '../domain/map-record.ts';
@@ -27,18 +24,17 @@ function map(mediaId = 'm1'): MapRecord {
   };
 }
 
-function setUp(answer?: Error) {
+interface Download {
+  url: string;
+  signal: AbortSignal | undefined;
+}
+
+function setUp(answer?: Error, signal?: AbortSignal) {
   const files = new Map<string, Buffer>();
-  const downloads: string[] = [];
-  const http: HttpClient = {
-    get: () => Promise.reject(new Error('Not used.')),
-    post: () => Promise.reject(new Error('Not used.')),
-    getBytes(url) {
-      downloads.push(url);
-      return answer
-        ? Promise.reject(answer)
-        : Promise.resolve(Buffer.from(url));
-    },
+  const downloads: Download[] = [];
+  const fetchImage: FetchMapImage = (url, given) => {
+    downloads.push({ url, signal: given });
+    return answer ? Promise.reject(answer) : Promise.resolve(Buffer.from(url));
   };
   const images: ImageStore = {
     has: (key) => Promise.resolve(files.has(key)),
@@ -57,7 +53,7 @@ function setUp(answer?: Error) {
     });
 
   return {
-    mapImages: createMapImages({ http, images, render }),
+    mapImages: createMapImages({ fetchImage, images, render, signal }),
     files,
     downloads,
   };
@@ -98,7 +94,7 @@ describe('createMapImages', () => {
   });
 
   it('keeps the previous version when the new image fails', async () => {
-    const { mapImages } = setUp(new HttpClientError(404, 'Gone.'));
+    const { mapImages } = setUp(new Error('Gone.'));
     const errors = quietErrors();
 
     try {
@@ -113,7 +109,7 @@ describe('createMapImages', () => {
   });
 
   it('leaves out a new map whose image fails', async () => {
-    const { mapImages } = setUp(new HttpClientError(404, 'Gone.'));
+    const { mapImages } = setUp(new Error('Gone.'));
     const errors = quietErrors();
 
     try {
@@ -126,11 +122,33 @@ describe('createMapImages', () => {
     }
   });
 
+  it('counts a timed-out download as a failed image and keeps the previous version', async () => {
+    const { mapImages } = setUp(new DOMException('Too slow.', 'TimeoutError'));
+    const errors = quietErrors();
+
+    try {
+      assert.deepEqual(await mapImages.prepare(map('new'), map()), {
+        map: map(),
+        failed: true,
+      });
+    } finally {
+      errors.mock.restore();
+    }
+  });
+
   it('lets a cancel through instead of counting it as a failed image', async () => {
-    const { mapImages } = setUp(new DOMException('Stopped.', 'AbortError'));
+    const controller = new AbortController();
+    controller.abort();
+    const { mapImages, downloads } = setUp(
+      new DOMException('Stopped.', 'AbortError'),
+      controller.signal,
+    );
 
     await assert.rejects(mapImages.prepare(map(), map('old')), {
       name: 'AbortError',
     });
+    assert.deepEqual(downloads, [
+      { url: 'https://cdn.test/m1', signal: controller.signal },
+    ]);
   });
 });

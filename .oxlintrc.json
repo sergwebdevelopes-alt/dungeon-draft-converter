@@ -208,7 +208,6 @@
                   "**/jobs/**",
                   "**/image-processing/**",
                   "**/infrastructure/**",
-                  "!**/infrastructure/http-client/http-client.ts",
                   "**/config.ts"
                 ],
                 "message": "The application imports only its domain, its ports, shared/ and contracts/."
@@ -238,7 +237,6 @@
                   "**/http/**",
                   "**/jobs/**",
                   "**/infrastructure/**",
-                  "!**/infrastructure/http-client/http-client.ts",
                   "**/config.ts"
                 ],
                 "message": "The application imports only its domain, its ports, shared/ and contracts/."
