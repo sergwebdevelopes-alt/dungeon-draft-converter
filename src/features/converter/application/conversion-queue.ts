@@ -1,9 +1,6 @@
 import { checkLimit } from './check-limit.ts';
 
-type QueuePosition =
-  | { state: 'waiting'; ahead: number }
-  | { state: 'converting' }
-  | { state: 'unknown' };
+import type { QueuePosition } from '../../../contracts/converter-api.ts';
 
 interface QueueOptions {
   maxParallel: number;
@@ -121,4 +118,4 @@ class ConversionQueue {
 }
 
 export { ConversionQueue };
-export type { QueueOptions, QueuePosition, RunOptions };
+export type { QueueOptions, RunOptions };

@@ -1,24 +1,15 @@
 import type {
+  ConfigResponse,
   FormatPreset,
-  LOGO_LIMITS,
+  LogoLimits,
   LogoSetting,
+  QueuePosition,
   Variant,
-} from '../../../../../src/features/converter/image-processing/render-map-images.ts';
-import type { QueuePosition } from '../../../../../src/features/converter/application/conversion-queue.ts';
-
-type LogoLimits = typeof LOGO_LIMITS;
+} from '../../../../../src/contracts/converter-api.ts';
 
 type LogoPlacement = Record<LogoSetting, number>;
 
-interface Config {
-  presets: FormatPreset[];
-  variants: Variant[];
-  maxUploadBytes: number;
-  maxTotalUploadBytes: number;
-  maxLevels: number;
-  maxLogoBytes: number;
-  logo: LogoLimits;
-}
+type Config = ConfigResponse;
 
 interface ConvertRequest {
   ticket: string;

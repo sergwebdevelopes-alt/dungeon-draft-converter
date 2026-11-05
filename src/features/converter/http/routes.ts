@@ -6,6 +6,10 @@ import {
   MAX_UPLOAD_BYTES,
 } from '../../../config.ts';
 import { HttpError } from '../../../infrastructure/http-server/http-errors.ts';
+import type {
+  ConfigResponse,
+  QueuePosition,
+} from '../../../contracts/converter-api.ts';
 import type { ConversionQueue } from '../application/conversion-queue.ts';
 import type { PendingLimit } from '../application/pending-limit.ts';
 import {
@@ -61,13 +65,13 @@ function createRoutes({
       maxLevels: MAX_LEVELS,
       maxLogoBytes: MAX_LOGO_BYTES,
       logo: LOGO_LIMITS,
-    });
+    } satisfies ConfigResponse);
   });
 
   router.get('/queue/:ticket', (req, res) => {
     res
       .set('Cache-Control', 'no-store')
-      .json(queue.position(req.params.ticket));
+      .json(queue.position(req.params.ticket) satisfies QueuePosition);
   });
 
   router.post(

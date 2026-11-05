@@ -18,6 +18,7 @@ The back end mirrors the front end: features under `src/features/`, technology u
 - **Port** (`ports/`): an interface we define for something a use case needs from outside. Example: `gallery/ports/map-repository.ts`.
 - **Adapter** (`adapters/`): one implementation of a port with one technology, named `<technology>-<port>.ts`. It is the only file that imports that library. Example: `gallery/adapters/postgres-map-repository.ts`, `converter/adapters/fflate-zip-writer.ts`.
 - **Entry points:** where work starts. A feature's `http/routes.ts` (all its endpoints, `createRoutes(deps)`), its `jobs/`, and the scripts in `src/cli/`.
+- **Contracts** (`src/contracts/`): the shapes the server and the web app exchange, in files that import nothing. Every layer may use them, and they're the only server code the web app imports.
 - **Composition root:** `server.ts`, `app.ts`, `create-gallery.ts`, `start-jobs.ts` and `cli/`, the only code that knows every piece. It builds the adapters and hands them in.
 
 ### Dependency rule
@@ -39,9 +40,10 @@ src/
 ├── config.ts            every process.env read and every limit
 ├── cli/                 migrate-database.ts (npm run db:migrate), sync-gallery-once.ts (npm run gallery:sync)
 ├── settings/            read-settings.ts (Zod, the only file importing zod), stop-on-bad-settings.ts
+├── contracts/           what the server and the web app exchange; imports nothing: converter-api (presets, variants, logo limits, ConfigResponse, QueuePosition), gallery-api (MapEntry, MapsResponse, Squares), grid-stroke
 ├── features/
 │   ├── converter/       .dd2vtt → VTT and print images
-│   │   ├── domain/            dd2vtt-metadata, grid-stroke (also used by the web app)
+│   │   ├── domain/            dd2vtt-metadata
 │   │   ├── application/       convert-levels, conversion-queue (parallel slots, FIFO line, positions), pending-limit, check-limit
 │   │   ├── image-processing/  sharp-based: read-dd2vtt-file, render-map-images, bake-lighting, merge-levels, draw-grid
 │   │   ├── ports/             zip-writer, multipart-parser
@@ -119,11 +121,11 @@ web/src/
 - No DI container: modules export ready instances (`http`, `storage`, `converterApi`); hooks take them as default parameters so tests can pass fakes.
 - The ports rule covers runtime libraries (HTTP, storage, animation). UI frameworks and build tools (React, Tailwind, Vite, Vitest) are used directly.
 - Membership plans live in `web/src/shared/config/site.ts` (`membership.plans`); adding a Patreon tier means adding one entry there. Pages use `Container` for width and padding; sections may run full width.
-- The web app imports only types from the server's `src/`, plus `src/features/converter/domain/grid-stroke.ts` (the export grid style); `web/src/server-imports.test.ts` enforces this.
+- The web app imports from the server only `src/contracts/` (API shapes and the export grid style), and `web/src/server-imports.test.ts` enforces this. The server checks its JSON answers against the same types (`satisfies ConfigResponse` / `MapsResponse` / `QueuePosition`), so a change to the API breaks typecheck on both sides.
 - Use the shared `Button`/`ButtonLink`, `Alert` and `Segmented` instead of repeating their classes.
 - Motion is imported only in `web/src/shared/ui/motion/`; features use its wrappers (`MotionProvider`, `Reveal`, `SharedFrame`, `Swipeable`).
 - Patreon post HTML is sanitised once, in the sync (the official adapter gets the sanitiser passed in), and stored as `maps.description`; the modal inserts it with `dangerouslySetInnerHTML` in `MapDescription.tsx`, the only place raw HTML is rendered.
-- The gallery loads `GET /api/maps`, filled by the Patreon sync (public posts in any Patreon collection; collection names become filter chips). The web `MapEntry` is the server's type from `src/features/gallery/http/map-entry.ts`; `subtitle` and `squares` are optional, so the grid choice and the converter teaser appear only for maps with squares. The modal draws its grid with `GridOverlay`, so no gridded image is needed.
+- The gallery loads `GET /api/maps`, filled by the Patreon sync (public posts in any Patreon collection; collection names become filter chips). The web `MapEntry` comes from `src/contracts/gallery-api.ts`; `subtitle` and `squares` are optional, so the grid choice and the converter teaser appear only for maps with squares. The modal draws its grid with `GridOverlay`, so no gridded image is needed.
 - Styling uses Tailwind with colour and font tokens in `web/src/styles.css`.
 
 ## Code style

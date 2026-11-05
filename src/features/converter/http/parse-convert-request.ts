@@ -11,11 +11,13 @@ import {
   FORMAT_PRESETS,
   LOGO_LIMITS,
   VARIANTS,
-  type FormatPreset,
   type LogoOptions,
-  type LogoSetting,
-  type Variant,
 } from '../image-processing/render-map-images.ts';
+import type {
+  FormatPreset,
+  LogoSetting,
+  Variant,
+} from '../../../contracts/converter-api.ts';
 import type { ConversionQueue } from '../application/conversion-queue.ts';
 import { formatMegabytes } from '../../../shared/utils/format.ts';
 import { HttpError } from '../../../infrastructure/http-server/http-errors.ts';

@@ -2,7 +2,8 @@ import express, { Router, type Request, type RequestHandler } from 'express';
 import { HttpError } from '../../../infrastructure/http-server/http-errors.ts';
 import type { GallerySync } from '../application/sync-gallery.ts';
 import type { GalleryStores } from '../ports/gallery-stores.ts';
-import { toMapEntry, type MapEntry } from './map-entry.ts';
+import type { MapEntry, MapsResponse } from '../../../contracts/gallery-api.ts';
+import { toMapEntry } from './map-entry.ts';
 import { isValidSignature } from './patreon-webhook-signature.ts';
 
 const MAX_WEBHOOK_BYTES = 1024 * 1024;
@@ -73,7 +74,7 @@ function createRoutes({
     const maps = stores ? await listEntries(stores) : [];
 
     res.set('Cache-Control', 'no-cache');
-    res.json({ maps });
+    res.json({ maps } satisfies MapsResponse);
   });
 
   router.post('/patreon/webhook', rawBody, (req, res) => {

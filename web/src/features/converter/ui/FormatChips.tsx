@@ -10,7 +10,7 @@ const PRESET_HINTS: Record<string, string> = {
 };
 
 interface FormatChipsProps {
-  presets: FormatPreset[] | null;
+  presets: readonly FormatPreset[] | null;
   selected: string[];
   disabled: boolean;
   onToggle: (name: string) => void;

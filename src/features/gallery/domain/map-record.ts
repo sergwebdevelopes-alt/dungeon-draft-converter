@@ -1,7 +1,4 @@
-interface Squares {
-  x: number;
-  y: number;
-}
+import type { Squares } from '../../../contracts/gallery-api.ts';
 
 interface MapImage {
   url: string;
@@ -23,4 +20,4 @@ interface MapRecord {
   image: MapImage;
 }
 
-export type { MapImage, MapRecord, Squares };
+export type { MapImage, MapRecord };

@@ -1,18 +1,6 @@
 import { imageKey, type ImageName } from '../domain/map-image-keys.ts';
-import type { MapRecord, Squares } from '../domain/map-record.ts';
-
-interface MapEntry {
-  slug: string;
-  title: string;
-  subtitle?: string;
-  description?: string;
-  tags: string[];
-  squares?: Squares;
-  width: number;
-  height: number;
-  patreonUrl: string;
-  images: Record<ImageName, string>;
-}
+import type { MapEntry } from '../../../contracts/gallery-api.ts';
+import type { MapRecord } from '../domain/map-record.ts';
 
 function imageUrls(
   map: MapRecord,
@@ -41,4 +29,3 @@ function toMapEntry(map: MapRecord, urlFor: (key: string) => string): MapEntry {
 }
 
 export { toMapEntry };
-export type { MapEntry };

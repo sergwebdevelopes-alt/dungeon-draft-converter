@@ -13,6 +13,12 @@ import {
 } from '../../../shared/errors.ts';
 import { MAX_LOGO_PIXELS, MAX_PARALLEL_IMAGES } from '../../../config.ts';
 import { formatMegapixels } from '../../../shared/utils/format.ts';
+import type {
+  FormatPreset,
+  LogoLimits,
+  LogoSetting,
+  Variant,
+} from '../../../contracts/converter-api.ts';
 
 const JPEG_QUALITY = 80;
 const JPEG_OPTIMISE_CODING = false;
@@ -28,9 +34,7 @@ const LOGO_FORMATS = new Set(['png', 'jpeg', 'webp']);
 const LOGO_LIMITS = {
   size: { min: 2, max: 20, step: 1, default: 10 },
   margin: { min: 0, max: 5, step: 0.5, default: 3 },
-} as const;
-
-type LogoSetting = keyof typeof LOGO_LIMITS;
+} as const satisfies LogoLimits;
 
 class InvalidLogoError extends InvalidInputError {
   name = 'InvalidLogoError';
@@ -48,12 +52,6 @@ class InvalidMapImageError extends InvalidInputError {
   name = 'InvalidMapImageError';
 }
 
-interface FormatPreset {
-  name: string;
-  ppi: number;
-  format: 'jpg' | 'webp';
-}
-
 const FORMAT_PRESETS: readonly FormatPreset[] = [
   { name: 'JPG_70', ppi: 70, format: 'jpg' },
   { name: 'JPG_140', ppi: 140, format: 'jpg' },
@@ -61,9 +59,7 @@ const FORMAT_PRESETS: readonly FormatPreset[] = [
   { name: 'WEBP_140', ppi: 140, format: 'webp' },
 ] as const;
 
-const VARIANTS = ['NoGrid', 'Grid'] as const;
-
-type Variant = (typeof VARIANTS)[number];
+const VARIANTS = ['NoGrid', 'Grid'] as const satisfies readonly Variant[];
 
 interface LogoOptions {
   image: Buffer;
@@ -413,12 +409,4 @@ export {
   convertImage,
   makeImages,
 };
-export type {
-  FormatPreset,
-  Variant,
-  LogoSetting,
-  LogoOptions,
-  ImageOptions,
-  MapImages,
-  OutputFile,
-};
+export type { LogoOptions, ImageOptions, MapImages, OutputFile };

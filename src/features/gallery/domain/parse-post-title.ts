@@ -1,5 +1,5 @@
 import { tidy } from './tidy-text.ts';
-import type { Squares } from './map-record.ts';
+import type { Squares } from '../../../contracts/gallery-api.ts';
 
 interface ParsedTitle {
   title: string;

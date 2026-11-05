@@ -1,4 +1,4 @@
-import { GRID_STROKE } from '../domain/grid-stroke.ts';
+import { GRID_STROKE } from '../../../contracts/grid-stroke.ts';
 
 const MAX_TILE_SQUARES = 10;
 const DASH_ALIGNMENT_PX = 0.05;

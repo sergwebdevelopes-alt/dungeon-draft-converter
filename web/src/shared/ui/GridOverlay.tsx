@@ -1,4 +1,4 @@
-import { GRID_STROKE } from '../../../../src/features/converter/domain/grid-stroke.ts';
+import { GRID_STROKE } from '../../../../src/contracts/grid-stroke.ts';
 
 interface GridOverlayProps {
   columns: number;

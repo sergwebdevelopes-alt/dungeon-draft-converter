@@ -14,10 +14,10 @@ import {
   InvalidLogoPlacementError,
   InvalidMapImageError,
   MapTooLargeError,
-  type FormatPreset,
   type ImageOptions,
   type OutputFile,
 } from './render-map-images.ts';
+import type { FormatPreset } from '../../../contracts/converter-api.ts';
 import { newImagePath, type LoadedMap } from './read-dd2vtt-file.ts';
 
 async function makeTinyPng(file: string): Promise<void> {

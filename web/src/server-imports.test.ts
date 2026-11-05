@@ -6,15 +6,12 @@ import { describe, expect, it } from 'vitest';
 const WEB_SRC = path.dirname(fileURLToPath(import.meta.url));
 const THIS_FILE = path.basename(fileURLToPath(import.meta.url));
 const SOURCE_FILE = /\.tsx?$/;
-const SERVER_IMPORT =
-  /^\s*import\s+(type\s+)?[^'"]*?from\s+'((?:\.\.\/)+src\/[^']+)'/gm;
-const VALUE_IMPORT_ALLOWED =
-  /\/src\/features\/converter\/domain\/grid-stroke\.ts$/;
+const SERVER_IMPORT = /^\s*import\s+[^'"]*?from\s+'((?:\.\.\/)+src\/[^']+)'/gm;
+const CONTRACT = /(?:\.\.\/)+src\/contracts\/[^/]+\.ts$/;
 
 interface ServerImport {
   file: string;
   from: string;
-  typeOnly: boolean;
 }
 
 function sourceFiles(): string[] {
@@ -29,20 +26,19 @@ function serverImports(): ServerImport[] {
 
     return [...code.matchAll(SERVER_IMPORT)].map((match) => ({
       file,
-      from: match[2],
-      typeOnly: match[1] !== undefined,
+      from: match[1],
     }));
   });
 }
 
 describe('imports from the server', () => {
-  it('are only types, apart from the shared grid stroke', () => {
+  it('come only from src/contracts/', () => {
     const imports = serverImports();
-    const valueImports = imports.filter(
-      (entry) => !entry.typeOnly && !VALUE_IMPORT_ALLOWED.test(entry.from),
+    const outsideContracts = imports.filter(
+      (entry) => !CONTRACT.test(entry.from),
     );
 
     expect(imports.length).toBeGreaterThan(0);
-    expect(valueImports).toEqual([]);
+    expect(outsideContracts).toEqual([]);
   });
 });
