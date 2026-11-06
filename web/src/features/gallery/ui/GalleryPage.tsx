@@ -200,15 +200,10 @@ function Gallery({ state, api, onLoadMore }: GalleryProps) {
       {openMap && (
         <MapModal
           map={openMap}
-          morph={openMap.slug === openedSlug}
+          morphSlug={openedSlug}
           position={listed ? { index, total: state.total } : undefined}
-          neighbours={
-            listed
-              ? [neighbourOf(listed, -1), neighbourOf(listed, 1)].filter(
-                  (map): map is MapEntry => map !== null,
-                )
-              : []
-          }
+          previous={listed && neighbourOf(listed, -1)}
+          next={listed && neighbourOf(listed, 1)}
           onClose={close}
           onPrevious={() => step(-1)}
           onNext={() => step(1)}

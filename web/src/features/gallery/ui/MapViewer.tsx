@@ -10,7 +10,7 @@ interface MapViewerProps {
   morph: boolean;
 }
 
-const FRAME = 'relative overflow-hidden rounded-lg bg-surface shadow-2xl';
+const FRAME = 'relative overflow-hidden bg-surface';
 
 function frameStyle({ width, height }: MapEntry): CSSProperties {
   const ratio = width / height;

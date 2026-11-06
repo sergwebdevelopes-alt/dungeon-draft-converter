@@ -240,6 +240,27 @@ describe('GalleryPage', () => {
     await waitFor(() => expect(card('Blue Inn')).toHaveFocus());
   });
 
+  it('puts the controls over the image and the neighbours beside it in the swipe track', async () => {
+    await renderGallery();
+    await userEvent.click(card('Ice Cave'));
+    const track = within(dialog()!).getByTestId('swipe-track');
+    const imageArea = track.parentElement!;
+
+    for (const name of ['Close', 'Previous map', 'Next map']) {
+      const button = within(dialog()!).getByRole('button', { name });
+      expect(imageArea.contains(button), name).toBe(true);
+      expect(track.contains(button), name).toBe(false);
+    }
+    expect(imageArea).toContainElement(within(dialog()!).getByText('1 of 3'));
+    expect(
+      [...track.querySelectorAll('img')].map((img) => img.getAttribute('src')),
+    ).toEqual([
+      '/maps/1/crypt/view.webp',
+      '/maps/1/cave/view.webp',
+      '/maps/1/inn/view.webp',
+    ]);
+  });
+
   it('keeps the page from scrolling while a map is open', async () => {
     await renderGallery();
     const root = document.documentElement;

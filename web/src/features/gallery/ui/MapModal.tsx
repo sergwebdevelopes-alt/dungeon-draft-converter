@@ -10,16 +10,17 @@ import {
 import { useScrollLock } from '../../../shared/lib/useScrollLock.ts';
 import { ButtonLink } from '../../../shared/ui/Button.tsx';
 import { Segmented } from '../../../shared/ui/Segmented.tsx';
-import { Reveal, Swipeable } from '../../../shared/ui/motion/index.ts';
+import { Reveal, SwipeCarousel } from '../../../shared/ui/motion/index.ts';
 import { captionOf, type MapEntry } from '../model/catalog.ts';
 import { MapDescription } from './MapDescription.tsx';
 import { MapViewer } from './MapViewer.tsx';
 
 interface MapModalProps {
   map: MapEntry;
-  morph: boolean;
+  morphSlug: string | null;
   position?: { index: number; total: number };
-  neighbours: MapEntry[];
+  previous: MapEntry | null;
+  next: MapEntry | null;
   onClose: () => void;
   onPrevious: () => void;
   onNext: () => void;
@@ -76,19 +77,22 @@ function useArrowKeys(
   }, [enabled]);
 }
 
-function usePreload(maps: MapEntry[]) {
+function usePreload(...maps: (MapEntry | null)[]) {
+  const urls = maps.flatMap((map) => (map ? [map.images.view] : [])).join(' ');
+
   useEffect(() => {
-    for (const map of maps) {
-      new Image().src = map.images.view;
+    for (const url of urls.split(' ').filter(Boolean)) {
+      new Image().src = url;
     }
-  }, [maps]);
+  }, [urls]);
 }
 
 function MapModal({
   map,
-  morph,
+  morphSlug,
   position,
-  neighbours,
+  previous,
+  next,
   onClose,
   onPrevious,
   onNext,
@@ -100,7 +104,20 @@ function MapModal({
   const canMove = position !== undefined && position.total > 1;
 
   useArrowKeys(canMove, onPrevious, onNext);
-  usePreload(neighbours);
+
+  function slide(entry: MapEntry, grid: boolean) {
+    return {
+      key: entry.slug,
+      content: (
+        <MapViewer
+          map={entry}
+          showGrid={grid}
+          morph={entry.slug === morphSlug}
+        />
+      ),
+    };
+  }
+  usePreload(previous, next);
 
   function handleCancel(event: SyntheticEvent) {
     event.preventDefault();
@@ -121,21 +138,22 @@ function MapModal({
       onClick={handleBackdropClick}
       className="m-auto h-dvh max-h-none w-full max-w-none bg-transparent p-0 text-text backdrop:bg-black/75 backdrop:backdrop-blur-sm sm:h-[min(92dvh,920px)] sm:w-[min(94vw,1280px)]"
     >
-      <Reveal className="relative grid h-full grid-rows-[minmax(0,1fr)_auto] overflow-hidden bg-surface sm:rounded-2xl sm:ring-1 sm:ring-line lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-1">
-        <Swipeable
-          className="relative grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-3 bg-sunken p-3 sm:p-6"
-          onSwipeLeft={onNext}
-          onSwipeRight={onPrevious}
-          onSwipeDown={onClose}
+      <Reveal className="grid h-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-surface sm:rounded-2xl sm:ring-1 sm:ring-line lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-1">
+        <SwipeCarousel
+          className="relative h-[75dvh] min-h-0 w-full bg-sunken lg:h-auto"
+          previous={previous && slide(previous, false)}
+          current={slide(map, showGrid)}
+          next={next && slide(next, false)}
+          onPrevious={onPrevious}
+          onNext={onNext}
+          onDismiss={onClose}
         >
-          <MapViewer map={map} showGrid={showGrid} morph={morph} />
-
           {canMove && (
             <>
               <button
                 type="button"
                 aria-label="Previous map"
-                className={`${ROUND_BUTTON} absolute top-1/2 left-3 -translate-y-1/2 sm:left-5`}
+                className={`${ROUND_BUTTON} absolute top-1/2 left-4 hidden -translate-y-1/2 lg:grid`}
                 onClick={onPrevious}
               >
                 ‹
@@ -143,7 +161,7 @@ function MapModal({
               <button
                 type="button"
                 aria-label="Next map"
-                className={`${ROUND_BUTTON} absolute top-1/2 right-3 -translate-y-1/2 sm:right-5`}
+                className={`${ROUND_BUTTON} absolute top-1/2 right-4 hidden -translate-y-1/2 lg:grid`}
                 onClick={onNext}
               >
                 ›
@@ -152,19 +170,28 @@ function MapModal({
           )}
 
           {position && (
-            <p className="justify-self-center rounded-full bg-black/60 px-3 py-1 text-sm text-white tabular-nums">
+            <p className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-sm text-white tabular-nums">
               {position.index + 1} of {position.total}
             </p>
           )}
+
+          <button
+            type="button"
+            aria-label="Close"
+            className={`${ROUND_BUTTON} absolute top-3 right-3`}
+            onClick={onClose}
+          >
+            ×
+          </button>
           <p role="status" className="sr-only">
             {position
               ? `${map.title}, ${position.index + 1} of ${position.total}`
               : map.title}
           </p>
-        </Swipeable>
+        </SwipeCarousel>
 
-        <div className="grid content-start gap-5 border-t border-line p-4 sm:p-6 lg:min-h-0 lg:overflow-y-auto lg:border-t-0 lg:border-l">
-          <div className="grid min-h-[5.25rem] content-start gap-1 pr-12">
+        <div className="grid min-h-0 content-start gap-4 overflow-y-auto border-t border-line p-4 sm:p-6 lg:gap-5 lg:border-t-0 lg:border-l">
+          <div className="grid content-start gap-1 lg:min-h-[5.25rem]">
             <h2
               id={titleId}
               className="line-clamp-2 font-display text-xl leading-tight font-bold tracking-wide sm:text-2xl lg:text-xl"
@@ -174,7 +201,7 @@ function MapModal({
             <p className="text-muted">{captionOf(map)}</p>
           </div>
 
-          <ul className="flex flex-wrap gap-2" aria-label="Tags">
+          <ul className="hidden flex-wrap gap-2 lg:flex" aria-label="Tags">
             {map.tags.map((tag) => (
               <li
                 key={tag}
@@ -186,27 +213,20 @@ function MapModal({
           </ul>
 
           {map.squares && (
-            <Segmented
-              label="Grid"
-              options={GRID_OPTIONS}
-              value={showGrid ? 'with' : 'without'}
-              onChange={(choice) => setShowGrid(choice === 'with')}
-            />
+            <div className="hidden lg:block">
+              <Segmented
+                label="Grid"
+                options={GRID_OPTIONS}
+                value={showGrid ? 'with' : 'without'}
+                onChange={(choice) => setShowGrid(choice === 'with')}
+              />
+            </div>
           )}
 
           <ButtonLink href={map.patreonUrl}>Get it on Patreon</ButtonLink>
 
           {map.description && <MapDescription html={map.description} />}
         </div>
-
-        <button
-          type="button"
-          aria-label="Close"
-          className={`${ROUND_BUTTON} absolute top-3 right-3 z-10`}
-          onClick={onClose}
-        >
-          ×
-        </button>
       </Reveal>
     </dialog>
   );
