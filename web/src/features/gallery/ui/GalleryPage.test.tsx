@@ -240,6 +240,20 @@ describe('GalleryPage', () => {
     await waitFor(() => expect(card('Blue Inn')).toHaveFocus());
   });
 
+  it('keeps the page from scrolling while a map is open', async () => {
+    await renderGallery();
+    const root = document.documentElement;
+
+    await userEvent.click(card('Blue Inn'));
+
+    expect(root.style.overflow).toBe('hidden');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(dialog()).toBeNull());
+
+    expect(root.style.overflow).toBe('');
+  });
+
   it('closes when the user goes back', async () => {
     await renderGallery();
     await userEvent.click(card('Ice Cave'));

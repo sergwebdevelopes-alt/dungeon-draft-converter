@@ -7,6 +7,7 @@ import {
   type MouseEvent,
   type SyntheticEvent,
 } from 'react';
+import { useScrollLock } from '../../../shared/lib/useScrollLock.ts';
 import { ButtonLink } from '../../../shared/ui/Button.tsx';
 import { Segmented } from '../../../shared/ui/Segmented.tsx';
 import { Reveal, Swipeable } from '../../../shared/ui/motion/index.ts';
@@ -94,6 +95,7 @@ function MapModal({
 }: MapModalProps) {
   const dialogRef = useModalDialog();
   const titleId = useId();
+  useScrollLock();
   const [showGrid, setShowGrid] = useState(false);
   const canMove = position !== undefined && position.total > 1;
 
