@@ -27,6 +27,7 @@ interface ConfigResponse {
   maxTotalUploadBytes: number;
   maxLevels: number;
   maxLogoBytes: number;
+  maxOutputPixels: number;
   logo: LogoLimits;
 }
 

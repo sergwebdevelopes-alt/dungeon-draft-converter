@@ -9,9 +9,12 @@ const PRESET_HINTS: Record<string, string> = {
   WEBP_140: 'Smallest',
 };
 
+const TOO_LARGE_HINT = 'Too large for this map';
+
 interface FormatChipsProps {
   presets: readonly FormatPreset[] | null;
   selected: string[];
+  tooLarge: string[];
   disabled: boolean;
   onToggle: (name: string) => void;
 }
@@ -19,9 +22,18 @@ interface FormatChipsProps {
 const CHIP =
   'grid min-h-12 content-center gap-0.5 rounded-xl px-2 text-center ring-1 ring-line transition hover:ring-gold/60 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 aria-pressed:bg-gold/15 aria-pressed:ring-2 aria-pressed:ring-gold';
 
+function hintFor(preset: FormatPreset, tooLarge: boolean): string {
+  if (tooLarge) {
+    return TOO_LARGE_HINT;
+  }
+
+  return PRESET_HINTS[preset.name] ?? `${preset.ppi} px per square`;
+}
+
 function FormatChips({
   presets,
   selected,
+  tooLarge,
   disabled,
   onToggle,
 }: FormatChipsProps) {
@@ -29,21 +41,27 @@ function FormatChips({
     <PanelSection title="Formats">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2">
         {presets
-          ? presets.map((preset) => (
-              <button
-                key={preset.name}
-                type="button"
-                className={CHIP}
-                aria-pressed={selected.includes(preset.name)}
-                disabled={disabled}
-                onClick={() => onToggle(preset.name)}
-              >
-                <span className="text-sm font-bold">{presetLabel(preset)}</span>
-                <span className="text-xs text-muted">
-                  {PRESET_HINTS[preset.name] ?? `${preset.ppi} px per square`}
-                </span>
-              </button>
-            ))
+          ? presets.map((preset) => {
+              const large = tooLarge.includes(preset.name);
+
+              return (
+                <button
+                  key={preset.name}
+                  type="button"
+                  className={CHIP}
+                  aria-pressed={!large && selected.includes(preset.name)}
+                  disabled={disabled || large}
+                  onClick={() => onToggle(preset.name)}
+                >
+                  <span className="text-sm font-bold">
+                    {presetLabel(preset)}
+                  </span>
+                  <span className="text-xs text-muted">
+                    {hintFor(preset, large)}
+                  </span>
+                </button>
+              );
+            })
           : Array.from({ length: 4 }, (_, i) => (
               <span
                 key={i}

@@ -10,6 +10,7 @@ const TEST_CONFIG: Config = {
   maxTotalUploadBytes: 150,
   maxLevels: 3,
   maxLogoBytes: 50,
+  maxOutputPixels: 250_000_000,
   logo: {
     size: { min: 2, max: 20, step: 1, default: 10 },
     margin: { min: 0, max: 5, step: 0.5, default: 3 },

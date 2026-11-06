@@ -3,7 +3,9 @@ import {
   canSubmit,
   converterReducer,
   initialState,
+  presetsToConvert,
   selectedPresets,
+  tooLargePresets,
   visibleMaps,
   type ConverterAction,
   type ConverterState,
@@ -280,5 +282,50 @@ describe('selectedPresets', () => {
       'JPG_70',
       'WEBP_140',
     ]);
+  });
+});
+
+describe('formats too large for the map', () => {
+  const smallLimit: ConverterAction = {
+    type: 'configLoaded',
+    config: { ...TEST_CONFIG, maxOutputPixels: 1_000_000 },
+    settings: { ...SETTINGS, variants: [...SETTINGS.variants] },
+  };
+  const bigMap: ConverterAction = {
+    type: 'mapSizeKnown',
+    size: { columns: 20, rows: 25 },
+  };
+
+  it('leaves out the JPG format that would pass the limit, keeping the choice', () => {
+    const state = run(smallLimit, withMap, bigMap);
+
+    expect(tooLargePresets(state)).toEqual(['JPG_70']);
+    expect(presetsToConvert(state)).toEqual(['WEBP_140']);
+    expect(selectedPresets(state).map((preset) => preset.name)).toEqual([
+      'WEBP_140',
+    ]);
+    expect(state.presets).toEqual(['JPG_70', 'WEBP_140']);
+  });
+
+  it('limits nothing once the map size is unknown again', () => {
+    const state = run(smallLimit, withMap, bigMap, {
+      type: 'mapSizeKnown',
+      size: null,
+    });
+
+    expect(tooLargePresets(state)).toEqual([]);
+    expect(presetsToConvert(state)).toEqual(['JPG_70', 'WEBP_140']);
+  });
+
+  it('cannot convert when every chosen format is too large', () => {
+    const state = run(
+      smallLimit,
+      withMap,
+      { type: 'presetToggled', name: 'WEBP_140' },
+      bigMap,
+    );
+
+    expect(state.presets).toEqual(['JPG_70']);
+    expect(canSubmit(state)).toBe(false);
   });
 });

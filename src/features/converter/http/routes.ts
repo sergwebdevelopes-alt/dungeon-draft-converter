@@ -15,6 +15,7 @@ import type { PendingLimit } from '../application/pending-limit.ts';
 import {
   FORMAT_PRESETS,
   LOGO_LIMITS,
+  MAX_OUTPUT_PIXELS,
   VARIANTS,
 } from '../image-processing/render-map-images.ts';
 import {
@@ -64,6 +65,7 @@ function createRoutes({
       maxTotalUploadBytes: MAX_TOTAL_UPLOAD_BYTES,
       maxLevels: MAX_LEVELS,
       maxLogoBytes: MAX_LOGO_BYTES,
+      maxOutputPixels: MAX_OUTPUT_PIXELS,
       logo: LOGO_LIMITS,
     } satisfies ConfigResponse);
   });

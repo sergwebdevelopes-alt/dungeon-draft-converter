@@ -14,6 +14,7 @@ const CONFIG: Config = {
   maxTotalUploadBytes: 2000,
   maxLevels: 10,
   maxLogoBytes: 1000,
+  maxOutputPixels: 250_000_000,
   logo: {
     size: { min: 2, max: 20, step: 1, default: 10 },
     margin: { min: 0, max: 5, step: 0.5, default: 3 },
@@ -26,10 +27,10 @@ function json(body: unknown): Response {
   });
 }
 
-function mockServer() {
+function mockServer(config: Config = CONFIG) {
   const fetchMock = vi.fn((url: string) => {
     if (url === '/api/config') {
-      return Promise.resolve(json(CONFIG));
+      return Promise.resolve(json(config));
     }
     if (url.startsWith('/api/convert')) {
       return Promise.resolve(new Response(new Blob(['zip'])));
@@ -247,6 +248,40 @@ describe('ConverterPage', () => {
     expect(
       await screen.findByRole('img', { name: 'Preview of the main map' }),
     ).toHaveAttribute('src', 'blob:zip');
+  });
+
+  it('turns off a format whose image would be too large for the map', async () => {
+    const fetchMock = mockServer({ ...CONFIG, maxOutputPixels: 1_000_000 });
+    await renderPage();
+    const map = new File(
+      [
+        JSON.stringify({
+          resolution: { map_size: { x: 20, y: 25 }, pixels_per_grid: 100 },
+          image: 'iVBORw0KGgoAAAANSUhEUg==',
+        }),
+      ],
+      'Cave.dd2vtt',
+    );
+
+    await userEvent.upload(mapInput(), map);
+    const jpg = await screen.findByRole('button', {
+      name: /JPG · 70 px.*Too large for this map/,
+    });
+
+    expect(jpg).toBeDisabled();
+    expect(jpg).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: /WEBP · 140 px/ })).toBeEnabled();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Convert & download' }),
+    );
+    await screen.findByRole('button', { name: 'Download again' });
+    const convertUrl = fetchMock.mock.calls
+      .map(([url]) => url)
+      .find((url) => url.startsWith('/api/convert'));
+    expect(
+      new URL(convertUrl!, 'http://test').searchParams.get('presets'),
+    ).toBe('WEBP_140');
   });
 
   it('exports only the grid version when the grid is chosen', async () => {

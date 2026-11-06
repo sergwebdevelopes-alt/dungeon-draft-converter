@@ -390,6 +390,7 @@ async function makeImages(
 
 export {
   MAX_INPUT_PIXELS,
+  MAX_OUTPUT_PIXELS,
   LOGO_LIMITS,
   MapTooLargeError,
   InvalidLogoPlacementError,

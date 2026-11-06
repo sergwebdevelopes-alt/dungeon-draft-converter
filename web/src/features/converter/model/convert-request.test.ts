@@ -38,6 +38,17 @@ describe('toConvertRequest', () => {
     expect(toConvertRequest(state, 't').maps).toEqual(maps);
   });
 
+  it('leaves out the formats that are too large for the map', () => {
+    const state = {
+      ...base,
+      config: { ...TEST_CONFIG, maxOutputPixels: 1_000_000 },
+      presets: ['JPG_70', 'WEBP_140'],
+      mapSize: { columns: 20, rows: 25 },
+    };
+
+    expect(toConvertRequest(state, 't').presets).toEqual(['WEBP_140']);
+  });
+
   it('leaves the logo out when there is none', () => {
     expect(toConvertRequest(base, 't').logo).toBeUndefined();
   });

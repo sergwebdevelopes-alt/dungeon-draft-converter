@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react';
+import { useEffect, type FormEvent } from 'react';
 import { usePreventPageDrop } from '../../../shared/lib/useFileDrop.ts';
 import { Alert } from '../../../shared/ui/Alert.tsx';
 import { Container } from '../../../shared/ui/Container.tsx';
@@ -7,6 +7,7 @@ import {
   canSubmit,
   isConverting,
   selectedPresets,
+  tooLargePresets,
   visibleMaps,
 } from '../model/converter-reducer.ts';
 import { choiceOf, variantsFor } from '../model/grid-choice.ts';
@@ -28,7 +29,16 @@ function ConverterPage() {
   const formats = selectedPresets(state);
   const shown = visibleMaps(state);
   const preview = useMapPreview(maps, shown);
+  const columns = preview.status === 'ready' ? preview.columns : null;
+  const rows = preview.status === 'ready' ? preview.rows : null;
   usePreventPageDrop();
+
+  useEffect(() => {
+    dispatch({
+      type: 'mapSizeKnown',
+      size: columns && rows ? { columns, rows } : null,
+    });
+  }, [dispatch, columns, rows]);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -100,6 +110,7 @@ function ConverterPage() {
               <FormatChips
                 presets={config?.presets ?? null}
                 selected={state.presets}
+                tooLarge={tooLargePresets(state)}
                 disabled={converting}
                 onToggle={(name) => dispatch({ type: 'presetToggled', name })}
               />

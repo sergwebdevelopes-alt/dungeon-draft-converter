@@ -1,3 +1,7 @@
+import {
+  tooLargePresets as presetsTooLarge,
+  type MapSize,
+} from './format-limits.ts';
 import { addMaps, levelKey, logoError, moveItem } from './map-rules.ts';
 import { defaultPlacement } from './placement.ts';
 import { withProgress, type Progress, type Status } from './progress.ts';
@@ -13,6 +17,7 @@ interface ConverterState {
   placement: LogoPlacement | null;
   presets: string[];
   variants: Variant[];
+  mapSize: MapSize | null;
   status: Status;
 }
 
@@ -27,6 +32,7 @@ type ConverterAction =
   | { type: 'logoCleared' }
   | { type: 'presetToggled'; name: string }
   | { type: 'variantsChosen'; variants: Variant[] }
+  | { type: 'mapSizeKnown'; size: MapSize | null }
   | { type: 'placementChanged'; placement: LogoPlacement }
   | { type: 'placementReset' }
   | { type: 'submitted'; ticket: string; startedAt: number }
@@ -45,6 +51,7 @@ const initialState: ConverterState = {
   placement: null,
   presets: [],
   variants: [],
+  mapSize: null,
   status: { kind: 'idle' },
 };
 
@@ -143,6 +150,9 @@ function converterReducer(
     case 'variantsChosen':
       return edited(state, { variants: action.variants });
 
+    case 'mapSizeKnown':
+      return { ...state, mapSize: action.size };
+
     case 'placementChanged':
       return edited(state, { placement: action.placement });
 
@@ -197,21 +207,37 @@ function visibleMaps(state: ConverterState): File[] {
   return state.maps.filter((map) => !isHidden(state, map));
 }
 
+function tooLargePresets(state: ConverterState): string[] {
+  return state.config
+    ? presetsTooLarge(
+        state.config.presets,
+        state.mapSize,
+        state.config.maxOutputPixels,
+      )
+    : [];
+}
+
+function presetsToConvert(state: ConverterState): string[] {
+  const tooLarge = tooLargePresets(state);
+
+  return state.presets.filter((name) => !tooLarge.includes(name));
+}
+
 function canSubmit(state: ConverterState): boolean {
   return (
     !!state.config &&
     visibleMaps(state).length > 0 &&
-    state.presets.length > 0 &&
+    presetsToConvert(state).length > 0 &&
     state.variants.length > 0 &&
     !isConverting(state)
   );
 }
 
 function selectedPresets(state: ConverterState) {
+  const names = presetsToConvert(state);
+
   return (
-    state.config?.presets.filter((preset) =>
-      state.presets.includes(preset.name),
-    ) ?? []
+    state.config?.presets.filter((preset) => names.includes(preset.name)) ?? []
   );
 }
 
@@ -221,7 +247,9 @@ export {
   initialState,
   isConverting,
   isHidden,
+  presetsToConvert,
   selectedPresets,
+  tooLargePresets,
   visibleMaps,
 };
 export type { ConverterAction, ConverterState };

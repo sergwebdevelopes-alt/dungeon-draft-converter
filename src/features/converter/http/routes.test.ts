@@ -56,6 +56,7 @@ describe('GET /api/config', () => {
       maxTotalUploadBytes: MAX_TOTAL_UPLOAD_BYTES,
       maxLevels: MAX_LEVELS,
       maxLogoBytes: MAX_LOGO_BYTES,
+      maxOutputPixels: 250_000_000,
       logo: LOGO_LIMITS,
     });
   });
