@@ -30,6 +30,12 @@ function Stats() {
   );
 }
 
+const WIPE =
+  'absolute inset-0 animate-wipe will-change-transform motion-reduce:animate-none';
+
+const WIPE_BACK =
+  'absolute inset-0 animate-wipe-back will-change-transform motion-reduce:animate-none';
+
 function coverStyle({ width, height }: GriddedMap): CSSProperties {
   return {
     aspectRatio: `${width} / ${height}`,
@@ -63,15 +69,22 @@ function GridWipe({ map }: { map: GriddedMap }) {
           className="absolute inset-0 size-full"
         />
       </Cover>
-      <div className="absolute inset-0 animate-wipe motion-reduce:animate-none motion-reduce:[clip-path:inset(0_0_0_50%)]">
-        <Cover map={map}>
-          <GridOverlay columns={map.squares.x} rows={map.squares.y} />
-        </Cover>
+      <div
+        data-testid="grid-reveal"
+        className={`overflow-hidden ${WIPE} motion-reduce:translate-x-1/2`}
+      >
+        <div className={`${WIPE_BACK} motion-reduce:-translate-x-1/2`}>
+          <Cover map={map}>
+            <GridOverlay columns={map.squares.x} rows={map.squares.y} />
+          </Cover>
+        </div>
       </div>
       <div
         aria-hidden="true"
-        className="absolute inset-y-0 w-0.5 -translate-x-1/2 animate-wipe-line bg-gold shadow-[0_0_14px_var(--gold)] motion-reduce:left-1/2 motion-reduce:animate-none"
-      />
+        className={`pointer-events-none ${WIPE} motion-reduce:translate-x-1/2`}
+      >
+        <div className="absolute inset-y-0 left-0 w-0.5 -translate-x-1/2 bg-gold shadow-[0_0_14px_var(--gold)]" />
+      </div>
       <span className="absolute top-3 left-3 rounded-full bg-black/60 px-3 py-1 text-xs font-bold tracking-wide text-white uppercase">
         No grid
       </span>

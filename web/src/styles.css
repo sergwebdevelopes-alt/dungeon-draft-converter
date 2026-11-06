@@ -80,23 +80,23 @@
       background-position: -120% 0;
     }
   }
-  --animate-wipe-line: wipe-line 7s ease-in-out infinite alternate;
-
-  @keyframes wipe-line {
-    from {
-      left: 88%;
-    }
-    to {
-      left: 12%;
-    }
-  }
+  --animate-wipe-back: wipe-back 7s ease-in-out infinite alternate;
 
   @keyframes wipe {
     from {
-      clip-path: inset(0 0 0 88%);
+      transform: translateX(88%);
     }
     to {
-      clip-path: inset(0 0 0 12%);
+      transform: translateX(12%);
+    }
+  }
+
+  @keyframes wipe-back {
+    from {
+      transform: translateX(-88%);
+    }
+    to {
+      transform: translateX(-12%);
     }
   }
 

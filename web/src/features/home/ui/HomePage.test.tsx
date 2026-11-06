@@ -169,6 +169,24 @@ describe('HomePage', () => {
     expect(gridCover?.getAttribute('style')).toBe(cover?.getAttribute('style'));
   });
 
+  it('moves the grid and the line with transforms only, so a big grid is not redrawn', async () => {
+    await renderHome();
+    const teaser = screen.getByRole('region', {
+      name: 'Your Dungeondraft maps, ready for any table',
+    });
+    const reveal = within(teaser).getByTestId('grid-reveal');
+    const grid = reveal.querySelector('svg');
+    const counter = grid?.parentElement?.parentElement;
+    const line = reveal.nextElementSibling;
+
+    expect(reveal).toHaveClass('animate-wipe', 'overflow-hidden');
+    expect(counter?.parentElement).toBe(reveal);
+    expect(counter).toHaveClass('animate-wipe-back');
+    expect(line).toHaveAttribute('aria-hidden', 'true');
+    expect(line).toHaveClass('animate-wipe');
+    expect(teaser.innerHTML).not.toMatch(/clip-path|animate-wipe-line/);
+  });
+
   it('names the image formats the converter makes', async () => {
     await renderHome();
 
