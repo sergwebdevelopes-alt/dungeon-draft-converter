@@ -59,6 +59,8 @@ const PATREON_WEBSITE_USER_AGENT =
   process.env.PATREON_WEBSITE_USER_AGENT ||
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0 Safari/537.36';
 
+const SITE_URL = process.env.SITE_URL || 'https://lairofartificer.com';
+
 const ANALYTICS_SCRIPT_ORIGIN = 'https://static.cloudflareinsights.com';
 const ANALYTICS_REPORT_ORIGIN = 'https://cloudflareinsights.com';
 
@@ -100,6 +102,7 @@ export {
   SETTINGS_PROBLEMS,
   SHARP_CONCURRENCY,
   SHUTDOWN_TIMEOUT_MS,
+  SITE_URL,
   STALE_CLEANUP_INTERVAL_MS,
   STALE_UPLOAD_DIR_MS,
   UPLOAD_ROOT,

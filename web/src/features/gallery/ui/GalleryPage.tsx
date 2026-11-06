@@ -176,6 +176,7 @@ function Gallery({ state, api, onLoadMore }: GalleryProps) {
 
   return (
     <>
+      <PageTitle title={openMap?.title ?? 'Maps'} />
       <ul className={GRID}>
         {maps.map((map, i) => (
           <li
@@ -224,7 +225,7 @@ function GalleryPage({ api, site = SITE }: GalleryPageProps) {
 
   return (
     <>
-      <PageTitle title="Maps" />
+      {!loaded && <PageTitle title="Maps" />}
       <Container className="grid gap-8 pt-12 pb-4 sm:pt-16">
         <header className="grid gap-4">
           <p className="text-sm font-bold tracking-[0.2em] text-gold uppercase">

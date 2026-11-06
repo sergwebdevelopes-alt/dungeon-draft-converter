@@ -9,6 +9,7 @@ import {
   MAX_PENDING_CONVERSIONS,
   ROOT_DIR,
   SETTINGS,
+  SITE_URL,
   WEB_DIST_DIR,
 } from './config.ts';
 import {
@@ -22,6 +23,9 @@ import { healthRouter } from './infrastructure/http-server/health-route.ts';
 import type { GalleryStores } from './features/gallery/ports/gallery-stores.ts';
 import type { GallerySync } from './features/gallery/application/sync-gallery.ts';
 import * as gallery from './features/gallery/http/routes.ts';
+import { createFindMapPage } from './features/gallery/http/map-page.ts';
+import { createPageFor } from './page-heads.ts';
+import { SITE_PAGES } from './contracts/site-pages.ts';
 import {
   blockCrossSiteRequests,
   securityHeaders,
@@ -68,7 +72,11 @@ async function createApp(
   app.use(GALLERY_IMAGES_URL, serveGalleryImages(GALLERY_DIR));
 
   if (IS_PRODUCTION) {
-    app.use(serveWebApp(WEB_DIST_DIR));
+    const findMapPage = createFindMapPage(
+      galleryStores,
+      SITE_PAGES['/maps'].description,
+    );
+    app.use(serveWebApp(WEB_DIST_DIR, createPageFor(SITE_URL, findMapPage)));
   } else {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({

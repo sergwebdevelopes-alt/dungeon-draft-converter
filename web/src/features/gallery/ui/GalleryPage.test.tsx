@@ -228,6 +228,29 @@ describe('GalleryPage', () => {
     expect(location()).toBe('/maps?map=inn');
   });
 
+  it('names the tab after the open map', async () => {
+    await renderGallery();
+    expect(document.title).toBe('Maps · Lair of Artificer');
+
+    await userEvent.click(card('Blue Inn'));
+    await waitFor(() =>
+      expect(document.title).toBe('Blue Inn · Lair of Artificer'),
+    );
+
+    fireEvent(dialog()!, new Event('cancel', { cancelable: true }));
+    await waitFor(() =>
+      expect(document.title).toBe('Maps · Lair of Artificer'),
+    );
+  });
+
+  it('names the tab after a linked map from the first render', async () => {
+    await renderGallery('/maps?map=inn');
+
+    await waitFor(() =>
+      expect(document.title).toBe('Blue Inn · Lair of Artificer'),
+    );
+  });
+
   it('closes with Escape and returns focus to the card', async () => {
     await renderGallery();
     await userEvent.click(card('Blue Inn'));
@@ -393,6 +416,7 @@ describe('GalleryPage', () => {
   });
 
   it('shows placeholders while loading and a message when loading fails', async () => {
+    document.title = '';
     render(
       <MemoryRouter initialEntries={['/maps']}>
         <GalleryPage
@@ -403,6 +427,7 @@ describe('GalleryPage', () => {
     expect(
       screen.getByRole('list', { name: 'Loading maps' }),
     ).toBeInTheDocument();
+    expect(document.title).toBe('Maps · Lair of Artificer');
     cleanup();
 
     await renderGalleryError();
