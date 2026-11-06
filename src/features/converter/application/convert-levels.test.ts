@@ -83,6 +83,7 @@ describe('convertLevels', () => {
       {
         levels: [makeLevel('Tavern', PIXELS_PER_GRID)],
         original,
+        foundry: true,
         presets: SMALL_PRESETS,
       },
       workDir,
@@ -128,6 +129,7 @@ describe('convertLevels', () => {
           makeLevel('Castle', PIXELS_PER_GRID),
           makeLevel('Dungeon', PIXELS_PER_GRID),
         ],
+        foundry: true,
         presets: JPG_70,
         variants: ['NoGrid'],
       },
@@ -150,6 +152,41 @@ describe('convertLevels', () => {
     >;
     assert.deepEqual(json.environment, { baked_lighting: false });
     assert.equal(typeof json.image, 'string');
+  });
+
+  it('leaves the Foundry copy out unless it is asked for', async () => {
+    const single = await convertLevels(
+      {
+        levels: [makeLevel('Tavern', PIXELS_PER_GRID)],
+        original,
+        presets: JPG_70,
+        variants: ['NoGrid'],
+      },
+      workDir,
+    );
+    const merged = await convertLevels(
+      {
+        levels: [
+          makeLevel('Castle', PIXELS_PER_GRID),
+          makeLevel('Dungeon', PIXELS_PER_GRID),
+        ],
+        foundry: false,
+        presets: JPG_70,
+        variants: ['NoGrid'],
+      },
+      workDir,
+    );
+
+    for (const result of [single, merged]) {
+      const paths = (await collect(result.files)).map((file) => file.path);
+
+      assert.equal(
+        paths.some((path) => path.startsWith('FOUNDRY_VTT_DD2VTT/')),
+        false,
+        paths.join(', '),
+      );
+      assert.equal(paths.length, 1);
+    }
   });
 
   it('rejects a map without a grid when only grid images are wanted', async () => {
@@ -177,7 +214,12 @@ describe('convertLevels', () => {
 
   it('makes "No grid" images for a map without a grid', async () => {
     const result = await convertLevels(
-      { levels: [makeLevel('Plain')], original, presets: JPG_70 },
+      {
+        levels: [makeLevel('Plain')],
+        original,
+        foundry: true,
+        presets: JPG_70,
+      },
       workDir,
     );
 

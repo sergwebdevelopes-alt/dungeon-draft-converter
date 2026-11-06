@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ConvertPanel } from './ConvertPanel.tsx';
 import type { Status } from '../model/progress.ts';
 
-function renderPanel(status: Status, canSubmit = true) {
+function renderPanel(status: Status, canSubmit = true, foundry = false) {
   const handlers = {
     onCancel: vi.fn(),
     onDownloadAgain: vi.fn(),
@@ -17,6 +17,7 @@ function renderPanel(status: Status, canSubmit = true) {
         canSubmit={canSubmit}
         mapCount={2}
         imageCount={4}
+        foundry={foundry}
         {...handlers}
       />
     </form>,
@@ -31,6 +32,17 @@ describe('ConvertPanel', () => {
     expect(
       screen.getByRole('complementary', { name: 'Conversion' }),
     ).toHaveTextContent('2 maps · 4 images');
+    expect(
+      screen.getByRole('complementary', { name: 'Conversion' }),
+    ).not.toHaveTextContent('Foundry');
+  });
+
+  it('mentions the Foundry file when it is part of the download', () => {
+    renderPanel({ kind: 'idle' }, true, true);
+
+    expect(
+      screen.getByRole('complementary', { name: 'Conversion' }),
+    ).toHaveTextContent('2 maps · 4 images + Foundry file');
   });
 
   it('shows no summary before maps are added', () => {
@@ -40,6 +52,7 @@ describe('ConvertPanel', () => {
         canSubmit={false}
         mapCount={0}
         imageCount={0}
+        foundry={false}
         onCancel={vi.fn()}
         onDownloadAgain={vi.fn()}
         onReset={vi.fn()}

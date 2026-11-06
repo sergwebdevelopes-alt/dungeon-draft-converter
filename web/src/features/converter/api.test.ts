@@ -49,6 +49,7 @@ describe('createConverterApi', () => {
         maps,
         presets: ['JPG_70', 'WEBP_140'],
         variants: ['NoGrid'],
+        foundry: true,
         logo: { image: logo, placement: { size: 12, margin: 2.5 } },
       },
       signal,
@@ -66,6 +67,7 @@ describe('createConverterApi', () => {
       name: 'Tower.dd2vtt',
       presets: 'JPG_70,WEBP_140',
       variants: 'NoGrid',
+      foundry: 'true',
       logoSize: '12',
       logoMargin: '2.5',
     });
@@ -78,7 +80,7 @@ describe('createConverterApi', () => {
     expect(options.onResponse).toBe(onDownloading);
   });
 
-  it('leaves logo options out without a logo', async () => {
+  it('leaves logo options and the Foundry file out when they are off', async () => {
     const http = fakeHttp();
 
     await createConverterApi(http.client).convert(
@@ -87,6 +89,7 @@ describe('createConverterApi', () => {
         maps: [new File(['a'], 'A.dd2vtt')],
         presets: ['JPG_70'],
         variants: ['Grid'],
+        foundry: false,
       },
       signal,
       () => undefined,
@@ -97,6 +100,7 @@ describe('createConverterApi', () => {
       FormData,
     ];
     expect(url).not.toContain('logo');
+    expect(url).not.toContain('foundry');
     expect(form.has('logo')).toBe(false);
   });
 });

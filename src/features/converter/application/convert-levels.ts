@@ -14,6 +14,7 @@ const FOUNDRY_DIR = 'FOUNDRY_VTT_DD2VTT';
 interface ConversionInput extends ImageOptions {
   levels: LoadedMap[];
   original?: string;
+  foundry?: boolean;
 }
 
 interface ConversionFile {
@@ -31,7 +32,14 @@ function mergedFileName(mainFileName: string): string {
 }
 
 async function convertLevels(
-  { levels, original, presets, variants, logo }: ConversionInput,
+  {
+    levels,
+    original,
+    foundry = false,
+    presets,
+    variants,
+    logo,
+  }: ConversionInput,
   workDir: string,
 ): Promise<ConversionResult> {
   const merged =
@@ -43,7 +51,7 @@ async function convertLevels(
         )
       : undefined;
   const map = merged?.map ?? levels[0];
-  const foundryFile = merged?.dd2vtt ?? original;
+  const foundryFile = foundry ? (merged?.dd2vtt ?? original) : undefined;
   const images = await makeImages(map, workDir, { presets, variants, logo });
   if (images.count === 0) {
     throw new UnprocessableError(

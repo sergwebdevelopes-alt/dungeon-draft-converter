@@ -12,6 +12,7 @@ describe('toConvertRequest', () => {
     maps,
     presets: ['JPG_70'],
     variants: ['Grid' as const],
+    foundry: false,
     placement: { size: 99, margin: 1 },
   };
 
@@ -23,6 +24,7 @@ describe('toConvertRequest', () => {
       maps,
       presets: ['JPG_70'],
       variants: ['Grid'],
+      foundry: false,
       logo: { image: logo, placement: { size: 20, margin: 1 } },
     });
   });
@@ -47,6 +49,13 @@ describe('toConvertRequest', () => {
     };
 
     expect(toConvertRequest(state, 't').presets).toEqual(['WEBP_140']);
+  });
+
+  it('asks for the Foundry file only when it is on', () => {
+    expect(toConvertRequest(base, 't').foundry).toBe(false);
+    expect(toConvertRequest({ ...base, foundry: true }, 't').foundry).toBe(
+      true,
+    );
   });
 
   it('leaves the logo out when there is none', () => {

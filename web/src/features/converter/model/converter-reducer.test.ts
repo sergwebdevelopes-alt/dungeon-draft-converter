@@ -16,6 +16,7 @@ const SETTINGS = {
   presets: ['JPG_70', 'WEBP_140'],
   variants: ['NoGrid', 'Grid'] as const,
   placement: { size: 10, margin: 3 },
+  foundry: false,
 };
 
 function run(...actions: ConverterAction[]): ConverterState {
@@ -282,6 +283,31 @@ describe('selectedPresets', () => {
       'JPG_70',
       'WEBP_140',
     ]);
+  });
+});
+
+describe('the Foundry file', () => {
+  it('is off until the visitor turns it on, and keeps a saved choice', () => {
+    const off = run(loaded, withMap);
+    const on = run(loaded, withMap, { type: 'foundryToggled' });
+    const saved = run({
+      type: 'configLoaded',
+      config: TEST_CONFIG,
+      settings: {
+        ...SETTINGS,
+        variants: [...SETTINGS.variants],
+        foundry: true,
+      },
+    });
+
+    expect(initialState.foundry).toBe(false);
+    expect(off.foundry).toBe(false);
+    expect(on.foundry).toBe(true);
+    expect(
+      run(loaded, { type: 'foundryToggled' }, { type: 'foundryToggled' })
+        .foundry,
+    ).toBe(false);
+    expect(saved.foundry).toBe(true);
   });
 });
 

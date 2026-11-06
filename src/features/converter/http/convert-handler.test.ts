@@ -151,7 +151,12 @@ describe('convertHandler', () => {
       const res = await convert(
         server.base,
         [{ name: 'Castle.dd2vtt', data: map }],
-        { presets: 'JPG_70', variants: 'NoGrid,Grid', name: 'Castle.dd2vtt' },
+        {
+          presets: 'JPG_70',
+          variants: 'NoGrid,Grid',
+          name: 'Castle.dd2vtt',
+          foundry: 'true',
+        },
       );
 
       assert.equal(res.status, 200);
@@ -199,7 +204,12 @@ describe('convertHandler', () => {
           { name: 'Top.dd2vtt', data: level },
           { name: 'Ground.dd2vtt', data: level },
         ],
-        { presets: 'JPG_70', variants: 'NoGrid', name: 'Top.dd2vtt' },
+        {
+          presets: 'JPG_70',
+          variants: 'NoGrid',
+          name: 'Top.dd2vtt',
+          foundry: 'true',
+        },
       );
 
       assert.equal(res.status, 200);
@@ -358,7 +368,7 @@ describe('convertHandler', () => {
         const res = await convert(
           server.base,
           [{ name: 'Big.dd2vtt', data: map }],
-          { presets: 'JPG_300', variants: 'NoGrid,Grid' },
+          { presets: 'JPG_300', variants: 'NoGrid,Grid', foundry: 'true' },
         );
 
         assert.equal(res.status, 200);

@@ -23,6 +23,7 @@ describe('loadSettings', () => {
       presets: ['JPG_70', 'WEBP_140'],
       variants: ['NoGrid', 'Grid'],
       placement: { size: 10, margin: 3 },
+      foundry: false,
     });
   });
 
@@ -31,12 +32,14 @@ describe('loadSettings', () => {
       presets: ['WEBP_140', 'OLD_PRESET'],
       variants: ['Grid'],
       placement: { size: 15, margin: 1 },
+      foundry: true,
     });
 
     expect(loadSettings(TEST_CONFIG, store)).toEqual({
       presets: ['WEBP_140'],
       variants: ['Grid'],
       placement: { size: 15, margin: 1 },
+      foundry: true,
     });
   });
 
@@ -45,12 +48,14 @@ describe('loadSettings', () => {
       presets: ['OLD_PRESET'],
       variants: 'Grid',
       placement: { size: 999, margin: 'x' },
+      foundry: 'yes',
     });
 
     expect(loadSettings(TEST_CONFIG, store)).toEqual({
       presets: ['JPG_70', 'WEBP_140'],
       variants: ['NoGrid', 'Grid'],
       placement: { size: 10, margin: 3 },
+      foundry: false,
     });
   });
 
@@ -71,6 +76,7 @@ describe('saveSettings', () => {
       presets: ['JPG_70'],
       variants: ['Grid' as const],
       placement: { size: 5, margin: 1 },
+      foundry: true,
     };
 
     saveSettings(settings, store);

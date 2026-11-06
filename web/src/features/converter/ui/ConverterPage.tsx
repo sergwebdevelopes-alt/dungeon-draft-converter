@@ -111,8 +111,10 @@ function ConverterPage() {
                 presets={config?.presets ?? null}
                 selected={state.presets}
                 tooLarge={tooLargePresets(state)}
+                foundry={state.foundry}
                 disabled={converting}
                 onToggle={(name) => dispatch({ type: 'presetToggled', name })}
+                onToggleFoundry={() => dispatch({ type: 'foundryToggled' })}
               />
               <GridSwitch
                 value={choiceOf(state.variants)}
@@ -143,6 +145,7 @@ function ConverterPage() {
             status={status}
             canSubmit={canSubmit(state)}
             mapCount={shown.length}
+            foundry={state.foundry}
             imageCount={imageCount(
               shown.length,
               formats.length,

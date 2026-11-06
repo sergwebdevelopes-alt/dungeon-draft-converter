@@ -20,6 +20,7 @@ function convertParams({
   logo,
   presets,
   variants,
+  foundry,
 }: ConvertRequest): URLSearchParams {
   const params = new URLSearchParams({
     ticket,
@@ -27,6 +28,9 @@ function convertParams({
     presets: presets.join(','),
     variants: variants.join(','),
   });
+  if (foundry) {
+    params.set('foundry', 'true');
+  }
   if (logo) {
     params.set('logoSize', String(logo.placement.size));
     params.set('logoMargin', String(logo.placement.margin));

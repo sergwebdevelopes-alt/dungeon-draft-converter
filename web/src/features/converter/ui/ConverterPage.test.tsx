@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Config } from '../model/types.ts';
@@ -282,6 +282,49 @@ describe('ConverterPage', () => {
     expect(
       new URL(convertUrl!, 'http://test').searchParams.get('presets'),
     ).toBe('WEBP_140');
+  });
+
+  it('adds the Foundry file only once it is turned on', async () => {
+    const fetchMock = mockServer();
+    await renderPage();
+    await userEvent.upload(mapInput(), mapFile());
+    const foundry = screen.getByRole('button', { name: /Foundry VTT/ });
+    const conversion = screen.getByRole('complementary', {
+      name: 'Conversion',
+    });
+
+    expect(foundry).toHaveAttribute('aria-pressed', 'false');
+    expect(conversion).not.toHaveTextContent('Foundry file');
+
+    await userEvent.click(foundry);
+
+    expect(foundry).toHaveAttribute('aria-pressed', 'true');
+    expect(conversion).toHaveTextContent('+ Foundry file');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Convert & download' }),
+    );
+    await screen.findByRole('button', { name: 'Download again' });
+    const convertUrl = fetchMock.mock.calls
+      .map(([url]) => url)
+      .find((url) => url.startsWith('/api/convert'));
+    expect(
+      new URL(convertUrl!, 'http://test').searchParams.get('foundry'),
+    ).toBe('true');
+  });
+
+  it('remembers the Foundry choice for the next visit', async () => {
+    mockServer();
+    await renderPage();
+    await userEvent.click(screen.getByRole('button', { name: /Foundry VTT/ }));
+    cleanup();
+
+    await renderPage();
+
+    expect(screen.getByRole('button', { name: /Foundry VTT/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 
   it('exports only the grid version when the grid is chosen', async () => {

@@ -17,6 +17,7 @@ interface ConverterState {
   placement: LogoPlacement | null;
   presets: string[];
   variants: Variant[];
+  foundry: boolean;
   mapSize: MapSize | null;
   status: Status;
 }
@@ -31,6 +32,7 @@ type ConverterAction =
   | { type: 'logoSelected'; file: File }
   | { type: 'logoCleared' }
   | { type: 'presetToggled'; name: string }
+  | { type: 'foundryToggled' }
   | { type: 'variantsChosen'; variants: Variant[] }
   | { type: 'mapSizeKnown'; size: MapSize | null }
   | { type: 'placementChanged'; placement: LogoPlacement }
@@ -51,6 +53,7 @@ const initialState: ConverterState = {
   placement: null,
   presets: [],
   variants: [],
+  foundry: false,
   mapSize: null,
   status: { kind: 'idle' },
 };
@@ -146,6 +149,9 @@ function converterReducer(
 
     case 'presetToggled':
       return edited(state, { presets: toggle(state.presets, action.name) });
+
+    case 'foundryToggled':
+      return edited(state, { foundry: !state.foundry });
 
     case 'variantsChosen':
       return edited(state, { variants: action.variants });

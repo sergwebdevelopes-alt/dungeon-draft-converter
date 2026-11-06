@@ -24,10 +24,10 @@ function useConverter(
 ) {
   const [state, dispatch] = useReducer(converterReducer, initialState);
   const abortRef = useRef<AbortController | null>(null);
-  const { status, presets, variants, placement } = state;
+  const { status, presets, variants, placement, foundry } = state;
 
   useLoadConfig(api, store, dispatch);
-  useSaveSettings(store, presets, variants, placement);
+  useSaveSettings(store, { presets, variants, placement, foundry });
   useAbortOnUnmount(abortRef);
   useQueuePolling(api, state, dispatch);
   useRevokeResultUrl(status);
@@ -118,15 +118,18 @@ function useLoadConfig(
 
 function useSaveSettings(
   store: KeyValueStore,
-  presets: string[],
-  variants: ConverterState['variants'],
-  placement: ConverterState['placement'],
+  {
+    presets,
+    variants,
+    placement,
+    foundry,
+  }: Pick<ConverterState, 'presets' | 'variants' | 'placement' | 'foundry'>,
 ) {
   useEffect(() => {
     if (placement) {
-      saveSettings({ presets, variants, placement }, store);
+      saveSettings({ presets, variants, placement, foundry }, store);
     }
-  }, [store, presets, variants, placement]);
+  }, [store, presets, variants, placement, foundry]);
 }
 
 function useAbortOnUnmount(abortRef: { current: AbortController | null }) {

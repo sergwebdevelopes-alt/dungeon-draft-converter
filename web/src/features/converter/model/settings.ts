@@ -8,6 +8,7 @@ interface Settings {
   presets: string[];
   variants: Variant[];
   placement: LogoPlacement;
+  foundry: boolean;
 }
 
 function pickKnown<T extends string>(
@@ -51,6 +52,7 @@ function loadSettings(config: Config, store: KeyValueStore): Settings {
     ),
     variants: pickKnown(record.variants, config.variants),
     placement: readPlacement(record.placement, config),
+    foundry: record.foundry === true,
   };
 }
 

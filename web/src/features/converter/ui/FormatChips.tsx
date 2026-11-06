@@ -15,8 +15,10 @@ interface FormatChipsProps {
   presets: readonly FormatPreset[] | null;
   selected: string[];
   tooLarge: string[];
+  foundry: boolean;
   disabled: boolean;
   onToggle: (name: string) => void;
+  onToggleFoundry: () => void;
 }
 
 const CHIP =
@@ -34,8 +36,10 @@ function FormatChips({
   presets,
   selected,
   tooLarge,
+  foundry,
   disabled,
   onToggle,
+  onToggleFoundry,
 }: FormatChipsProps) {
   return (
     <PanelSection title="Formats">
@@ -70,6 +74,20 @@ function FormatChips({
               />
             ))}
       </div>
+      {presets && (
+        <button
+          type="button"
+          className={`${CHIP} mt-2 w-full`}
+          aria-pressed={foundry}
+          disabled={disabled}
+          onClick={onToggleFoundry}
+        >
+          <span className="text-sm font-bold">Foundry VTT</span>
+          <span className="text-xs text-muted">
+            .dd2vtt with walls and lights
+          </span>
+        </button>
+      )}
     </PanelSection>
   );
 }

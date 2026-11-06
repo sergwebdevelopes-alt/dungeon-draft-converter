@@ -16,6 +16,7 @@ interface ConvertRequest {
   maps: File[];
   presets: string[];
   variants: Variant[];
+  foundry: boolean;
   logo?: { image: File; placement: LogoPlacement };
 }
 

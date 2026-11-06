@@ -10,7 +10,7 @@ function toConvertRequest(
   state: ConverterState,
   ticket: string,
 ): ConvertRequest {
-  const { config, logo, placement, variants } = state;
+  const { config, logo, placement, variants, foundry } = state;
   const logoOptions =
     logo && placement && config
       ? { image: logo, placement: clampPlacement(placement, config.logo) }
@@ -22,6 +22,7 @@ function toConvertRequest(
     logo: logoOptions,
     presets: presetsToConvert(state),
     variants,
+    foundry,
   };
 }
 

@@ -77,6 +77,30 @@ describe('parseConvertRequest', () => {
     });
   });
 
+  describe('foundry', () => {
+    it('leaves the Foundry file out unless it is turned on', async () => {
+      for (const [query, expected] of [
+        [{}, false],
+        [{ foundry: '' }, false],
+        [{ foundry: 'false' }, false],
+        [{ foundry: 'true' }, true],
+      ] as const) {
+        const result = await parse(makeRequest(query));
+
+        assert.equal(result.foundry, expected, JSON.stringify(query));
+      }
+    });
+
+    it('refuses any other value', async () => {
+      for (const foundry of ['yes', '1', 'TRUE']) {
+        await assert.rejects(parse(makeRequest({ foundry })), {
+          status: 400,
+          message: 'foundry must be true or false.',
+        });
+      }
+    });
+  });
+
   describe('presets and variants', () => {
     it('returns the chosen presets in the standard order', async () => {
       const result = await parse(makeRequest({ presets: 'WEBP_140,JPG_70' }));

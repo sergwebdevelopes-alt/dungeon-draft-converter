@@ -36,6 +36,7 @@ interface ConvertRequest {
   ticket?: string;
   levels: LoadedMap[];
   original?: string;
+  foundry: boolean;
   logo?: LogoOptions;
 }
 
@@ -107,10 +108,23 @@ function parseTicket(raw: unknown, queue: ConversionQueue): string | undefined {
   return ticket;
 }
 
+function parseFoundry(raw: unknown): boolean {
+  const value = queryString(raw);
+  if (value === 'true') {
+    return true;
+  }
+  if (value === undefined || value === 'false') {
+    return false;
+  }
+
+  throw new HttpError(400, 'foundry must be true or false.');
+}
+
 function parseOptions(query: Query, queue: ConversionQueue) {
   return {
     presets: parsePresets(query.presets),
     variants: parseVariants(query.variants),
+    foundry: parseFoundry(query.foundry),
     logoPlacement: {
       size: parseLogoPercent(query.logoSize, 'size'),
       margin: parseLogoPercent(query.logoMargin, 'margin'),
@@ -197,7 +211,7 @@ async function parseConvertRequest(
   { query, files }: { query: Query; files: Uploads },
   queue: ConversionQueue,
 ): Promise<ConvertRequest> {
-  const { presets, variants, logoPlacement, ticket } = parseOptions(
+  const { presets, variants, foundry, logoPlacement, ticket } = parseOptions(
     query,
     queue,
   );
@@ -205,7 +219,7 @@ async function parseConvertRequest(
 
   const logo = logoImage && { image: logoImage, ...logoPlacement };
 
-  return { presets, variants, ticket, levels, original, logo };
+  return { presets, variants, ticket, levels, original, foundry, logo };
 }
 
 export { parseConvertRequest };

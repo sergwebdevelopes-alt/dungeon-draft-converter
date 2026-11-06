@@ -16,6 +16,7 @@ interface ConvertPanelProps {
   canSubmit: boolean;
   mapCount: number;
   imageCount: number;
+  foundry: boolean;
   onCancel: () => void;
   onDownloadAgain: () => void;
   onReset: () => void;
@@ -30,6 +31,7 @@ function ConvertPanel({
   canSubmit,
   mapCount,
   imageCount,
+  foundry,
   onCancel,
   onDownloadAgain,
   onReset,
@@ -42,6 +44,7 @@ function ConvertPanel({
       {mapCount > 0 && (
         <p className="text-center text-sm text-muted lg:text-left">
           {plural(mapCount, 'map')} · {plural(imageCount, 'image')}
+          {foundry && ' + Foundry file'}
         </p>
       )}
 
