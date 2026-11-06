@@ -32,6 +32,29 @@ describe('readMapPreview', () => {
     ).toEqual(new Uint8Array([0x89, 0x50, 0x4e, 0x47]));
   });
 
+  it('knows when the map was exported without lighting', async () => {
+    const unlit = await readMapPreview(
+      dd2vtt(valid({ environment: { baked_lighting: false } })),
+    );
+    const noEnvironment = await readMapPreview(dd2vtt(valid()));
+    const lit = await readMapPreview(
+      dd2vtt(valid({ environment: { baked_lighting: true } })),
+    );
+    const noGrid = await readMapPreview(
+      dd2vtt(
+        valid({
+          environment: { baked_lighting: false },
+          resolution: { map_size: { x: 20, y: 25 } },
+        }),
+      ),
+    );
+
+    expect(unlit.unlit).toBe(true);
+    expect(noEnvironment.unlit).toBe(true);
+    expect(lit.unlit).toBe(false);
+    expect(noGrid.unlit).toBe(false);
+  });
+
   it('rounds fractional grid sizes', async () => {
     const preview = await readMapPreview(
       dd2vtt(valid({ resolution: { map_size: { x: 20.4, y: 24.6 } } })),

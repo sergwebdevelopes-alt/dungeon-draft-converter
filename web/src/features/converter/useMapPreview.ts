@@ -4,7 +4,13 @@ import { readPreviewInWorker } from './preview-worker.ts';
 
 type LevelPreview =
   | { status: 'loading' }
-  | { status: 'ready'; url: string; columns: number; rows: number }
+  | {
+      status: 'ready';
+      url: string;
+      columns: number;
+      rows: number;
+      unlit: boolean;
+    }
   | { status: 'error'; message: string };
 
 type ReadPreview = (file: File) => Promise<MapPreview>;
@@ -29,12 +35,18 @@ function combine(
     return main;
   }
 
-  const layers = [...shown]
+  const ready = [...shown]
     .reverse()
     .map((file) => levels.get(file))
-    .flatMap((level) => (level?.status === 'ready' ? [level.url] : []));
+    .filter((level) => level?.status === 'ready');
 
-  return { status: 'ready', layers, columns: main.columns, rows: main.rows };
+  return {
+    status: 'ready',
+    layers: ready.map((level) => level.url),
+    columns: main.columns,
+    rows: main.rows,
+    unlit: ready.some((level) => level.unlit),
+  };
 }
 
 function revoke(level: LevelPreview | undefined) {
@@ -68,6 +80,7 @@ function useMapPreview(
             url: URL.createObjectURL(preview.image),
             columns: preview.columns,
             rows: preview.rows,
+            unlit: preview.unlit,
           };
         } catch (error) {
           next = {

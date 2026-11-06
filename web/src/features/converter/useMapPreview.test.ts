@@ -4,7 +4,12 @@ import type { MapPreview, PreviewState } from './model/map-preview.ts';
 import { useMapPreview } from './useMapPreview.ts';
 
 function preview(name: string): MapPreview {
-  return { image: new Blob([name]), columns: 20, rows: 25 };
+  return {
+    image: new Blob([name]),
+    columns: 20,
+    rows: 25,
+    unlit: name.includes('Unlit'),
+  };
 }
 
 describe('useMapPreview', () => {
@@ -52,6 +57,7 @@ describe('useMapPreview', () => {
         layers: ['blob:1'],
         columns: 20,
         rows: 25,
+        unlit: false,
       }),
     );
   });
@@ -112,8 +118,26 @@ describe('useMapPreview', () => {
         layers: ['blob:1'],
         columns: 20,
         rows: 25,
+        unlit: false,
       }),
     );
+  });
+
+  it('is unlit when any shown level was exported without lighting', async () => {
+    const tower = new File(['1'], 'Tower.dd2vtt');
+    const cellar = new File(['2'], 'UnlitCellar.dd2vtt');
+    const { result, rerender } = renderPreviews([tower, cellar]);
+    await waitFor(() =>
+      expect(
+        result.current.status === 'ready' && result.current.layers,
+      ).toHaveLength(2),
+    );
+
+    expect(result.current).toMatchObject({ unlit: true });
+
+    rerender({ files: [tower, cellar], shown: [tower] });
+
+    expect(result.current).toMatchObject({ unlit: false });
   });
 
   it('says so when every level is hidden', () => {

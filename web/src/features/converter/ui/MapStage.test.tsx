@@ -8,6 +8,7 @@ const READY: PreviewState = {
   layers: ['blob:map'],
   columns: 4,
   rows: 3,
+  unlit: false,
 };
 
 function renderStage(overrides: Partial<Parameters<typeof MapStage>[0]> = {}) {
@@ -112,6 +113,30 @@ describe('MapStage', () => {
     });
   });
 
+  it('says the preview is without lighting only for a map that gets it later', () => {
+    const { unmount } = render(
+      <MapStage
+        preview={{ ...READY, unlit: true }}
+        grid="without"
+        logo={null}
+        placement={null}
+        busy={false}
+        disabled={false}
+        onAddMaps={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Preview without lighting')).toHaveAttribute(
+      'title',
+      'Lighting is added to the downloaded images.',
+    );
+
+    unmount();
+    renderStage();
+
+    expect(screen.queryByText('Preview without lighting')).toBeNull();
+  });
+
   it('stacks merged levels with the main map on top', () => {
     renderStage({
       preview: {
@@ -119,6 +144,7 @@ describe('MapStage', () => {
         layers: ['blob:cellar', 'blob:tower'],
         columns: 4,
         rows: 3,
+        unlit: false,
       },
     });
 

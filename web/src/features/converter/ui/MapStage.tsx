@@ -20,6 +20,9 @@ interface MapStageProps {
 const LABEL =
   'pointer-events-none absolute top-3 rounded-full bg-black/60 px-3 py-1 text-xs font-bold tracking-wide text-white uppercase';
 
+const NOTE =
+  'absolute bottom-3 left-3 rounded-full bg-black/60 px-3 py-1 text-xs text-white/85';
+
 function frameStyle(columns: number, rows: number): CSSProperties {
   return {
     aspectRatio: `${columns} / ${rows}`,
@@ -161,6 +164,14 @@ function MapFrame({
         />
       ))}
       <GridLayer columns={preview.columns} rows={preview.rows} grid={grid} />
+      {preview.unlit && (
+        <span
+          className={NOTE}
+          title="Lighting is added to the downloaded images."
+        >
+          Preview without lighting
+        </span>
+      )}
       {logo && placement && <LogoMark logo={logo} placement={placement} />}
       {busy && (
         <div

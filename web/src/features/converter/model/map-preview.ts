@@ -2,13 +2,20 @@ interface MapPreview {
   image: Blob;
   columns: number;
   rows: number;
+  unlit: boolean;
 }
 
 type PreviewState =
   | { status: 'empty' }
   | { status: 'hidden' }
   | { status: 'loading' }
-  | { status: 'ready'; layers: string[]; columns: number; rows: number }
+  | {
+      status: 'ready';
+      layers: string[];
+      columns: number;
+      rows: number;
+      unlit: boolean;
+    }
   | { status: 'error'; message: string };
 
 type PreviewReply =
@@ -57,6 +64,14 @@ function gridSize(resolution: unknown): { columns: number; rows: number } {
   return { columns: Math.round(columns), rows: Math.round(rows) };
 }
 
+function isUnlit(data: Fields): boolean {
+  const environment = isObject(data.environment) ? data.environment : {};
+  const resolution = isObject(data.resolution) ? data.resolution : {};
+  const pixelsPerGrid = Number(resolution.pixels_per_grid);
+
+  return environment.baked_lighting !== true && pixelsPerGrid > 0;
+}
+
 async function readMapPreview(file: File): Promise<MapPreview> {
   let data: unknown;
   try {
@@ -81,6 +96,7 @@ async function readMapPreview(file: File): Promise<MapPreview> {
     image: new Blob([bytes], { type: imageType(bytes) }),
     columns,
     rows,
+    unlit: isUnlit(data),
   };
 }
 
