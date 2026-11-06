@@ -13,9 +13,7 @@ function imageCount(
 }
 
 function zipName(maps: File[]): string {
-  const stem = maps[0].name.replace(/\.dd2vtt$/i, '');
-
-  return maps.length > 1 ? `${stem}_merged.zip` : `${stem}.zip`;
+  return `${maps[0].name.replace(/\.dd2vtt$/i, '')}.zip`;
 }
 
 export { imageCount, presetLabel, zipName };

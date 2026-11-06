@@ -18,7 +18,7 @@ describe('summary', () => {
     expect(zipName([file('Cave.dd2vtt')])).toBe('Cave.zip');
     expect(zipName([file('Cave.DD2VTT')])).toBe('Cave.zip');
     expect(zipName([file('Tower.dd2vtt'), file('Cellar.dd2vtt')])).toBe(
-      'Tower_merged.zip',
+      'Tower.zip',
     );
   });
 });

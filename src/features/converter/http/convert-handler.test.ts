@@ -195,7 +195,7 @@ describe('convertHandler', () => {
       assert.doesNotMatch(JSON.stringify(entry), /Castle/);
     });
 
-    it('merges several levels into one map', async () => {
+    it('merges several levels into one map named after the main map', async () => {
       const level = await makeMap();
 
       const res = await convert(
@@ -213,9 +213,13 @@ describe('convertHandler', () => {
       );
 
       assert.equal(res.status, 200);
+      assert.match(
+        res.headers.get('content-disposition') ?? '',
+        /filename="Top\.zip"/,
+      );
       assert.deepEqual(Object.keys(await unzip(res)).sort(), [
-        'Top_merged/FOUNDRY_VTT_DD2VTT/Top_merged.dd2vtt',
-        'Top_merged/JPG_70/Top_merged_70px_NoGrid.jpg',
+        'Top/FOUNDRY_VTT_DD2VTT/Top.dd2vtt',
+        'Top/JPG_70/Top_70px_NoGrid.jpg',
       ]);
       await waitFor(() => server.logged.at(-1)?.levels === 2);
     });

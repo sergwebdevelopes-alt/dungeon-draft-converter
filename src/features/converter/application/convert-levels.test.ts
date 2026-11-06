@@ -122,7 +122,7 @@ describe('convertLevels', () => {
     );
   });
 
-  it('merges several levels into "<main>_merged"', async () => {
+  it('names merged levels after the main map, like a single map', async () => {
     const result = await convertLevels(
       {
         levels: [
@@ -138,13 +138,10 @@ describe('convertLevels', () => {
 
     const files = await collect(result.files);
 
-    assert.equal(result.name, 'Castle_merged');
+    assert.equal(result.name, 'Castle');
     assert.deepEqual(
       files.map((file) => file.path),
-      [
-        'FOUNDRY_VTT_DD2VTT/Castle_merged.dd2vtt',
-        'JPG_70/Castle_merged_70px_NoGrid.jpg',
-      ],
+      ['FOUNDRY_VTT_DD2VTT/Castle.dd2vtt', 'JPG_70/Castle_70px_NoGrid.jpg'],
     );
     const json = JSON.parse(files[0].data.toString('utf8')) as Record<
       string,

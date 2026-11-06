@@ -1,10 +1,8 @@
 import { createReadStream } from 'node:fs';
-import path from 'node:path';
 import {
   makeImages,
   type ImageOptions,
 } from '../image-processing/render-map-images.ts';
-import { MAP_EXTENSION } from '../image-processing/read-dd2vtt-file.ts';
 import type { LoadedMap } from '../domain/loaded-map.ts';
 import { UnprocessableError } from '../../../shared/errors.ts';
 import { mergeLevels } from '../image-processing/merge-levels.ts';
@@ -27,10 +25,6 @@ interface ConversionResult {
   files: AsyncIterable<ConversionFile>;
 }
 
-function mergedFileName(mainFileName: string): string {
-  return `${path.parse(mainFileName).name}_merged${MAP_EXTENSION}`;
-}
-
 async function convertLevels(
   {
     levels,
@@ -44,11 +38,7 @@ async function convertLevels(
 ): Promise<ConversionResult> {
   const merged =
     levels.length > 1
-      ? await mergeLevels(
-          levels,
-          mergedFileName(levels[0].fileNameWithExt),
-          workDir,
-        )
+      ? await mergeLevels(levels, levels[0].fileNameWithExt, workDir)
       : undefined;
   const map = merged?.map ?? levels[0];
   const foundryFile = foundry ? (merged?.dd2vtt ?? original) : undefined;

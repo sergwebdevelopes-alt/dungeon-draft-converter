@@ -92,7 +92,7 @@ If a map was exported from Dungeondraft with lighting turned off, the app lights
 
 ## Combining levels
 
-In the web app you can upload up to 10 maps of the same size and grid, for example an upper floor and the ground floor below it. Each map you add goes on top of the list, so add the lowest floor first. The top map in the list is the main map; the maps below it are drawn underneath, in list order. You can reorder them with the arrows or by dragging. The eye button hides a level: it stays in the list but is left out of the preview and the conversion. You get one set of images and one merged `.dd2vtt`, named `<Main>_merged`:
+In the web app you can upload up to 10 maps of the same size and grid, for example an upper floor and the ground floor below it. Each map you add goes on top of the list, so add the lowest floor first. The top map in the list is the main map; the maps below it are drawn underneath, in list order. You can reorder them with the arrows or by dragging. The eye button hides a level: it stays in the list but is left out of the preview and the conversion. You get one set of images and one merged `.dd2vtt` (if Foundry VTT is chosen), named after the main map, like a single map:
 
 - **Image:** the levels are stacked as they are. Dungeondraft bakes each level's lighting into its own image, so every level stays lit exactly once; merging in Dungeondraft lights the whole map again and makes it darker. If any level was exported without lighting, the app lights the levels itself first ([see above](#maps-exported-without-lighting)), and the merged `.dd2vtt` stays unlit for Foundry.
 - **Walls and doors:** from the main map only.
