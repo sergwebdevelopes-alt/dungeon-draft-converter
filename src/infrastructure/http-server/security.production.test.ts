@@ -43,12 +43,33 @@ describe('securityHeaders in production', () => {
     const directives = policy.split('; ');
 
     assert.ok(directives.includes("default-src 'self'"), policy);
-    assert.ok(directives.includes("script-src 'self'"), policy);
     assert.ok(directives.includes("img-src 'self' blob:"), policy);
     assert.ok(directives.includes("object-src 'none'"), policy);
     assert.ok(directives.includes("frame-ancestors 'none'"), policy);
     assert.ok(!policy.includes('data:'), policy);
     assert.ok(!policy.includes('unsafe-inline'), policy);
+  });
+
+  it('allows Cloudflare Web Analytics and no other outside source', async () => {
+    const res = await fetch(base);
+    const policy = res.headers.get('content-security-policy') ?? '';
+    const directives = policy.split('; ');
+
+    assert.ok(
+      directives.includes(
+        "script-src 'self' https://static.cloudflareinsights.com",
+      ),
+      policy,
+    );
+    assert.ok(
+      directives.includes("connect-src 'self' https://cloudflareinsights.com"),
+      policy,
+    );
+    assert.deepEqual([...new Set(policy.match(/https:\/\/[^\s;]+/g))].sort(), [
+      'https://cloudflareinsights.com',
+      'https://static.cloudflareinsights.com',
+    ]);
+    assert.ok(!policy.includes('*'), policy);
   });
 
   it('sets Strict-Transport-Security', async () => {

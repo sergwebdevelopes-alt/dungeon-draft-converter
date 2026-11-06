@@ -1,3 +1,5 @@
+import type { AnalyticsConfig } from '../analytics/cloudflare-analytics.ts';
+
 interface NavItem {
   label: string;
   href: string;
@@ -30,10 +32,15 @@ interface SiteConfig {
   membership: {
     plans: MembershipPlan[];
   };
+  analytics?: AnalyticsConfig;
 }
 
 const SITE: SiteConfig = {
   name: 'Lair of Artificer',
+  analytics: {
+    cloudflareToken: '2d1529b91276411cae89483e0a1a975d',
+    hostname: 'lairofartificer.com',
+  },
   nav: [
     { label: 'Home', href: '/' },
     { label: 'Maps', href: '/maps' },

@@ -1,5 +1,9 @@
 import type { RequestHandler } from 'express';
-import { IS_PRODUCTION } from '../../config.ts';
+import {
+  ANALYTICS_REPORT_ORIGIN,
+  ANALYTICS_SCRIPT_ORIGIN,
+  IS_PRODUCTION,
+} from '../../config.ts';
 import { HttpError } from './http-errors.ts';
 import { isSafeMethod } from './http-methods.ts';
 
@@ -7,10 +11,10 @@ const ALLOWED_FETCH_SITES = new Set(['same-origin', 'none']);
 
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
-  "script-src 'self'",
+  `script-src 'self' ${ANALYTICS_SCRIPT_ORIGIN}`,
   "style-src 'self'",
   "img-src 'self' blob:",
-  "connect-src 'self'",
+  `connect-src 'self' ${ANALYTICS_REPORT_ORIGIN}`,
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'self'",

@@ -59,11 +59,16 @@ const PATREON_WEBSITE_USER_AGENT =
   process.env.PATREON_WEBSITE_USER_AGENT ||
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0 Safari/537.36';
 
+const ANALYTICS_SCRIPT_ORIGIN = 'https://static.cloudflareinsights.com';
+const ANALYTICS_REPORT_ORIGIN = 'https://cloudflareinsights.com';
+
 const { settings: SETTINGS, problems: SETTINGS_PROBLEMS } = readSettings(
   process.env,
 );
 
 export {
+  ANALYTICS_REPORT_ORIGIN,
+  ANALYTICS_SCRIPT_ORIGIN,
   CONVERSION_TIMEOUT_MS,
   GALLERY_DIR,
   GALLERY_IMAGES_URL,
