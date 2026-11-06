@@ -10,7 +10,17 @@ interface MapPage extends PageText {
   imageAlt: string;
 }
 
+interface MapLink {
+  path: string;
+  publishedAt: string;
+}
+
 type FindMapPage = (slug: string) => Promise<MapPage | null>;
+type ListMapLinks = () => Promise<MapLink[]>;
+
+function mapPagePath(slug: string): string {
+  return `/maps?map=${encodeURIComponent(slug)}`;
+}
 
 function describe(description: string | undefined, fallback: string): string {
   const summary = description ? mapSummary(description, SUMMARY_LENGTH) : '';
@@ -37,5 +47,16 @@ function createFindMapPage(
   };
 }
 
-export { createFindMapPage };
-export type { FindMapPage, MapPage };
+function createListMapLinks(stores: GalleryStores | undefined): ListMapLinks {
+  return async () => {
+    const maps = stores ? await stores.maps.listMaps() : [];
+
+    return maps.map((map) => ({
+      path: mapPagePath(map.slug),
+      publishedAt: map.publishedAt,
+    }));
+  };
+}
+
+export { createFindMapPage, createListMapLinks, mapPagePath };
+export type { FindMapPage, ListMapLinks, MapLink, MapPage };

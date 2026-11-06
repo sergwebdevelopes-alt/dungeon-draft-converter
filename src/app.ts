@@ -23,7 +23,11 @@ import { healthRouter } from './infrastructure/http-server/health-route.ts';
 import type { GalleryStores } from './features/gallery/ports/gallery-stores.ts';
 import type { GallerySync } from './features/gallery/application/sync-gallery.ts';
 import * as gallery from './features/gallery/http/routes.ts';
-import { createFindMapPage } from './features/gallery/http/map-page.ts';
+import {
+  createFindMapPage,
+  createListMapLinks,
+} from './features/gallery/http/map-page.ts';
+import { createSitemapRoute } from './site-map.ts';
 import { createPageFor } from './page-heads.ts';
 import { SITE_PAGES } from './contracts/site-pages.ts';
 import {
@@ -70,6 +74,10 @@ async function createApp(
   );
 
   app.use(GALLERY_IMAGES_URL, serveGalleryImages(GALLERY_DIR));
+  app.get(
+    '/sitemap.xml',
+    createSitemapRoute(SITE_URL, createListMapLinks(galleryStores)),
+  );
 
   if (IS_PRODUCTION) {
     const findMapPage = createFindMapPage(

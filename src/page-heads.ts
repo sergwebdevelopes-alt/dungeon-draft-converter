@@ -4,7 +4,10 @@ import {
   SITE_PAGES,
   pageTitle,
 } from './contracts/site-pages.ts';
-import type { FindMapPage } from './features/gallery/http/map-page.ts';
+import {
+  mapPagePath,
+  type FindMapPage,
+} from './features/gallery/http/map-page.ts';
 import type { PageImage } from './infrastructure/http-server/page-head.ts';
 import type {
   Page,
@@ -67,7 +70,7 @@ function createPageFor(
       head: {
         title: pageTitle(map.title),
         description: map.description,
-        url: absolute(`/maps?map=${encodeURIComponent(slug)}`),
+        url: absolute(mapPagePath(slug)),
         image: { url: absolute(map.imageUrl), alt: map.imageAlt },
       },
     };

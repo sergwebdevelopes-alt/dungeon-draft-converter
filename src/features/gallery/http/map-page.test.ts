@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { GalleryStores } from '../ports/gallery-stores.ts';
 import type { StoredMap } from '../ports/map-repository.ts';
-import { createFindMapPage } from './map-page.ts';
+import {
+  createFindMapPage,
+  createListMapLinks,
+  mapPagePath,
+} from './map-page.ts';
 
 const FALLBACK = 'Browse every map.';
 
@@ -28,6 +32,7 @@ function storedMap(overrides: Partial<StoredMap> = {}): StoredMap {
 function stores(maps: StoredMap[]): GalleryStores {
   return {
     maps: {
+      listMaps: () => Promise.resolve(maps),
       findMap: (slug: string) =>
         Promise.resolve(maps.find((map) => map.slug === slug) ?? null),
     },
@@ -66,5 +71,32 @@ describe('createFindMapPage', () => {
       await createFindMapPage(undefined, FALLBACK)('tser-falls'),
       null,
     );
+  });
+});
+
+describe('mapPagePath', () => {
+  it('links to the map in the gallery, with the slug encoded', () => {
+    assert.equal(mapPagePath('tser-falls'), '/maps?map=tser-falls');
+    assert.equal(mapPagePath('a&b c'), '/maps?map=a%26b%20c');
+  });
+});
+
+describe('createListMapLinks', () => {
+  it('links to every map with its publishing date', async () => {
+    const list = createListMapLinks(
+      stores([
+        storedMap(),
+        storedMap({ slug: 'a&b', publishedAt: '2024-09-05T16:14:17.000Z' }),
+      ]),
+    );
+
+    assert.deepEqual(await list(), [
+      { path: '/maps?map=tser-falls', publishedAt: '2025-07-01T10:00:00.000Z' },
+      { path: '/maps?map=a%26b', publishedAt: '2024-09-05T16:14:17.000Z' },
+    ]);
+  });
+
+  it('lists no maps without a gallery', async () => {
+    assert.deepEqual(await createListMapLinks(undefined)(), []);
   });
 });
