@@ -1,7 +1,20 @@
+import { useEffect } from 'react';
 import { SITE } from '../config/site.ts';
 
-function PageTitle({ title }: { title?: string }) {
-  return <title>{title ? `${title} · ${SITE.name}` : SITE.name}</title>;
+function pageTitle(title?: string): string {
+  if (title) {
+    return `${title} · ${SITE.name}`;
+  }
+
+  return SITE.tagline ? `${SITE.name} · ${SITE.tagline}` : SITE.name;
 }
 
-export { PageTitle };
+function PageTitle({ title }: { title?: string }) {
+  useEffect(() => {
+    document.title = pageTitle(title);
+  }, [title]);
+
+  return null;
+}
+
+export { PageTitle, pageTitle };

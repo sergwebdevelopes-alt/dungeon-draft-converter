@@ -37,6 +37,7 @@ interface SiteConfig {
 
 const SITE: SiteConfig = {
   name: 'Lair of Artificer',
+  tagline: 'Battle maps for epic adventures',
   analytics: {
     cloudflareToken: '2d1529b91276411cae89483e0a1a975d',
     hostname: 'lairofartificer.com',
