@@ -20,6 +20,7 @@ import { serveGalleryImages } from './features/gallery/http/serve-map-images.ts'
 import type { LogConversion } from './features/converter/http/conversion-log.ts';
 import * as converter from './features/converter/http/routes.ts';
 import { healthRouter } from './infrastructure/http-server/health-route.ts';
+import { noIndex } from './infrastructure/http-server/no-index.ts';
 import type { GalleryStores } from './features/gallery/ports/gallery-stores.ts';
 import type { GallerySync } from './features/gallery/application/sync-gallery.ts';
 import * as gallery from './features/gallery/http/routes.ts';
@@ -63,6 +64,7 @@ async function createApp(
 
   app.use(
     '/api',
+    noIndex,
     healthRouter(isShuttingDown),
     converter.createRoutes({ queue, pendingLimit, log: logConversion }),
     gallery.createRoutes({

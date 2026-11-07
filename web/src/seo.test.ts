@@ -88,7 +88,7 @@ describe('search engines and link previews', () => {
 
     expect(robots).toMatch(/^User-agent: \*$/m);
     expect(robots).toMatch(/^Allow: \/$/m);
-    expect(robots).toMatch(/^Disallow: \/api\/$/m);
+    expect(robots).not.toMatch(/Disallow/);
     expect(robots).toMatch(new RegExp(`^Sitemap: ${SITE}/sitemap.xml$`, 'm'));
   });
 });
