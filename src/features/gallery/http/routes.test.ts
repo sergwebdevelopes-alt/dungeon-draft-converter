@@ -43,6 +43,7 @@ function gallery(maps: StoredMap[]): GalleryStores {
       Promise.resolve([...new Set(maps.flatMap((map) => map.tags))]),
     findMap: (slug) =>
       Promise.resolve(maps.find((map) => map.slug === slug) ?? null),
+    lastSyncedAt: () => Promise.resolve(null),
     replaceMaps: () => Promise.resolve({ added: 0, updated: 0, removed: 0 }),
   };
   const images: ImageStorage = {
@@ -74,6 +75,7 @@ async function serve(stores: GalleryStores | undefined, pageSizes?: PageSizes) {
       stores,
       sync: undefined,
       webhookSecret: undefined,
+      syncSchedule: { intervalMinutes: 60, graceMinutes: 60 },
       pageSizes,
     }),
   );
@@ -267,6 +269,7 @@ describe('POST /api/patreon/webhook', () => {
         stores: undefined,
         webhookSecret: secret,
         sync: withSync ? sync : undefined,
+        syncSchedule: { intervalMinutes: 60, graceMinutes: 60 },
         log: (entry) => logs.push(entry),
       }),
     );
@@ -371,5 +374,78 @@ describe('POST /api/patreon/webhook', () => {
       assert.equal(res.status, 404);
     }
     assert.equal(runs, 0);
+  });
+});
+
+describe('GET /api/gallery/health', () => {
+  const servers: http.Server[] = [];
+  const NOW = new Date('2026-11-07T12:00:00.000Z');
+  const sync: GallerySync = { run: () => Promise.resolve() };
+
+  after(() => {
+    for (const server of servers) {
+      server.closeAllConnections();
+      server.close();
+    }
+  });
+
+  function withLastSync(lastSyncAt: string | null): GalleryStores {
+    const stores = gallery([]);
+    return {
+      ...stores,
+      maps: { ...stores.maps, lastSyncedAt: () => Promise.resolve(lastSyncAt) },
+    };
+  }
+
+  async function healthAt(
+    stores: GalleryStores | undefined,
+    withSync = true,
+  ): Promise<Response> {
+    const app = express();
+    app.use(
+      '/api',
+      createRoutes({
+        stores,
+        sync: withSync ? sync : undefined,
+        webhookSecret: undefined,
+        syncSchedule: { intervalMinutes: 1440, graceMinutes: 60 },
+        now: () => NOW,
+      }),
+    );
+    app.use(errorHandler);
+    const server = await listen(app);
+    servers.push(server);
+    const { port } = server.address() as { port: number };
+
+    return fetch(`http://localhost:${port}/api/gallery/health`);
+  }
+
+  it('answers 200 while the last sync is recent enough', async () => {
+    const res = await healthAt(withLastSync('2026-11-06T11:00:00.000Z'));
+
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get('cache-control'), 'no-store');
+    assert.deepEqual(await res.json(), {
+      lastSyncAt: '2026-11-06T11:00:00.000Z',
+      stale: false,
+    });
+  });
+
+  it('answers 503 when the sync stopped or never ran', async () => {
+    for (const lastSyncAt of ['2026-11-06T10:59:00.000Z', null]) {
+      const res = await healthAt(withLastSync(lastSyncAt));
+
+      assert.equal(res.status, 503, String(lastSyncAt));
+      assert.deepEqual(await res.json(), { lastSyncAt, stale: true });
+    }
+  });
+
+  it('is not there without a database or a sync', async () => {
+    for (const res of [
+      await healthAt(undefined),
+      await healthAt(withLastSync('2026-11-07T11:00:00.000Z'), false),
+    ]) {
+      assert.equal(res.status, 404);
+    }
   });
 });

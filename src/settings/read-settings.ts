@@ -13,6 +13,7 @@ interface PatreonSettings {
 
 interface GallerySettings {
   syncIntervalMinutes: number;
+  syncGraceMinutes: number;
 }
 
 interface Settings {
@@ -24,7 +25,7 @@ interface Settings {
 type Env = Record<string, string | undefined>;
 
 const DEFAULTS: Settings = {
-  gallery: { syncIntervalMinutes: 60 },
+  gallery: { syncIntervalMinutes: 60, syncGraceMinutes: 60 },
 };
 
 const DATABASE_DEFAULTS = { host: '127.0.0.1', port: 5432 };
@@ -74,6 +75,7 @@ const envSchema = z
     PATREON_WEBHOOK_SECRET: optionalText,
     PATREON_RELAY_KEY: optionalText,
     GALLERY_SYNC_INTERVAL_MINUTES: wholeNumber(5),
+    GALLERY_SYNC_GRACE_MINUTES: wholeNumber(0),
   })
   .superRefine((env, ctx) => {
     if (Boolean(env.POSTGRES_USER) !== Boolean(env.POSTGRES_PASSWORD)) {
@@ -159,6 +161,8 @@ function toSettings(env: ParsedEnv): Settings {
     gallery: {
       syncIntervalMinutes:
         env.GALLERY_SYNC_INTERVAL_MINUTES ?? gallery.syncIntervalMinutes,
+      syncGraceMinutes:
+        env.GALLERY_SYNC_GRACE_MINUTES ?? gallery.syncGraceMinutes,
     },
   };
 }

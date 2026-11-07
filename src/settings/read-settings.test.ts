@@ -14,7 +14,7 @@ const DATABASE = { POSTGRES_USER: 'artificer', POSTGRES_PASSWORD: 'p@ss:w/rd' };
 describe('readSettings', () => {
   it('starts with the gallery off and default gallery settings', () => {
     assert.deepEqual(readSettings({}), {
-      settings: { gallery: { syncIntervalMinutes: 60 } },
+      settings: { gallery: { syncIntervalMinutes: 60, syncGraceMinutes: 60 } },
       problems: [],
     });
   });
@@ -28,6 +28,7 @@ describe('readSettings', () => {
       ...PATREON,
       PATREON_WEBHOOK_SECRET: 'hook',
       GALLERY_SYNC_INTERVAL_MINUTES: '15',
+      GALLERY_SYNC_GRACE_MINUTES: '0',
     });
 
     assert.deepEqual(problems, []);
@@ -49,6 +50,7 @@ describe('readSettings', () => {
       },
       gallery: {
         syncIntervalMinutes: 15,
+        syncGraceMinutes: 0,
       },
     });
   });
@@ -149,6 +151,19 @@ describe('readSettings', () => {
     assert.deepEqual(problemFor('5'), []);
   });
 
+  it('checks the sync grace time', () => {
+    const problemFor = (value: string) =>
+      readSettings({ GALLERY_SYNC_GRACE_MINUTES: value }).problems;
+
+    assert.deepEqual(problemFor('-1'), [
+      'GALLERY_SYNC_GRACE_MINUTES must be a whole number.',
+    ]);
+    assert.deepEqual(problemFor('soon'), [
+      'GALLERY_SYNC_GRACE_MINUTES must be a whole number.',
+    ]);
+    assert.deepEqual(problemFor('90'), []);
+  });
+
   it('reads the key for the Patreon relay, and leaves it out when empty', () => {
     const withKey = readSettings({
       ...DATABASE,
@@ -181,7 +196,10 @@ describe('readSettings', () => {
     });
 
     assert.deepEqual(problems, []);
-    assert.deepEqual(settings.gallery, { syncIntervalMinutes: 60 });
+    assert.deepEqual(settings.gallery, {
+      syncIntervalMinutes: 60,
+      syncGraceMinutes: 60,
+    });
   });
 
   it('lists every problem at once and falls back to the defaults', () => {
@@ -197,7 +215,7 @@ describe('readSettings', () => {
       'Patreon settings are incomplete: set PATREON_CAMPAIGN_ID, PATREON_CLIENT_SECRET, PATREON_CREATOR_TOKEN, PATREON_REFRESH_TOKEN.',
     ]);
     assert.deepEqual(settings, {
-      gallery: { syncIntervalMinutes: 60 },
+      gallery: { syncIntervalMinutes: 60, syncGraceMinutes: 60 },
     });
   });
 });

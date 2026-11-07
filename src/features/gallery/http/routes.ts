@@ -2,6 +2,7 @@ import express, { Router, type Request, type RequestHandler } from 'express';
 import { GALLERY_PAGE_SIZE, MAX_GALLERY_PAGE_SIZE } from '../../../config.ts';
 import { HttpError } from '../../../infrastructure/http-server/http-errors.ts';
 import type { GallerySync } from '../application/sync-gallery.ts';
+import { isSyncStale, type SyncSchedule } from '../domain/sync-freshness.ts';
 import type { GalleryStores } from '../ports/gallery-stores.ts';
 import type {
   MapResponse,
@@ -25,8 +26,10 @@ interface GalleryRoutesDeps {
   stores: GalleryStores | undefined;
   sync: GallerySync | undefined;
   webhookSecret: string | undefined;
+  syncSchedule: SyncSchedule;
   pageSizes?: PageSizes;
   log?: (entry: WebhookLogEntry) => void;
+  now?: () => Date;
 }
 
 const EMPTY_PAGE: MapsResponse = { maps: [], total: 0, tags: [] };
@@ -103,6 +106,8 @@ function createRoutes({
     maxPageSize: MAX_GALLERY_PAGE_SIZE,
   },
   log = logToConsole,
+  syncSchedule,
+  now = () => new Date(),
 }: GalleryRoutesDeps): Router {
   const router = Router();
 
@@ -119,6 +124,18 @@ function createRoutes({
 
     res.set('Cache-Control', 'no-cache');
     res.json(found satisfies MapResponse);
+  });
+
+  router.get('/gallery/health', async (_req, res) => {
+    if (!stores || !sync) {
+      throw new HttpError(404, 'Not found.');
+    }
+
+    const lastSyncAt = await stores.maps.lastSyncedAt();
+    const stale = isSyncStale(lastSyncAt, now(), syncSchedule);
+
+    res.set('Cache-Control', 'no-store');
+    res.status(stale ? 503 : 200).json({ lastSyncAt, stale });
   });
 
   router.post('/patreon/webhook', rawBody, (req, res) => {

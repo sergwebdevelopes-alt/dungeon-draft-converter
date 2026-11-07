@@ -72,6 +72,10 @@ async function createApp(
       stores: galleryStores,
       sync: gallerySync,
       webhookSecret: SETTINGS.patreon?.webhookSecret,
+      syncSchedule: {
+        intervalMinutes: SETTINGS.gallery.syncIntervalMinutes,
+        graceMinutes: SETTINGS.gallery.syncGraceMinutes,
+      },
     }),
     notFound,
   );

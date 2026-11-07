@@ -182,6 +182,14 @@ function createPostgresMapRepository(db: Database): MapRepository {
       return row ? toStoredMap(row) : null;
     },
 
+    async lastSyncedAt() {
+      const [{ last }] = await db.query<{ last: Date | null }>(
+        'SELECT max(checked_at) AS last FROM maps',
+      );
+
+      return last ? last.toISOString() : null;
+    },
+
     async replaceMaps(maps) {
       return db.transaction(async (tx): Promise<SyncCounts> => {
         const before = await storedIds(tx);

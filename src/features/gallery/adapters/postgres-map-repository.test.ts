@@ -273,4 +273,18 @@ describe('createPostgresMapRepository', () => {
     assert.deepEqual(found?.tags, ['Waterdeep', 'Barovia']);
     assert.equal(await store.findMap('nope'), null);
   });
+
+  it('knows when the newest check of a map happened, or that none did', async () => {
+    assert.equal(await store.lastSyncedAt(), null);
+
+    await store.replaceMaps(SHELF);
+    await test.db.query(
+      "UPDATE maps SET checked_at = '2026-01-01T00:00:00Z' WHERE post_id <> '2'",
+    );
+    await test.db.query(
+      "UPDATE maps SET checked_at = '2026-11-07T10:36:25.990Z' WHERE post_id = '2'",
+    );
+
+    assert.equal(await store.lastSyncedAt(), '2026-11-07T10:36:25.990Z');
+  });
 });

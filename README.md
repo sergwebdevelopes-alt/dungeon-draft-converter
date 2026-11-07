@@ -57,6 +57,10 @@ To update the gallery as soon as you publish, change or delete a post, add a web
 
 `GET /api/health` answers `{"ok":true}` (200) while the server is running and `{"ok":false}` (503) while it shuts down, for uptime monitors.
 
+`GET /api/gallery/health` tells whether the Patreon sync still works. Every successful sync (scheduled, from the webhook or at startup) marks the maps as checked, so the newest check is the last successful sync. It answers `{"lastSyncAt":"…","stale":false}` (200) while that was at most `GALLERY_SYNC_INTERVAL_MINUTES` plus `GALLERY_SYNC_GRACE_MINUTES` (default 60) ago, and `"stale":true` (503) when it's older or the gallery never synced. Without the database or the Patreon settings it answers 404.
+
+`deploy/site-monitor/worker.js` is a Cloudflare Worker that checks `/api/health`, `/api/maps?limit=1` and `/api/gallery/health` on a Cron Trigger (every 5 minutes) and sends a Telegram message when one fails twice in a row and again when it works again. It needs a KV namespace bound as `STATE` (where it remembers each check's state, written only when that changes), the secrets `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`, and optionally `SITE_URL` (default `https://lairofartificer.com`).
+
 ### Without Docker
 
 Requires Node.js 24.2 or newer.

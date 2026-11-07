@@ -26,6 +26,7 @@ interface MapRepository {
   listMapsPage(query: MapsPageQuery): Promise<MapsPage>;
   listTags(): Promise<string[]>;
   findMap(slug: string): Promise<StoredMap | null>;
+  lastSyncedAt(): Promise<string | null>;
   replaceMaps(maps: MapRecord[]): Promise<SyncCounts>;
 }
 
