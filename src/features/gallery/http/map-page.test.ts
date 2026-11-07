@@ -49,6 +49,8 @@ describe('createFindMapPage', () => {
       description: 'A roaring waterfall.',
       imageUrl: '/maps/166553789/717019350/view.webp',
       imageAlt: 'Tser Falls',
+      patreonUrl: 'https://www.patreon.com/posts/tser-166553789',
+      publishedAt: '2025-07-01T10:00:00.000Z',
     });
   });
 

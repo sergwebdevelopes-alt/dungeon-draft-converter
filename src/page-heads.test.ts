@@ -4,6 +4,7 @@ import type { Request } from 'express';
 import { NOT_FOUND_PAGE, SITE_PAGES } from './contracts/site-pages.ts';
 import type { FindMapPage } from './features/gallery/http/map-page.ts';
 import { createPageFor } from './page-heads.ts';
+import { mapData, siteData } from './structured-data.ts';
 
 const SITE = 'https://lair.test';
 const LINKS = { url: SITE, patreonUrl: 'https://www.patreon.com/cw/Lair' };
@@ -41,7 +42,7 @@ describe('createPageFor', () => {
   const pageFor = createPageFor(LINKS, findIceCave);
 
   it('gives each site page its own text and canonical address', async () => {
-    for (const path of ['/', '/maps', '/converter'] as const) {
+    for (const path of ['/maps', '/converter'] as const) {
       assert.deepEqual(await pageFor(request(path)), {
         status: 200,
         head: {
@@ -54,6 +55,22 @@ describe('createPageFor', () => {
     }
   });
 
+  it('describes the site on the home page for search engines', async () => {
+    assert.deepEqual(await pageFor(request('/')), {
+      status: 200,
+      head: {
+        ...SITE_PAGES['/'],
+        url: `${SITE}/`,
+        image: SITE_IMAGE,
+        noindex: false,
+        structuredData: siteData(
+          (path) => new URL(path, SITE).href,
+          LINKS.patreonUrl,
+        ),
+      },
+    });
+  });
+
   it('gives a linked map its title, summary, view image and address', async () => {
     assert.deepEqual(await pageFor(request('/maps', { map: 'ice&cave' })), {
       status: 200,
@@ -62,6 +79,18 @@ describe('createPageFor', () => {
         description: 'A frozen cave.',
         url: `${SITE}/maps?map=ice%26cave`,
         image: { url: `${SITE}/maps/1/2/view.webp`, alt: 'Ice Cave' },
+        structuredData: mapData(
+          (path) => new URL(path, SITE).href,
+          {
+            title: 'Ice Cave',
+            description: 'A frozen cave.',
+            imageUrl: '/maps/1/2/view.webp',
+            imageAlt: 'Ice Cave',
+            patreonUrl: 'https://www.patreon.com/posts/ice-cave-1',
+            publishedAt: '2026-10-12T07:08:36.000Z',
+          },
+          `${SITE}/maps?map=ice%26cave`,
+        ),
       },
     });
   });

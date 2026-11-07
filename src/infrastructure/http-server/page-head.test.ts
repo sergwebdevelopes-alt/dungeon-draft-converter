@@ -80,6 +80,44 @@ describe('renderPageHead', () => {
   });
 });
 
+describe('structured data', () => {
+  it('adds each object as a JSON-LD script after the share tags', () => {
+    const html = renderPageHead({
+      ...HEAD,
+      structuredData: [{ '@type': 'WebSite' }, { '@type': 'Organization' }],
+    });
+
+    assert.ok(
+      html.endsWith(
+        [
+          '<meta name="twitter:image" content="https://lair.test/maps/1/2/view.webp" />',
+          '<script type="application/ld+json">{"@type":"WebSite"}</script>',
+          '<script type="application/ld+json">{"@type":"Organization"}</script>',
+        ].join('\n    '),
+      ),
+    );
+  });
+
+  it('adds no script without structured data', () => {
+    assert.doesNotMatch(renderPageHead(HEAD), /<script/);
+  });
+
+  it('keeps text from posts from closing the script', () => {
+    const html = renderPageHead({
+      ...HEAD,
+      structuredData: [{ name: '</script><script>alert(1)</script> & "x"' }],
+    });
+
+    assert.ok(
+      html.includes(
+        '{"name":"\\u003c/script>\\u003cscript>alert(1)\\u003c/script> & \\"x\\""}</script>',
+      ),
+    );
+    assert.equal(html.match(/<script/g)?.length, 1);
+    assert.equal(html.match(/<\/script>/g)?.length, 1);
+  });
+});
+
 describe('withPageHead', () => {
   it('replaces only the block between the markers', () => {
     const html = withPageHead(TEMPLATE, HEAD);
