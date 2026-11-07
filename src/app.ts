@@ -9,6 +9,7 @@ import {
   MAX_PENDING_CONVERSIONS,
   ROOT_DIR,
   SETTINGS,
+  SITE_PATREON_URL,
   SITE_URL,
   WEB_DIST_DIR,
 } from './config.ts';
@@ -86,7 +87,15 @@ async function createApp(
       galleryStores,
       SITE_PAGES['/maps'].description,
     );
-    app.use(serveWebApp(WEB_DIST_DIR, createPageFor(SITE_URL, findMapPage)));
+    app.use(
+      serveWebApp(
+        WEB_DIST_DIR,
+        createPageFor(
+          { url: SITE_URL, patreonUrl: SITE_PATREON_URL },
+          findMapPage,
+        ),
+      ),
+    );
   } else {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({

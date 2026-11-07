@@ -131,6 +131,8 @@ Environment variables, all optional. Leave a variable out or empty to use its de
 | `PATREON_WEBSITE_USER_AGENT`       | a desktop Chrome              | User-Agent for reading post descriptions from the Patreon website; change it if Patreon starts refusing them            |
 | `PATREON_WEBSITE_API_URL`          | `https://www.patreon.com/api` | Where post details are read from; point it at the relay in `deploy/patreon-relay/` when Patreon refuses the server's IP |
 | `PATREON_RELAY_KEY`                | —                             | Key the server sends to that relay (`X-Relay-Key`); the same value is the relay's `RELAY_KEY` secret                    |
+| `SITE_URL`                         | `https://lairofartificer.com` | Address the site is published at, used for canonical links, share previews, structured data and the sitemap             |
+| `SITE_PATREON_URL`                 | the Lair of Artificer page    | Patreon page named as the site's profile in its structured data                                                         |
 
 The Docker image also uses jemalloc with `MALLOC_CONF` set to return freed memory to the system quickly.
 

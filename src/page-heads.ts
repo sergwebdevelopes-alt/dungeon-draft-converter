@@ -9,6 +9,7 @@ import {
   type FindMapPage,
 } from './features/gallery/http/map-page.ts';
 import type { PageImage } from './infrastructure/http-server/page-head.ts';
+import { mapData, siteData } from './structured-data.ts';
 import type {
   Page,
   PageFor,
@@ -36,12 +37,17 @@ function logToConsole(message: string, error: unknown): void {
   console.error(message, error);
 }
 
+interface SiteLinks {
+  url: string;
+  patreonUrl: string;
+}
+
 function createPageFor(
-  siteUrl: string,
+  site: SiteLinks,
   findMapPage: FindMapPage,
   logError: LogError = logToConsole,
 ): PageFor {
-  const absolute = (path: string) => new URL(path, siteUrl).href;
+  const absolute = (path: string) => new URL(path, site.url).href;
 
   const siteImage: PageImage = {
     url: absolute(SITE_IMAGE.path),
@@ -65,13 +71,15 @@ function createPageFor(
       return null;
     }
 
+    const url = absolute(mapPagePath(slug));
     return {
       status: 200,
       head: {
         title: pageTitle(map.title),
         description: map.description,
-        url: absolute(mapPagePath(slug)),
+        url,
         image: { url: absolute(map.imageUrl), alt: map.imageAlt },
+        structuredData: mapData(absolute, map, url),
       },
     };
   }
@@ -87,6 +95,9 @@ function createPageFor(
         url: absolute(known ? path : '/'),
         image: siteImage,
         noindex: !known,
+        ...(path === '/'
+          ? { structuredData: siteData(absolute, site.patreonUrl) }
+          : {}),
       },
     };
   }
@@ -99,4 +110,4 @@ function createPageFor(
 }
 
 export { createPageFor };
-export type { LogError };
+export type { LogError, SiteLinks };

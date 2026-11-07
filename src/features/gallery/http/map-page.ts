@@ -8,6 +8,8 @@ const SUMMARY_LENGTH = 155;
 interface MapPage extends PageText {
   imageUrl: string;
   imageAlt: string;
+  patreonUrl: string;
+  publishedAt: string;
 }
 
 interface MapLink {
@@ -43,6 +45,8 @@ function createFindMapPage(
       description: describe(entry.description, fallbackDescription),
       imageUrl: entry.images.view,
       imageAlt: entry.title,
+      patreonUrl: map.patreonUrl,
+      publishedAt: map.publishedAt,
     };
   };
 }

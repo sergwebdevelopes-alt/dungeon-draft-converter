@@ -11,6 +11,7 @@ interface PageHead {
   url: string;
   image: PageImage;
   noindex?: boolean;
+  structuredData?: object[];
 }
 
 const START = '<!-- page-head -->';
@@ -30,6 +31,11 @@ function escapeHtml(text: string): string {
 
 function meta(attribute: 'name' | 'property', key: string, value: string) {
   return `<meta ${attribute}="${key}" content="${escapeHtml(value)}" />`;
+}
+
+function jsonLd(data: object): string {
+  const json = JSON.stringify(data).replace(/</g, '\\u003c');
+  return `<script type="application/ld+json">${json}</script>`;
 }
 
 function imageSize({ width, height }: PageImage): string[] {
@@ -61,6 +67,7 @@ function renderPageHead(head: PageHead): string {
     meta('name', 'twitter:title', title),
     meta('name', 'twitter:description', description),
     meta('name', 'twitter:image', image.url),
+    ...(head.structuredData ?? []).map(jsonLd),
   ].join('\n    ');
 }
 

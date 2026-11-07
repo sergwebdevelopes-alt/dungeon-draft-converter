@@ -6,6 +6,7 @@ import type { FindMapPage } from './features/gallery/http/map-page.ts';
 import { createPageFor } from './page-heads.ts';
 
 const SITE = 'https://lair.test';
+const LINKS = { url: SITE, patreonUrl: 'https://www.patreon.com/cw/Lair' };
 
 const SITE_IMAGE = {
   url: 'https://lair.test/og-image.jpg',
@@ -25,6 +26,8 @@ const findIceCave: FindMapPage = (slug) => {
           description: 'A frozen cave.',
           imageUrl: '/maps/1/2/view.webp',
           imageAlt: 'Ice Cave',
+          patreonUrl: 'https://www.patreon.com/posts/ice-cave-1',
+          publishedAt: '2026-10-12T07:08:36.000Z',
         }
       : null,
   );
@@ -35,7 +38,7 @@ function request(path: string, query: Record<string, unknown> = {}): Request {
 }
 
 describe('createPageFor', () => {
-  const pageFor = createPageFor(SITE, findIceCave);
+  const pageFor = createPageFor(LINKS, findIceCave);
 
   it('gives each site page its own text and canonical address', async () => {
     for (const path of ['/', '/maps', '/converter'] as const) {
@@ -95,7 +98,7 @@ describe('createPageFor', () => {
   it('shows the gallery and logs the error when the map lookup fails', async () => {
     const logged: string[] = [];
     const failing = createPageFor(
-      SITE,
+      LINKS,
       () => Promise.reject(new Error('database down')),
       (message, error) => logged.push(`${message} ${(error as Error).message}`),
     );
