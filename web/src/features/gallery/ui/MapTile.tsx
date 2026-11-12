@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import { captionOf, type MapEntry } from '../model/catalog.ts';
+import { captionOf, picturesLabel, type MapEntry } from '../model/catalog.ts';
 
 const TILE =
   'group relative block w-full overflow-hidden rounded-2xl bg-sunken text-left ring-1 ring-white/5 transition-shadow duration-500 hover:shadow-[0_30px_60px_-25px_rgb(0_0_0/0.7)]';
@@ -28,8 +28,15 @@ interface TileCaptionProps {
 }
 
 function TileCaption({ map, featured = false }: TileCaptionProps) {
+  const levels = picturesLabel(map);
+
   return (
     <span className="pointer-events-none absolute inset-x-0 bottom-0 grid gap-1 bg-linear-to-t from-black/85 via-black/40 to-transparent p-4 pt-20 text-white sm:p-5 sm:pt-24">
+      {levels && (
+        <span className="text-xs font-bold tracking-[0.15em] text-gold uppercase">
+          {levels}
+        </span>
+      )}
       <strong
         className={`font-display leading-tight font-bold tracking-wide ${featured ? 'text-2xl sm:text-3xl' : 'text-lg sm:text-xl'}`}
       >

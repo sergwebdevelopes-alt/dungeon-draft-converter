@@ -136,14 +136,16 @@ function render(
   original: Buffer,
   names: ImageName[],
 ): Promise<RenderedMapImages> {
-  return Promise.resolve(
-    Object.fromEntries(
+  return Promise.resolve({
+    width: 2000,
+    height: 1000,
+    files: Object.fromEntries(
       names.map((name) => [
         name,
         Buffer.from(`${name} of ${original.toString()}`),
       ]),
     ),
-  );
+  });
 }
 
 function setUp(state: FakePatreon, signal?: AbortSignal) {

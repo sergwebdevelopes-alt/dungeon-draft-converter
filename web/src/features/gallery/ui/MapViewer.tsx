@@ -1,18 +1,20 @@
 import type { CSSProperties, ReactNode } from 'react';
+import type { Squares } from '../../../../../src/contracts/gallery-api.ts';
 import { FadeImage } from '../../../shared/ui/FadeImage.tsx';
 import { GridOverlay } from '../../../shared/ui/GridOverlay.tsx';
 import { SharedFrame } from '../../../shared/ui/motion/index.ts';
-import type { MapEntry } from '../model/catalog.ts';
+import type { Picture } from '../model/catalog.ts';
 
 interface MapViewerProps {
-  map: MapEntry;
-  showGrid: boolean;
-  morph: boolean;
+  picture: Picture;
+  alt: string;
+  grid?: Squares;
+  morphId?: string;
 }
 
 const FRAME = 'relative overflow-hidden bg-surface';
 
-function frameStyle({ width, height }: MapEntry): CSSProperties {
+function frameStyle({ width, height }: Picture): CSSProperties {
   const ratio = width / height;
 
   return {
@@ -22,20 +24,20 @@ function frameStyle({ width, height }: MapEntry): CSSProperties {
 }
 
 function Frame({
-  map,
-  morph,
+  picture,
+  morphId,
   children,
 }: {
-  map: MapEntry;
-  morph: boolean;
+  picture: Picture;
+  morphId?: string;
   children: ReactNode;
 }) {
-  if (morph) {
+  if (morphId) {
     return (
       <SharedFrame
-        layoutId={`map-${map.slug}`}
+        layoutId={morphId}
         className={FRAME}
-        style={frameStyle(map)}
+        style={frameStyle(picture)}
       >
         {children}
       </SharedFrame>
@@ -43,28 +45,26 @@ function Frame({
   }
 
   return (
-    <div className={FRAME} style={frameStyle(map)}>
+    <div className={FRAME} style={frameStyle(picture)}>
       {children}
     </div>
   );
 }
 
-function MapViewer({ map, showGrid, morph }: MapViewerProps) {
+function MapViewer({ picture, alt, grid, morphId }: MapViewerProps) {
   return (
     <div
       className="grid size-full place-items-center"
       style={{ containerType: 'size' }}
     >
-      <Frame map={map} morph={morph}>
+      <Frame picture={picture} morphId={morphId}>
         <FadeImage
-          key={map.images.view}
-          src={map.images.view}
-          alt={[map.title, map.subtitle].filter(Boolean).join(', ')}
+          key={picture.view}
+          src={picture.view}
+          alt={alt}
           className="size-full object-cover"
         />
-        {showGrid && map.squares && (
-          <GridOverlay columns={map.squares.x} rows={map.squares.y} />
-        )}
+        {grid && <GridOverlay columns={grid.x} rows={grid.y} />}
       </Frame>
     </div>
   );

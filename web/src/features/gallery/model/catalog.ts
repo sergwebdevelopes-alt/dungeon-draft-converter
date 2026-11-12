@@ -5,6 +5,15 @@ import type {
 
 type GriddedMap = MapEntry & { squares: Squares };
 
+interface Picture {
+  view: string;
+  thumb?: string;
+  width: number;
+  height: number;
+}
+
+const GRID_RATIO_TOLERANCE = 0.01;
+
 function hasSquares(map: MapEntry): map is GriddedMap {
   return map.squares !== undefined;
 }
@@ -23,24 +32,38 @@ function findMap(maps: MapEntry[], slug: string | null): MapEntry | null {
   return maps.find((map) => map.slug === slug) ?? null;
 }
 
-function neighbour(
-  maps: MapEntry[],
-  slug: string,
-  step: 1 | -1,
-  wrap: boolean,
-): MapEntry | null {
-  const index = maps.findIndex((map) => map.slug === slug);
-  if (index === -1 || maps.length < 2) {
-    return null;
-  }
-
-  const next = index + step;
-  if (wrap) {
-    return maps[(next + maps.length) % maps.length];
-  }
-
-  return maps[next] ?? null;
+function mapPictures(map: MapEntry): Picture[] {
+  return (
+    map.pictures ?? [
+      { view: map.images.view, width: map.width, height: map.height },
+    ]
+  );
 }
 
-export { captionOf, findMap, hasSquares, neighbour };
-export type { GriddedMap, MapEntry };
+function picturesLabel(map: MapEntry): string | null {
+  const count = map.pictures?.length ?? 1;
+
+  return count > 1 ? `${count} levels` : null;
+}
+
+function wrapIndex(position: number, count: number): number {
+  return ((position % count) + count) % count;
+}
+
+function gridFits(picture: Picture, squares: Squares): boolean {
+  const pictureRatio = picture.width / picture.height;
+  const gridRatio = squares.x / squares.y;
+
+  return Math.abs(pictureRatio - gridRatio) / gridRatio < GRID_RATIO_TOLERANCE;
+}
+
+export {
+  captionOf,
+  findMap,
+  gridFits,
+  hasSquares,
+  picturesLabel,
+  mapPictures,
+  wrapIndex,
+};
+export type { GriddedMap, MapEntry, Picture };

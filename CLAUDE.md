@@ -52,8 +52,8 @@ src/
 │   │   ├── http/              routes (/config, /queue/:ticket, /convert), convert-handler, parse-convert-request, conversion-log, stream-zip, upload/
 │   │   └── jobs/              upload-cleanup-job
 │   └── gallery/         Patreon posts → the public map gallery
-│       ├── domain/            map-record, post-to-map-record, parse-post-title, choose-map-image, collection-chips, map-slugs, map-image-keys, gallery-sync-plan, choose-patreon-tokens, patreon-post, patreon-tokens, tidy-text
-│       ├── application/       sync-gallery (Patreon posts → maps, saved in one transaction, one run at a time), prepare-map-images (renders missing images, keeps the previous version if that fails)
+│       ├── domain/            map-record, post-to-map-record, parse-post-title, choose-map-image, collection-chips, map-slugs, map-image-keys, gallery-sync-plan, sync-freshness, map-summary, choose-patreon-tokens, patreon-post, patreon-tokens, tidy-text
+│       ├── application/       sync-gallery (Patreon posts → maps, saved in one transaction, one run at a time), prepare-map-images (renders the missing files of every image of a map; a failed cover keeps the previous version, a failed extra image is left out)
 │       ├── ports/             map-repository, image-storage, map-image-renderer, map-image-source, patreon-posts, patreon-post-details, patreon-token-repository, html-sanitizer, gallery-stores
 │       ├── adapters/          postgres-map-repository, postgres-patreon-token-repository, local-image-storage, sharp-map-image-renderer, http-map-image-source, patreon-api-posts, patreon-website-post-details, patreon-token-refresher, sanitize-html-sanitizer
 │       ├── http/              routes (/maps, /maps/:slug, /patreon/webhook), parse-maps-query, map-entry (the /api/maps shape), patreon-webhook-signature, serve-map-images (/maps/*)
@@ -126,14 +126,16 @@ web/src/
 - Membership plans live in `web/src/shared/config/site.ts` (`membership.plans`); adding a Patreon tier means adding one entry there. Pages use `Container` for width and padding; sections may run full width.
 - The web app imports from the server only `src/contracts/` (API shapes and the export grid style), and `web/src/server-imports.test.ts` enforces this. The server checks its JSON answers against the same types (`satisfies ConfigResponse` / `MapsResponse` / `QueuePosition`), so a change to the API breaks typecheck on both sides.
 - Use the shared `Button`/`ButtonLink`, `Alert` and `Segmented` instead of repeating their classes.
-- Motion is imported only in `web/src/shared/ui/motion/`; features use its wrappers (`MotionProvider`, `Reveal`, `SharedFrame`, `Swipeable`).
+- Motion is imported only in `web/src/shared/ui/motion/`; features use its wrappers (`MotionProvider`, `Reveal`, `SharedFrame`, `SwipeCarousel`).
 - Patreon post HTML is sanitised once, in the sync (the official adapter gets the sanitiser passed in), and stored as `maps.description`; the modal inserts it with `dangerouslySetInnerHTML` in `MapDescription.tsx`, the only place raw HTML is rendered.
 - The gallery loads `GET /api/maps`, filled by the Patreon sync (public posts in any Patreon collection; collection names become filter chips). It loads page by page (`?tag=&offset=&limit=`, answering `{ maps, total, tags }`): 21 maps first, then 24 at a time as the visitor scrolls (`model/map-pages.ts`, `useMapPages`), with a "Show more maps" button as the fallback. The collection filter runs on the server. A link to a map that is not loaded yet uses `GET /api/maps/:slug`. The home page and the gallery share the first page, loaded once. The web `MapEntry` comes from `src/contracts/gallery-api.ts`; `subtitle` and `squares` are optional, so the grid choice and the converter teaser appear only for maps with squares. The modal draws its grid with `GridOverlay`, so no gridded image is needed.
+- A map keeps every image of its post (`MapRecord.images`, the cover first; gridded copies are left out when the post has no-grid images). The cover gets `card`, `view` and `backdrop` files, the other images `view` and `thumb`, and the cover a `thumb` too when the map has several. Image sizes are measured from the files, because Patreon's can be wrong. Maps with several images carry `pictures` in `MapEntry`; the modal shows them with a thumbnail strip (`PictureStrip`), and swipe, arrow keys and arrow buttons go round the pictures of that map. The modal does not move between maps.
 - Styling uses Tailwind with colour and font tokens in `web/src/styles.css`.
 
 ## Code style
 
 - No comments in code unless asked.
+- Clear names: a name says what the thing is or does in plain words, so the code reads without looking inside it (`coverImage(map)`, `mapPictures(map)`, `coverImageFromRow(row)`). No `Of` suffix (`coverOf`, `picturesOf`), no abbreviations, no vague words like `data`, `info` or `more` (`more_images`).
 - Small named functions; separate steps with blank lines (see `src/features/converter/http/convert-handler.ts`).
 - `async`/`await` with `try`/`catch` rather than `.then()` chains.
 - User-facing sizes and durations go through `src/shared/utils/format.ts`.

@@ -54,6 +54,24 @@ const DESCRIBED: MapEntry = {
 
 const MAPS = [entry('cave', 'Ice Cave', ['Underground']), DESCRIBED, UNSIZED];
 
+function picture(name: string, width: number, height: number) {
+  return {
+    view: `/maps/1/${name}/view.webp`,
+    thumb: `/maps/1/${name}/thumb.webp`,
+    width,
+    height,
+  };
+}
+
+const CASTLE: MapEntry = {
+  ...entry('castle', 'Castle', ['Underground']),
+  pictures: [
+    picture('castle', 2000, 3000),
+    picture('castle-roof', 2000, 3000),
+    picture('castle-cellar', 4000, 3000),
+  ],
+};
+
 function many(count: number): MapEntry[] {
   return Array.from({ length: count }, (_, i) =>
     entry(`map-${i + 1}`, `Map ${i + 1}`, ['Underground']),
@@ -133,15 +151,9 @@ function heading() {
   return within(dialog()!).getByRole('heading').textContent;
 }
 
-function mapCard(number: number) {
-  return screen.getByRole('button', {
-    name: new RegExp(`^Map ${number}(?!\\d)`),
-  });
-}
-
-async function renderGallery(path = '/maps', api = fakeApi()) {
+async function renderGallery(path = '/maps', api = fakeApi(), from = '/') {
   render(
-    <MemoryRouter initialEntries={['/', path]} initialIndex={1}>
+    <MemoryRouter initialEntries={[from, path]} initialIndex={1}>
       <Routes>
         <Route
           path="/maps"
@@ -170,6 +182,27 @@ async function renderGalleryError() {
     </MemoryRouter>,
   );
   await screen.findByRole('alert');
+}
+
+async function renderCastle() {
+  await renderGallery('/maps?map=castle', fakeApi([CASTLE, ...MAPS]));
+}
+
+function trackImages() {
+  const track = within(dialog()!).getByTestId('swipe-track');
+
+  return [...track.querySelectorAll('img')].map((img) =>
+    img.getAttribute('src'),
+  );
+}
+
+function shownPicture() {
+  const track = within(dialog()!).getByTestId('swipe-track');
+  const shown = [...track.children].find(
+    (slide) => !slide.hasAttribute('aria-hidden'),
+  );
+
+  return shown?.querySelector('img')?.getAttribute('src');
 }
 
 function location() {
@@ -263,25 +296,45 @@ describe('GalleryPage', () => {
     await waitFor(() => expect(card('Blue Inn')).toHaveFocus());
   });
 
-  it('puts the controls over the image and the neighbours beside it in the swipe track', async () => {
-    await renderGallery();
-    await userEvent.click(card('Ice Cave'));
+  it('puts the controls over the image and the neighbouring pictures beside it in the swipe track', async () => {
+    await renderCastle();
     const track = within(dialog()!).getByTestId('swipe-track');
     const imageArea = track.parentElement!;
 
-    for (const name of ['Close', 'Previous map', 'Next map']) {
+    for (const name of ['Close', 'Previous picture', 'Next picture']) {
       const button = within(dialog()!).getByRole('button', { name });
       expect(imageArea.contains(button), name).toBe(true);
       expect(track.contains(button), name).toBe(false);
     }
-    expect(imageArea).toContainElement(within(dialog()!).getByText('1 of 3'));
-    expect(
-      [...track.querySelectorAll('img')].map((img) => img.getAttribute('src')),
-    ).toEqual([
-      '/maps/1/crypt/view.webp',
-      '/maps/1/cave/view.webp',
-      '/maps/1/inn/view.webp',
+    const strip = within(dialog()!).getByRole('list', {
+      name: 'Pictures of this map',
+    });
+    expect(imageArea).toContainElement(strip);
+    expect(track).not.toContainElement(strip);
+    expect(trackImages()).toEqual([
+      '/maps/1/castle-cellar/view.webp',
+      '/maps/1/castle/view.webp',
+      '/maps/1/castle-roof/view.webp',
     ]);
+  });
+
+  it('shows a map with one picture without a strip or arrows', async () => {
+    await renderGallery();
+    await userEvent.click(card('Ice Cave'));
+
+    expect(trackImages()).toEqual(['/maps/1/cave/view.webp']);
+    expect(
+      within(dialog()!).queryByRole('list', { name: 'Pictures of this map' }),
+    ).toBeNull();
+    expect(
+      within(dialog()!).queryByRole('button', { name: /picture/i }),
+    ).toBeNull();
+    expect(within(dialog()!).getByRole('status')).toHaveTextContent(
+      /^Ice Cave$/,
+    );
+
+    await userEvent.keyboard('{ArrowRight}');
+    expect(shownPicture()).toBe('/maps/1/cave/view.webp');
   });
 
   it('keeps the page from scrolling while a map is open', async () => {
@@ -328,39 +381,139 @@ describe('GalleryPage', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(3);
   });
 
-  it('moves between maps with the arrow keys and buttons, wrapping around', async () => {
-    await renderGallery();
-    await userEvent.click(card('Ice Cave'));
+  it('moves between the pictures of a map with the arrow keys and buttons, going round at the ends', async () => {
+    await renderCastle();
 
     await userEvent.keyboard('{ArrowRight}');
-    expect(
-      within(dialog()!).getByRole('heading', { name: 'Blue Inn' }),
-    ).toBeInTheDocument();
+    expect(shownPicture()).toBe('/maps/1/castle-roof/view.webp');
     expect(within(dialog()!).getByRole('status')).toHaveTextContent(
-      'Blue Inn, 2 of 3',
+      'Castle, picture 2 of 3',
     );
-    expect(location()).toBe('/maps?map=inn');
+    expect(heading()).toBe('Castle');
+    expect(location()).toBe('/maps?map=castle');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Previous map' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Previous map' }));
-    expect(
-      within(dialog()!).getByRole('heading', { name: 'Old Crypt' }),
-    ).toBeInTheDocument();
-    expect(within(dialog()!).getByText('3 of 3')).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Previous picture' }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Previous picture' }),
+    );
+    expect(shownPicture()).toBe('/maps/1/castle-cellar/view.webp');
+    expect(within(dialog()!).getByRole('status')).toHaveTextContent(
+      'Castle, picture 3 of 3',
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next picture' }));
+    expect(shownPicture()).toBe('/maps/1/castle/view.webp');
+
+    await userEvent.keyboard('{ArrowLeft}');
+    expect(shownPicture()).toBe('/maps/1/castle-cellar/view.webp');
   });
 
-  it('steps only through the filtered maps', async () => {
-    await renderGallery();
-    await userEvent.click(screen.getByRole('button', { name: 'Underground' }));
-    await waitFor(() => expect(screen.queryByText('Blue Inn')).toBeNull());
-    await userEvent.click(card('Ice Cave'));
+  it('opens the picture picked in the strip and marks its thumbnail', async () => {
+    await renderCastle();
+    const third = screen.getByRole('button', { name: 'Picture 3 of 3' });
+    expect(third.querySelector('img')).toHaveAttribute(
+      'src',
+      '/maps/1/castle-cellar/thumb.webp',
+    );
 
-    await userEvent.click(screen.getByRole('button', { name: 'Next map' }));
+    await userEvent.click(third);
 
+    expect(shownPicture()).toBe('/maps/1/castle-cellar/view.webp');
+    expect(third).toHaveAttribute('aria-current', 'true');
     expect(
-      within(dialog()!).getByRole('heading', { name: 'Old Crypt' }),
-    ).toBeInTheDocument();
-    expect(within(dialog()!).getByText('2 of 2')).toBeInTheDocument();
+      screen.getByRole('button', { name: 'Picture 1 of 3' }),
+    ).not.toHaveAttribute('aria-current');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Picture 2 of 3' }),
+    );
+
+    expect(shownPicture()).toBe('/maps/1/castle-roof/view.webp');
+  });
+
+  it('starts from the first picture when the visitor goes back to another open map', async () => {
+    const tower: MapEntry = {
+      ...entry('tower', 'Tower', ['Underground']),
+      pictures: [
+        picture('tower', 2000, 3000),
+        picture('tower-top', 2000, 3000),
+      ],
+    };
+    await renderGallery(
+      '/maps?map=castle',
+      fakeApi([CASTLE, tower, ...MAPS]),
+      '/maps?map=tower',
+    );
+    await userEvent.keyboard('{ArrowRight}');
+    expect(shownPicture()).toBe('/maps/1/castle-roof/view.webp');
+
+    act(() => navigateBack());
+
+    await waitFor(() => expect(heading()).toBe('Tower'));
+    expect(shownPicture()).toBe('/maps/1/tower/view.webp');
+    expect(cardImage('Tower')).toBeNull();
+    expect(cardImage('Castle')).not.toBeNull();
+  });
+
+  it('goes round a map with two pictures in both directions', async () => {
+    const two = { ...CASTLE, pictures: CASTLE.pictures?.slice(0, 2) };
+    await renderGallery('/maps?map=castle', fakeApi([two, ...MAPS]));
+
+    const seen = [shownPicture()];
+    for (const key of ['{ArrowRight}', '{ArrowRight}', '{ArrowLeft}']) {
+      await userEvent.keyboard(key);
+      seen.push(shownPicture());
+    }
+
+    expect(seen).toEqual([
+      '/maps/1/castle/view.webp',
+      '/maps/1/castle-roof/view.webp',
+      '/maps/1/castle/view.webp',
+      '/maps/1/castle-roof/view.webp',
+    ]);
+    expect(trackImages()).toEqual([
+      '/maps/1/castle/view.webp',
+      '/maps/1/castle-roof/view.webp',
+      '/maps/1/castle/view.webp',
+    ]);
+  });
+
+  it('starts from the first picture each time a map is opened', async () => {
+    await renderGallery('/maps', fakeApi([CASTLE, ...MAPS]));
+    await userEvent.click(card('Castle'));
+    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(dialog()).toBeNull());
+
+    await userEvent.click(card('Castle'));
+
+    expect(shownPicture()).toBe('/maps/1/castle/view.webp');
+  });
+
+  it('morphs from the card only until the visitor moves to another picture', async () => {
+    await renderGallery('/maps', fakeApi([CASTLE, ...MAPS]));
+    await userEvent.click(card('Castle'));
+    const frameOfCover = () =>
+      within(dialog()!)
+        .getByTestId('swipe-track')
+        .querySelector('img[src="/maps/1/castle/view.webp"]')!.parentElement!;
+
+    expect(frameOfCover().className).not.toContain('bg-surface');
+
+    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard('{ArrowLeft}');
+
+    expect(shownPicture()).toBe('/maps/1/castle/view.webp');
+    expect(frameOfCover().className).toContain('bg-surface');
+  });
+
+  it('says on the card how many levels a map has', async () => {
+    await renderGallery('/maps', fakeApi([CASTLE, ...MAPS]));
+
+    expect(within(card('Castle')).getByText('3 levels')).toBeInTheDocument();
+    expect(within(card('Ice Cave')).queryByText(/levels/)).toBeNull();
   });
 
   it('shows the grid version on request', async () => {
@@ -456,14 +609,25 @@ describe('GalleryPage', () => {
     ]);
   });
 
-  it('keeps only the opened card as the morph target while browsing', async () => {
-    await renderGallery();
-    await userEvent.click(card('Ice Cave'));
-    await userEvent.click(screen.getByRole('button', { name: 'Next map' }));
+  it('offers the grid only on the pictures it fits', async () => {
+    await renderCastle();
+    const modal = dialog()!;
+    await userEvent.click(
+      within(modal).getByRole('button', { name: 'With grid' }),
+    );
+    expect(modal.querySelectorAll('svg line')).toHaveLength(21 + 31);
 
-    expect(cardImage('Ice Cave')).toBeNull();
-    expect(cardImage('Blue Inn')).not.toBeNull();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(modal.querySelectorAll('svg line')).toHaveLength(21 + 31);
+
+    await userEvent.keyboard('{ArrowRight}');
+    expect(shownPicture()).toBe('/maps/1/castle-cellar/view.webp');
+    expect(modal.querySelector('svg line')).toBeNull();
+    expect(
+      within(modal).queryByRole('button', { name: 'With grid' }),
+    ).toBeNull();
   });
+
   it('shows 21 maps first and 24 more each time the visitor asks', async () => {
     const server = fakeServer(many(50));
     await renderGallery('/maps', server.api);
@@ -528,51 +692,7 @@ describe('GalleryPage', () => {
     await waitFor(() => expect(listedMaps()).toHaveLength(30));
   });
 
-  it('counts the position in the modal from all the maps on the server', async () => {
-    await renderGallery('/maps', fakeServer(many(30)).api);
-
-    await userEvent.click(mapCard(3));
-
-    expect(within(dialog()!).getByText('3 of 30')).toBeInTheDocument();
-  });
-
-  it('does not wrap around while maps are left to load', async () => {
-    await renderGallery('/maps', fakeServer(many(30)).api);
-    await userEvent.click(mapCard(1));
-
-    await userEvent.click(screen.getByRole('button', { name: 'Previous map' }));
-
-    expect(heading()).toBe('Map 1');
-  });
-
-  it('steps from the last loaded map into the next page once it arrives', async () => {
-    let release: () => void = () => undefined;
-    const held = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    const server = fakeServer(many(30), async (request, page) => {
-      if (request.offset > 0) {
-        await held;
-      }
-      return page;
-    });
-    await renderGallery('/maps', server.api);
-    await userEvent.click(mapCard(21));
-
-    await userEvent.click(screen.getByRole('button', { name: 'Next map' }));
-    expect(heading()).toBe('Map 21');
-
-    await act(async () => {
-      release();
-      await held;
-    });
-
-    await waitFor(() => expect(heading()).toBe('Map 22'));
-    expect(within(dialog()!).getByText('22 of 30')).toBeInTheDocument();
-    expect(location()).toBe('/maps?map=map-22');
-  });
-
-  it('opens a linked map that is not loaded yet, without a position', async () => {
+  it('opens a linked map that is not loaded yet', async () => {
     const server = fakeServer(many(30));
     await renderGallery('/maps?map=map-30', server.api);
 
@@ -582,8 +702,8 @@ describe('GalleryPage', () => {
     expect(server.linked).toEqual(['map-30']);
     expect(within(dialog()!).getByRole('status')).toHaveTextContent(/^Map 30$/);
     expect(
-      within(dialog()!).queryByRole('button', { name: 'Next map' }),
-    ).toBeNull();
-    expect(within(dialog()!).queryByText(/of 30/)).toBeNull();
+      within(dialog()!).getByTestId('swipe-track').querySelector('img')!
+        .parentElement!.className,
+    ).toContain('bg-surface');
   });
 });

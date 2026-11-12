@@ -54,10 +54,6 @@ function canLoadMore(state: PagesState): boolean {
   return hasMore(state) && state.status !== 'loadingMore';
 }
 
-function isComplete(state: PagesState): boolean {
-  return state.status !== 'loading' && state.maps.length >= state.total;
-}
-
 function answers(state: PagesState, request: PageRequest): boolean {
   return request.tag === state.tag && request.offset === state.maps.length;
 }
@@ -110,7 +106,6 @@ export {
   firstPage,
   hasMore,
   initialPages,
-  isComplete,
   nextPage,
   pagesReducer,
 };

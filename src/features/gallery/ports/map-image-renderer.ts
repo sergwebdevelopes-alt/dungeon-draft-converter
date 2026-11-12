@@ -1,6 +1,10 @@
 import type { ImageName } from '../domain/map-image-keys.ts';
 
-type RenderedMapImages = Partial<Record<ImageName, Buffer>>;
+interface RenderedMapImages {
+  width: number;
+  height: number;
+  files: Partial<Record<ImageName, Buffer>>;
+}
 
 type RenderMapImages = (
   original: Buffer,

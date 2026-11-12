@@ -36,6 +36,7 @@ function setUp(answer?: Error, signal?: AbortSignal) {
   const downloads: Download[] = [];
   const broken = new Set<string>();
   const rendered: ImageName[][] = [];
+  const realSize = { width: 2, height: 1 };
   const fetchImage: FetchMapImage = (url, given) => {
     downloads.push({ url, signal: given });
     if (broken.has(url)) {
@@ -57,14 +58,15 @@ function setUp(answer?: Error, signal?: AbortSignal) {
     names: ImageName[],
   ): Promise<RenderedMapImages> => {
     rendered.push(names);
-    return Promise.resolve(
-      Object.fromEntries(
+    return Promise.resolve({
+      ...realSize,
+      files: Object.fromEntries(
         names.map((name) => [
           name,
           Buffer.from(`${name} of ${original.toString()}`),
         ]),
       ),
-    );
+    });
   };
 
   return {
@@ -73,6 +75,7 @@ function setUp(answer?: Error, signal?: AbortSignal) {
     downloads,
     broken,
     rendered,
+    realSize,
   };
 }
 
@@ -225,6 +228,62 @@ describe('createMapImagePreparer', () => {
     }
   });
 
+  it('saves the size measured from the file, not the one Patreon gave', async () => {
+    const { preparer, realSize } = setUp();
+    realSize.width = 2800;
+    realSize.height = 2800;
+
+    const { map: prepared } = await preparer.prepare(map('m1', 'roof'));
+
+    assert.deepEqual(
+      prepared?.images.map(({ mediaId, width, height }) => [
+        mediaId,
+        width,
+        height,
+      ]),
+      [
+        ['m1', 2800, 2800],
+        ['roof', 2800, 2800],
+      ],
+    );
+  });
+
+  it('keeps the size it saved before for an image that is already stored', async () => {
+    const { preparer, realSize, downloads } = setUp();
+    realSize.width = 2800;
+    realSize.height = 2800;
+    const first = await preparer.prepare(map('m1', 'roof'));
+
+    const again = await preparer.prepare(
+      map('m1', 'roof'),
+      first.map ?? undefined,
+    );
+    const withoutPrevious = await preparer.prepare(map('m1', 'roof'));
+
+    assert.equal(downloads.length, 2);
+    assert.deepEqual(again.map?.images, first.map?.images);
+    assert.deepEqual(withoutPrevious.map?.images, map('m1', 'roof').images);
+  });
+
+  it('keeps each stored image its own size', async () => {
+    const { preparer } = setUp();
+    await preparer.prepare(map('m1', 'roof'));
+    const previous: MapRecord = {
+      ...map('m1', 'roof'),
+      images: [
+        { ...image('m1'), width: 10, height: 10 },
+        { ...image('roof'), width: 20, height: 5 },
+      ],
+    };
+
+    const { map: prepared } = await preparer.prepare(
+      map('m1', 'roof'),
+      previous,
+    );
+
+    assert.deepEqual(prepared?.images, previous.images);
+  });
+
   it('fails an image whose file the renderer left out', async () => {
     const files = new Map<string, Buffer>();
     const errors = quietErrors();
@@ -239,7 +298,12 @@ describe('createMapImagePreparer', () => {
         removeFolder: () => Promise.resolve(),
         urlFor: (key) => key,
       },
-      render: () => Promise.resolve({ card: Buffer.from('card') }),
+      render: () =>
+        Promise.resolve({
+          width: 2,
+          height: 1,
+          files: { card: Buffer.from('card') },
+        }),
     });
 
     try {

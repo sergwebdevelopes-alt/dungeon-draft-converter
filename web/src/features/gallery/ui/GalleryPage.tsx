@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNearViewport } from '../../../shared/lib/useNearViewport.ts';
 import { Button } from '../../../shared/ui/Button.tsx';
 import { SITE, type SiteConfig } from '../../../shared/config/site.ts';
@@ -8,8 +8,8 @@ import { Reveal } from '../../../shared/ui/motion/index.ts';
 import { PageTitle } from '../../../shared/ui/PageTitle.tsx';
 import { MembershipSection } from '../../membership/index.ts';
 import type { GalleryApi } from '../api.ts';
-import { findMap, neighbour, type MapEntry } from '../model/catalog.ts';
-import { hasMore, isComplete, type PagesState } from '../model/map-pages.ts';
+import { findMap } from '../model/catalog.ts';
+import { hasMore, type PagesState } from '../model/map-pages.ts';
 import { useLinkedMap } from '../useLinkedMap.ts';
 import { useMapPages } from '../useMapPages.ts';
 import { useOpenMap } from '../useOpenMap.ts';
@@ -18,21 +18,8 @@ import { MapModal } from './MapModal.tsx';
 import { TagFilter } from './TagFilter.tsx';
 
 const SKELETON_CARDS = 8;
-const PRELOAD_BEFORE_END = 3;
 
 const GRID = 'grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4';
-
-function useOpenedSlug(slug: string | null): string | null {
-  const [opened, setOpened] = useState(slug);
-  if (slug && !opened) {
-    setOpened(slug);
-  }
-  if (!slug && opened) {
-    setOpened(null);
-  }
-
-  return slug ? (opened ?? slug) : null;
-}
 
 function useCardFocus(openSlug: string | null) {
   const cards = useRef(new Map<string, HTMLButtonElement>());
@@ -82,31 +69,6 @@ interface GalleryProps {
   onLoadMore: () => void;
 }
 
-function useStepPastLoaded(
-  state: PagesState,
-  slug: string | null,
-  show: (slug: string) => void,
-) {
-  const waitingAfter = useRef<string | null>(null);
-
-  useEffect(() => {
-    const from = waitingAfter.current;
-    if (!from || from !== slug) {
-      return;
-    }
-
-    const next = neighbour(state.maps, from, 1, false);
-    if (next) {
-      waitingAfter.current = null;
-      show(next.slug);
-    }
-  }, [state.maps, slug, show]);
-
-  return (from: string) => {
-    waitingAfter.current = from;
-  };
-}
-
 function MoreMaps({ state, onLoadMore }: Omit<GalleryProps, 'api'>) {
   const more = hasMore(state);
   const sentinel = useNearViewport<HTMLDivElement>(onLoadMore, {
@@ -136,43 +98,12 @@ function MoreMaps({ state, onLoadMore }: Omit<GalleryProps, 'api'>) {
 }
 
 function Gallery({ state, api, onLoadMore }: GalleryProps) {
-  const { slug, open, show, close } = useOpenMap();
+  const { slug, open, close } = useOpenMap();
   const { maps } = state;
 
   const listed = findMap(maps, slug);
   const openMap = useLinkedMap(slug, listed, api);
-  const openedSlug = useOpenedSlug(listed?.slug ?? null);
   const registerCard = useCardFocus(openMap?.slug ?? null);
-  const waitForNext = useStepPastLoaded(state, slug, show);
-  const index = listed ? maps.indexOf(listed) : -1;
-  const wrap = isComplete(state);
-
-  useEffect(() => {
-    if (index !== -1 && index >= maps.length - PRELOAD_BEFORE_END) {
-      onLoadMore();
-    }
-  }, [index, maps.length, onLoadMore]);
-
-  function neighbourOf(map: MapEntry, direction: 1 | -1) {
-    return neighbour(maps, map.slug, direction, wrap);
-  }
-
-  function step(direction: 1 | -1) {
-    if (!openMap) {
-      return;
-    }
-
-    const next = neighbourOf(openMap, direction);
-    if (next) {
-      show(next.slug);
-      return;
-    }
-
-    if (direction === 1 && listed && hasMore(state)) {
-      waitForNext(listed.slug);
-      onLoadMore();
-    }
-  }
 
   return (
     <>
@@ -187,7 +118,7 @@ function Gallery({ state, api, onLoadMore }: GalleryProps) {
               <MapCard
                 map={map}
                 featured={i === 0}
-                isOpen={map.slug === openedSlug}
+                isOpen={map === listed}
                 buttonRef={registerCard(map.slug)}
                 onOpen={() => open(map.slug)}
               />
@@ -200,14 +131,10 @@ function Gallery({ state, api, onLoadMore }: GalleryProps) {
 
       {openMap && (
         <MapModal
+          key={openMap.slug}
           map={openMap}
-          morphSlug={openedSlug}
-          position={listed ? { index, total: state.total } : undefined}
-          previous={listed && neighbourOf(listed, -1)}
-          next={listed && neighbourOf(listed, 1)}
+          morph={listed !== null}
           onClose={close}
-          onPrevious={() => step(-1)}
-          onNext={() => step(1)}
         />
       )}
     </>

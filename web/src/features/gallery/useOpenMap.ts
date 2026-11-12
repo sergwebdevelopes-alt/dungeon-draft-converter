@@ -27,13 +27,6 @@ function useOpenMap() {
     setParams(paramsWith(next), { state: { openedFromGallery: true } });
   }
 
-  function show(next: string) {
-    setParams(paramsWith(next), {
-      replace: true,
-      state: location.state as unknown,
-    });
-  }
-
   function close() {
     const state = location.state as OpenedState | null;
     if (state?.openedFromGallery) {
@@ -44,7 +37,7 @@ function useOpenMap() {
     setParams(paramsWith(null), { replace: true });
   }
 
-  return { slug, open, show, close };
+  return { slug, open, close };
 }
 
 export { useOpenMap };

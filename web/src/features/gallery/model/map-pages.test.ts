@@ -5,7 +5,6 @@ import {
   firstPage,
   hasMore,
   initialPages,
-  isComplete,
   nextPage,
   pagesReducer,
   type PageRequest,
@@ -126,7 +125,7 @@ describe('pagesReducer', () => {
   });
 });
 
-describe('hasMore, canLoadMore and isComplete', () => {
+describe('hasMore and canLoadMore', () => {
   it('know whether maps are left to load', () => {
     const asked = pagesReducer(FIRST, { type: 'moreRequested' });
     const all = loaded(initialPages, firstPage(null), ['a', 'b'], 2);
@@ -137,10 +136,6 @@ describe('hasMore, canLoadMore and isComplete', () => {
     expect(hasMore(asked)).toBe(true);
     expect(canLoadMore(asked)).toBe(false);
     expect(hasMore(all)).toBe(false);
-
-    expect(isComplete(initialPages)).toBe(false);
-    expect(isComplete(FIRST)).toBe(false);
-    expect(isComplete(all)).toBe(true);
   });
 
   it('lets a failed next page be tried again', () => {

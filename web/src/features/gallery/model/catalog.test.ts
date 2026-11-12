@@ -3,7 +3,10 @@ import {
   captionOf,
   findMap,
   hasSquares,
-  neighbour,
+  gridFits,
+  mapPictures,
+  picturesLabel,
+  wrapIndex,
   type MapEntry,
 } from './catalog.ts';
 
@@ -29,22 +32,72 @@ describe('findMap', () => {
   });
 });
 
-describe('neighbour', () => {
-  it('steps forward and back, wrapping at the ends when asked to', () => {
-    expect(neighbour(LIST, 'a', 1, true)?.slug).toBe('b');
-    expect(neighbour(LIST, 'c', 1, true)?.slug).toBe('a');
-    expect(neighbour(LIST, 'a', -1, true)?.slug).toBe('c');
+const LEVELS: MapEntry = {
+  ...entry('castle'),
+  width: 2000,
+  height: 3000,
+  pictures: [
+    { view: 'v1', thumb: 't1', width: 2000, height: 3000 },
+    { view: 'v2', thumb: 't2', width: 4000, height: 3000 },
+  ],
+};
+
+describe('mapPictures', () => {
+  it('lists the pictures of a map with several', () => {
+    expect(mapPictures(LEVELS)).toBe(LEVELS.pictures);
   });
 
-  it('stops at the ends when the list is not complete', () => {
-    expect(neighbour(LIST, 'b', 1, false)?.slug).toBe('c');
-    expect(neighbour(LIST, 'c', 1, false)).toBeNull();
-    expect(neighbour(LIST, 'a', -1, false)).toBeNull();
+  it('gives the cover as the only picture of other maps', () => {
+    expect(mapPictures(entry('a'))).toEqual([
+      { view: 'v', width: 1000, height: 1000 },
+    ]);
+  });
+});
+
+describe('picturesLabel', () => {
+  it('counts the levels of a map with several pictures', () => {
+    expect(picturesLabel(LEVELS)).toBe('2 levels');
   });
 
-  it('has no neighbour for a single or unknown map', () => {
-    expect(neighbour([entry('a')], 'a', 1, true)).toBeNull();
-    expect(neighbour(LIST, 'nope', 1, true)).toBeNull();
+  it('says nothing for a map with one picture', () => {
+    expect(picturesLabel(entry('a'))).toBeNull();
+    expect(
+      picturesLabel({ ...LEVELS, pictures: LEVELS.pictures?.slice(0, 1) }),
+    ).toBeNull();
+  });
+});
+
+describe('gridFits', () => {
+  const squares = { x: 20, y: 30 };
+
+  it('fits a picture with the proportions of the grid', () => {
+    expect(gridFits({ view: 'v', width: 2000, height: 3000 }, squares)).toBe(
+      true,
+    );
+    expect(gridFits({ view: 'v', width: 2800, height: 4201 }, squares)).toBe(
+      true,
+    );
+  });
+
+  it('does not fit a picture with other proportions', () => {
+    expect(gridFits({ view: 'v', width: 3000, height: 2000 }, squares)).toBe(
+      false,
+    );
+    expect(gridFits({ view: 'v', width: 2000, height: 2900 }, squares)).toBe(
+      false,
+    );
+  });
+});
+
+describe('wrapIndex', () => {
+  it('goes round the list in both directions', () => {
+    expect([0, 1, 2, 3, 4, 7].map((at) => wrapIndex(at, 3))).toEqual([
+      0, 1, 2, 0, 1, 1,
+    ]);
+    expect([-1, -2, -3, -4].map((at) => wrapIndex(at, 3))).toEqual([
+      2, 1, 0, 2,
+    ]);
+    expect(wrapIndex(5, 1)).toBe(0);
   });
 });
 

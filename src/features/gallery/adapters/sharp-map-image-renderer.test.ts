@@ -44,15 +44,13 @@ describe('scaledCrop', () => {
 
 describe('renderMapImagesWithSharp', () => {
   it('renders the card, view, backdrop and thumbnail as WebP at their sizes', async () => {
-    const images = await renderMapImagesWithSharp(await original(4760, 2240), [
-      'card',
-      'view',
-      'backdrop',
-      'thumb',
-    ]);
+    const { files } = await renderMapImagesWithSharp(
+      await original(4760, 2240),
+      ['card', 'view', 'backdrop', 'thumb'],
+    );
 
     const sizes = await Promise.all(
-      [images.card, images.view, images.backdrop, images.thumb].map((image) =>
+      [files.card, files.view, files.backdrop, files.thumb].map((image) =>
         sharp(image).metadata(),
       ),
     );
@@ -68,19 +66,29 @@ describe('renderMapImagesWithSharp', () => {
   });
 
   it('renders only the images it is asked for', async () => {
-    const images = await renderMapImagesWithSharp(await original(600, 400), [
+    const { files } = await renderMapImagesWithSharp(await original(600, 400), [
       'view',
       'thumb',
     ]);
 
-    assert.deepEqual(Object.keys(images), ['view', 'thumb']);
+    assert.deepEqual(Object.keys(files), ['view', 'thumb']);
+  });
+
+  it('tells the real size of the original', async () => {
+    const { width, height } = await renderMapImagesWithSharp(
+      await original(2800, 2100),
+      ['thumb'],
+    );
+
+    assert.deepEqual([width, height], [2800, 2100]);
   });
 
   it('keeps a tall view within the long edge', async () => {
-    const { view } = await renderMapImagesWithSharp(
+    const { files } = await renderMapImagesWithSharp(
       await original(1500, 3000),
       ['view'],
     );
+    const { view } = files;
 
     const { width, height } = await sharp(view).metadata();
     assert.deepEqual([width, height], [1000, 2000]);

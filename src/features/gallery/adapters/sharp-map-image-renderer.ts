@@ -84,16 +84,16 @@ async function renderMapImagesWithSharp(
   names: ImageName[],
 ): Promise<RenderedMapImages> {
   const size = await sizeOf(original);
-  const rendered: RenderedMapImages = {};
+  const files: RenderedMapImages['files'] = {};
 
   for (const name of names) {
     const crop = CROPS[name];
-    rendered[name] = crop
+    files[name] = crop
       ? await renderCrop(original, size, crop)
       : await renderView(original);
   }
 
-  return rendered;
+  return { ...size, files };
 }
 
 export { renderMapImagesWithSharp, scaledCrop };

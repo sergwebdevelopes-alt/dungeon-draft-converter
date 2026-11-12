@@ -11,19 +11,22 @@ import { useScrollLock } from '../../../shared/lib/useScrollLock.ts';
 import { ButtonLink } from '../../../shared/ui/Button.tsx';
 import { Segmented } from '../../../shared/ui/Segmented.tsx';
 import { Reveal, SwipeCarousel } from '../../../shared/ui/motion/index.ts';
-import { captionOf, type MapEntry } from '../model/catalog.ts';
+import {
+  captionOf,
+  gridFits,
+  mapPictures,
+  wrapIndex,
+  type MapEntry,
+  type Picture,
+} from '../model/catalog.ts';
 import { MapDescription } from './MapDescription.tsx';
 import { MapViewer } from './MapViewer.tsx';
+import { PictureStrip } from './PictureStrip.tsx';
 
 interface MapModalProps {
   map: MapEntry;
-  morphSlug: string | null;
-  position?: { index: number; total: number };
-  previous: MapEntry | null;
-  next: MapEntry | null;
+  morph: boolean;
   onClose: () => void;
-  onPrevious: () => void;
-  onNext: () => void;
 }
 
 const GRID_OPTIONS = [
@@ -77,8 +80,10 @@ function useArrowKeys(
   }, [enabled]);
 }
 
-function usePreload(...maps: (MapEntry | null)[]) {
-  const urls = maps.flatMap((map) => (map ? [map.images.view] : [])).join(' ');
+function usePreload(...pictures: (Picture | undefined)[]) {
+  const urls = pictures
+    .flatMap((picture) => (picture ? [picture.view] : []))
+    .join(' ');
 
   useEffect(() => {
     for (const url of urls.split(' ').filter(Boolean)) {
@@ -87,37 +92,66 @@ function usePreload(...maps: (MapEntry | null)[]) {
   }, [urls]);
 }
 
-function MapModal({
-  map,
-  morphSlug,
-  position,
-  previous,
-  next,
-  onClose,
-  onPrevious,
-  onNext,
-}: MapModalProps) {
+function MapModal({ map, morph, onClose }: MapModalProps) {
   const dialogRef = useModalDialog();
   const titleId = useId();
   useScrollLock();
   const [showGrid, setShowGrid] = useState(false);
-  const canMove = position !== undefined && position.total > 1;
+  const [position, setPosition] = useState(0);
+  const [moved, setMoved] = useState(false);
 
-  useArrowKeys(canMove, onPrevious, onNext);
+  const pictures = mapPictures(map);
+  const several = pictures.length > 1;
+  const index = wrapIndex(position, pictures.length);
+  const picture = pictures[index];
+  const canGrid = map.squares !== undefined && gridFits(picture, map.squares);
+  const alt = [map.title, map.subtitle].filter(Boolean).join(', ');
+  const morphs = morph && !moved;
 
-  function slide(entry: MapEntry, grid: boolean) {
+  function pictureAt(at: number): Picture {
+    return pictures[wrapIndex(at, pictures.length)];
+  }
+
+  function move(by: number) {
+    if (by !== 0) {
+      setPosition(position + by);
+      setMoved(true);
+    }
+  }
+
+  function showPrevious() {
+    move(-1);
+  }
+
+  function showNext() {
+    move(1);
+  }
+
+  function showPicture(next: number) {
+    move(next - index);
+  }
+
+  useArrowKeys(several, showPrevious, showNext);
+  usePreload(
+    several ? pictureAt(position - 1) : undefined,
+    several ? pictureAt(position + 1) : undefined,
+  );
+
+  function slide(at: number) {
     return {
-      key: entry.slug,
+      key: String(at),
       content: (
         <MapViewer
-          map={entry}
-          showGrid={grid}
-          morph={entry.slug === morphSlug}
+          picture={pictureAt(at)}
+          alt={alt}
+          grid={
+            at === position && showGrid && canGrid ? map.squares : undefined
+          }
+          morphId={morphs && at === 0 ? `map-${map.slug}` : undefined}
         />
       ),
     };
   }
-  usePreload(previous, next);
 
   function handleCancel(event: SyntheticEvent) {
     event.preventDefault();
@@ -141,38 +175,37 @@ function MapModal({
       <Reveal className="grid h-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-surface sm:rounded-2xl sm:ring-1 sm:ring-line lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-1">
         <SwipeCarousel
           className="relative h-[75dvh] min-h-0 w-full bg-sunken lg:h-auto"
-          previous={previous && slide(previous, false)}
-          current={slide(map, showGrid)}
-          next={next && slide(next, false)}
-          onPrevious={onPrevious}
-          onNext={onNext}
+          previous={several ? slide(position - 1) : null}
+          current={slide(position)}
+          next={several ? slide(position + 1) : null}
+          onPrevious={showPrevious}
+          onNext={showNext}
           onDismiss={onClose}
         >
-          {canMove && (
+          {several && (
             <>
               <button
                 type="button"
-                aria-label="Previous map"
+                aria-label="Previous picture"
                 className={`${ROUND_BUTTON} absolute top-1/2 left-4 hidden -translate-y-1/2 lg:grid`}
-                onClick={onPrevious}
+                onClick={showPrevious}
               >
                 ‹
               </button>
               <button
                 type="button"
-                aria-label="Next map"
+                aria-label="Next picture"
                 className={`${ROUND_BUTTON} absolute top-1/2 right-4 hidden -translate-y-1/2 lg:grid`}
-                onClick={onNext}
+                onClick={showNext}
               >
                 ›
               </button>
+              <PictureStrip
+                pictures={pictures}
+                current={index}
+                onSelect={showPicture}
+              />
             </>
-          )}
-
-          {position && (
-            <p className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-sm text-white tabular-nums">
-              {position.index + 1} of {position.total}
-            </p>
           )}
 
           <button
@@ -184,8 +217,8 @@ function MapModal({
             ×
           </button>
           <p role="status" className="sr-only">
-            {position
-              ? `${map.title}, ${position.index + 1} of ${position.total}`
+            {several
+              ? `${map.title}, picture ${index + 1} of ${pictures.length}`
               : map.title}
           </p>
         </SwipeCarousel>
@@ -212,7 +245,7 @@ function MapModal({
             ))}
           </ul>
 
-          {map.squares && (
+          {canGrid && (
             <div className="hidden lg:block">
               <Segmented
                 label="Grid"

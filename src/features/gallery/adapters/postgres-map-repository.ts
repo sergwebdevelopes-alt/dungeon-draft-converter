@@ -74,7 +74,7 @@ async function removeOthers(tx: Queryable, maps: MapRecord[]): Promise<number> {
   return removed.length;
 }
 
-function coverImageOfRow(row: MapRow): MapImage {
+function coverImageFromRow(row: MapRow): MapImage {
   return {
     url: row.image_url,
     width: row.image_width,
@@ -96,7 +96,7 @@ function toStoredMap(row: MapRow): StoredMap {
       : {}),
     patreonUrl: row.patreon_url,
     publishedAt: row.published_at.toISOString(),
-    images: row.images.length > 0 ? row.images : [coverImageOfRow(row)],
+    images: row.images.length > 0 ? row.images : [coverImageFromRow(row)],
     checkedAt: row.checked_at.toISOString(),
   };
 }
