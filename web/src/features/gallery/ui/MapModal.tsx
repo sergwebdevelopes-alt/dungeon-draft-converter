@@ -1,26 +1,12 @@
-import {
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type MouseEvent,
-  type SyntheticEvent,
-} from 'react';
+import { useId, useState, type MouseEvent, type SyntheticEvent } from 'react';
+import { useArrowKeys } from '@/shared/lib/useArrowKeys.ts';
 import { useLoadedImages } from '@/shared/lib/useLoadedImages.ts';
+import { useModalDialog } from '@/shared/lib/useModalDialog.ts';
 import { useScrollLock } from '@/shared/lib/useScrollLock.ts';
-import { ButtonLink } from '@/shared/ui/Button.tsx';
-import { Segmented } from '@/shared/ui/Segmented.tsx';
 import { Reveal, SwipeCarousel } from '@/shared/ui/motion/index.ts';
-import {
-  gridFits,
-  mapPictures,
-  squaresLabel,
-  wrapIndex,
-  type MapEntry,
-  type Picture,
-} from '../model/catalog.ts';
-import { MapDescription } from './MapDescription.tsx';
+import { usePictureBrowser } from '../hooks/usePictureBrowser.ts';
+import { gridFits, type MapEntry } from '../model/catalog.ts';
+import { MapDetails } from './MapDetails.tsx';
 import { MapViewer } from './MapViewer.tsx';
 import { PictureStrip } from './PictureStrip.tsx';
 
@@ -30,95 +16,21 @@ interface MapModalProps {
   onClose: () => void;
 }
 
-const GRID_OPTIONS = [
-  { value: 'without', label: 'Without grid' },
-  { value: 'with', label: 'With grid' },
-] as const satisfies { value: string; label: string }[];
-
 const ROUND_BUTTON =
   'grid size-11 place-items-center rounded-full bg-black/55 text-xl text-white ring-1 ring-white/15 backdrop-blur transition hover:bg-black/75';
-
-function useModalDialog() {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  useLayoutEffect(() => {
-    const dialog = dialogRef.current;
-    if (dialog && !dialog.open) {
-      dialog.showModal();
-    }
-  }, []);
-
-  return dialogRef;
-}
-
-function useArrowKeys(
-  enabled: boolean,
-  onPrevious: () => void,
-  onNext: () => void,
-) {
-  const latest = useRef({ onPrevious, onNext });
-  latest.current = { onPrevious, onNext };
-
-  useEffect(() => {
-    if (!enabled) {
-      return;
-    }
-
-    function handleKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.target instanceof HTMLInputElement) {
-        return;
-      }
-      if (event.key === 'ArrowLeft') {
-        latest.current.onPrevious();
-      }
-      if (event.key === 'ArrowRight') {
-        latest.current.onNext();
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [enabled]);
-}
 
 function MapModal({ map, morph, onClose }: MapModalProps) {
   const dialogRef = useModalDialog();
   const titleId = useId();
   useScrollLock();
   const [showGrid, setShowGrid] = useState(false);
-  const [position, setPosition] = useState(0);
-  const [moved, setMoved] = useState(false);
+  const browser = usePictureBrowser(map);
+  const { pictures, several, position, index, picture, pictureAt } = browser;
+  const { showPrevious, showNext, showPicture } = browser;
 
-  const pictures = mapPictures(map);
-  const several = pictures.length > 1;
-  const index = wrapIndex(position, pictures.length);
-  const picture = pictures[index];
   const canGrid = map.squares !== undefined && gridFits(picture, map.squares);
   const alt = [map.title, map.subtitle].filter(Boolean).join(', ');
-  const morphs = morph && !moved;
-
-  function pictureAt(at: number): Picture {
-    return pictures[wrapIndex(at, pictures.length)];
-  }
-
-  function move(by: number) {
-    if (by !== 0) {
-      setPosition(position + by);
-      setMoved(true);
-    }
-  }
-
-  function showPrevious() {
-    move(-1);
-  }
-
-  function showNext() {
-    move(1);
-  }
-
-  function showPicture(next: number) {
-    move(next - index);
-  }
+  const morphs = morph && !browser.moved;
 
   useArrowKeys(several, showPrevious, showNext);
   const loaded = useLoadedImages(pictures.map((shown) => shown.view));
@@ -210,49 +122,13 @@ function MapModal({ map, morph, onClose }: MapModalProps) {
           </p>
         </SwipeCarousel>
 
-        <div className="grid min-h-0 content-start gap-4 overflow-y-auto border-t border-line p-4 sm:p-6 lg:gap-5 lg:border-t-0 lg:border-l">
-          <div className="grid content-start gap-3">
-            <div className="grid content-start gap-2">
-              <h2
-                id={titleId}
-                className="font-display text-xl leading-tight font-bold tracking-wide sm:text-2xl lg:text-xl"
-              >
-                {map.title}
-              </h2>
-              <div className="flex flex-wrap items-center gap-2">
-                <ul className="contents" aria-label="Tags">
-                  {map.tags.map((tag) => (
-                    <li
-                      key={tag}
-                      className="rounded-full border border-line px-3 py-1 text-xs font-bold tracking-wide text-muted uppercase"
-                    >
-                      {tag}
-                    </li>
-                  ))}
-                </ul>
-                {map.squares && (
-                  <p className="text-muted">{squaresLabel(map.squares)}</p>
-                )}
-              </div>
-            </div>
-
-            {canGrid && (
-              <div className="hidden lg:block">
-                <Segmented
-                  label="Grid"
-                  size="small"
-                  options={GRID_OPTIONS}
-                  value={showGrid ? 'with' : 'without'}
-                  onChange={(choice) => setShowGrid(choice === 'with')}
-                />
-              </div>
-            )}
-
-            <ButtonLink href={map.patreonUrl}>Get it on Patreon</ButtonLink>
-          </div>
-
-          {map.description && <MapDescription html={map.description} />}
-        </div>
+        <MapDetails
+          map={map}
+          titleId={titleId}
+          canGrid={canGrid}
+          showGrid={showGrid}
+          onShowGrid={setShowGrid}
+        />
       </Reveal>
     </dialog>
   );
