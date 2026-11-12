@@ -81,7 +81,7 @@ src/
 - **Errors:** they extend `InvalidInputError` (→ 400) or `UnprocessableError` (→ 422) from `shared/errors.ts`, and `infrastructure/http-server/http-errors.ts` maps them by kind. HTTP-only errors use `HttpError`.
 - **Dependencies are passed in**, not kept in module-level globals. For example, `createApp` creates the `ConversionQueue` and hands it to `converter.createRoutes`.
 - **Imports stay relative.** Node runs the `.ts` files directly and ignores tsconfig `paths`.
-- **No barrels:** no `index.ts` files.
+- **No barrels:** no `index.ts` files in the back end. (A front-end feature's `index.ts` is its entry; see Front end.)
 
 ### Adding a feature
 
@@ -100,27 +100,44 @@ src/
 
 ### Front end (`web/`)
 
+Four layers, each importing only from the ones below it: `app → pages → features → shared`.
+
 ```
 web/src/
-├── app/           entry, App, layout (header, footer, page shell)
-├── shared/
-│   ├── http/      HttpClient port + fetch adapter (only file using fetch); index.ts exports the `http` instance
-│   ├── storage/   KeyValueStore port + localStorage adapter; index.ts exports `storage`
-│   ├── lib/       small helpers and hooks: format, save-file, abortable, useObjectUrl, useFileDrop, useElapsed, useRotation, useNearViewport
-│   ├── analytics/ cloudflare-analytics: adds the Cloudflare Web Analytics beacon only on the site's domain (token and domain in config/site.ts; the server's CSP allows its two origins)
-│   ├── theme/     light/dark choice (storage port) + toggle; web/public/theme.js applies a saved choice before React starts
-│   ├── ui/        shared presentational components (Button/ButtonLink, Alert, Segmented, GridOverlay, …)
-│   └── config/    site.ts (site name, nav, links, membership plans)
-└── features/<feature>/
-    ├── api.ts     the feature's contract over HttpClient, plus a ready instance
-    ├── model/     pure TypeScript (no React, no fetch, no storage): types, rules, reducer
-    ├── use*.ts    the hook joining model and api (effects only)
-    ├── *.worker.ts  Web Worker entries for heavy work (converter: reading a .dd2vtt preview), each with an adapter that falls back to the page where workers are missing
-    └── ui/        presentational components: data and callbacks through props
+├── app/           entry, App, routes (pages load lazily), layout (header, footer, page shell)
+├── pages/         one folder per page; a page puts features together and adds its own heading
+│   ├── home/        HomePage and its own parts: Hero, LatestMaps, ConverterTeaser, teaser-frame
+│   ├── gallery/     GalleryPage (heading + MapGallery + MembershipSection)
+│   ├── converter/   ConverterPage (heading + ConverterForm)
+│   └── not-found/   NotFoundPage
+├── features/<feature>/   converter, gallery, membership
+│   ├── index.ts   the feature's only entry for pages
+│   ├── api/       the feature's contract over HttpClient, plus a ready instance (`gallery-api.ts`, `converter-api.ts`)
+│   ├── model/     pure TypeScript (no React, no fetch, no storage): types, rules, reducer
+│   ├── hooks/     hooks joining model and api (effects only)
+│   ├── workers/   Web Worker entries for heavy work (converter: reading a .dd2vtt preview), each with an adapter that falls back to the page where workers are missing
+│   └── ui/        presentational components: data and callbacks through props
+└── shared/
+    ├── http/      HttpClient port + fetch adapter (only file using fetch); index.ts exports the `http` instance
+    ├── storage/   KeyValueStore port + localStorage adapter; index.ts exports `storage`
+    ├── lib/       small helpers and hooks: format, save-file, abortable, useObjectUrl, useFileDrop, useElapsed, useRotation, useNearViewport, useLoadedImages, useScrollLock
+    ├── analytics/ cloudflare-analytics: adds the Cloudflare Web Analytics beacon only on the site's domain (token and domain in config/site.ts; the server's CSP allows its two origins)
+    ├── theme/     light/dark choice (storage port) + toggle; web/public/theme.js applies a saved choice before React starts
+    ├── ui/        shared presentational components (Button/ButtonLink, Alert, Segmented, GridOverlay, …)
+    └── config/    site.ts (site name, nav, links, membership plans)
 ```
 
+- **Layer rules,** enforced by oxlint (`no-restricted-imports` blocks for `web/src/**` in `.oxlintrc.json`):
+  - `shared/` imports nothing from `features/`, `pages/` or `app/`.
+  - A feature imports nothing from `pages/` or `app/`, and never another feature. A page puts features together (for example `GalleryPage` adds `MembershipSection` below `MapGallery`).
+  - A page uses a feature only through its `index.ts`, and never imports another page or `app/`.
+  - `app/` uses a feature through its `index.ts`. The one exception: `routes.tsx` imports `galleryApi` from the feature's `api/` to prefetch the first page of maps without loading the gallery's UI.
+- A feature keeps only `index.ts` at its root; everything else goes in `api/`, `model/`, `hooks/`, `workers/` or `ui/` (only the folders it needs). Unlike the back end, a front-end feature's `index.ts` is its entry, not a barrel to avoid.
+- Feature modules run nothing when imported. `vite.config.ts` tells the bundler so (`moduleSideEffects`), which keeps a page from loading the parts of a feature's `index.ts` it does not use. After changing what an `index.ts` exports or what a page imports, compare the files in `web/dist/assets` before and after `npm run build`.
+- **Adding a page:** a folder in `pages/` with `<Name>Page.tsx`, loaded lazily in `app/routes.tsx`. Parts only that page uses live next to it.
+- **Adding a feature:** a folder in `features/` with `index.ts` and the folders it needs, and its name in the "One feature never imports another" pattern in `.oxlintrc.json`.
 - Components never fetch or touch storage; logic goes in `model/` with its own tests.
-- A feature reaches the network only through its `api.ts`, and storage only through `shared/storage`.
+- A feature reaches the network only through its `api/`, and storage only through `shared/storage`.
 - No DI container: modules export ready instances (`http`, `storage`, `converterApi`); hooks take them as default parameters so tests can pass fakes.
 - The ports rule covers runtime libraries (HTTP, storage, animation). UI frameworks and build tools (React, Tailwind, Vite, Vitest) are used directly.
 - Membership plans live in `web/src/shared/config/site.ts` (`membership.plans`); adding a Patreon tier means adding one entry there. Pages use `Container` for width and padding; sections may run full width.

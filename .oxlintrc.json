@@ -325,6 +325,82 @@
           }
         ]
       }
+    },
+    {
+      "files": ["web/src/shared/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/features/**", "**/pages/**", "**/app/**"],
+                "message": "shared/ imports nothing from features/, pages/ or app/."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["web/src/features/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/pages/**", "**/app/**"],
+                "message": "A feature imports nothing from pages/ or app/."
+              },
+              {
+                "regex": "^(\\.\\./)+(converter|gallery|membership)/",
+                "message": "One feature never imports another; a page puts them together."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["web/src/pages/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/app/**"],
+                "message": "A page imports nothing from app/."
+              },
+              {
+                "regex": "features/[^/]+/[^/]+/",
+                "message": "A page uses a feature only through its index.ts."
+              },
+              {
+                "regex": "^\\.\\./(home|gallery|converter|not-found)/",
+                "message": "One page never imports another."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["web/src/app/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "features/[^/]+/(ui|model|hooks|workers)/",
+                "message": "app/ uses a feature through its index.ts, or its api/ to prefetch."
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }
