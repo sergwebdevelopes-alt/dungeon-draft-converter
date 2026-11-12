@@ -4,10 +4,16 @@ interface FadeImageProps {
   src: string;
   alt: string;
   className?: string;
+  fade?: boolean;
 }
 
-function FadeImage({ src, alt, className = '' }: FadeImageProps) {
-  const [loaded, setLoaded] = useState(false);
+const FADING = 'transition-[opacity,scale] duration-300 ease-out';
+const WAITING = 'scale-[1.015] opacity-0';
+const SHOWN = 'scale-100 opacity-100';
+
+function FadeImage({ src, alt, className = '', fade = true }: FadeImageProps) {
+  const [fades] = useState(fade);
+  const [loaded, setLoaded] = useState(!fade);
 
   return (
     <img
@@ -21,7 +27,7 @@ function FadeImage({ src, alt, className = '' }: FadeImageProps) {
       draggable={false}
       onLoad={() => setLoaded(true)}
       data-loaded={loaded}
-      className={`transition-[opacity,scale] duration-300 ease-out ${loaded ? 'scale-100 opacity-100' : 'scale-[1.015] opacity-0'} ${className}`}
+      className={`${fades ? FADING : ''} ${loaded ? SHOWN : WAITING} ${className}`}
     />
   );
 }

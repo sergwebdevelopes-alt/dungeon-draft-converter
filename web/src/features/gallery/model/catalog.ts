@@ -63,6 +63,7 @@ export {
   gridFits,
   hasSquares,
   picturesLabel,
+  squaresLabel,
   mapPictures,
   wrapIndex,
 };

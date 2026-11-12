@@ -8,14 +8,24 @@ interface SegmentedProps<T extends string> {
   options: Option<T>[];
   value: T | null;
   disabled?: boolean;
+  size?: 'regular' | 'small';
   onChange: (value: T) => void;
 }
+
+const BUTTON =
+  'rounded-lg px-3 font-bold text-muted transition-colors hover:text-text disabled:cursor-not-allowed disabled:opacity-50 aria-pressed:bg-surface aria-pressed:text-text aria-pressed:shadow';
+
+const BUTTON_SIZE = {
+  regular: 'min-h-11 text-sm',
+  small: 'min-h-8 text-xs',
+};
 
 function Segmented<T extends string>({
   label,
   options,
   value,
   disabled = false,
+  size = 'regular',
   onChange,
 }: SegmentedProps<T>) {
   return (
@@ -31,7 +41,7 @@ function Segmented<T extends string>({
           aria-pressed={value === option.value}
           disabled={disabled}
           onClick={() => onChange(option.value)}
-          className="min-h-11 rounded-lg px-3 text-sm font-bold text-muted transition-colors hover:text-text disabled:cursor-not-allowed disabled:opacity-50 aria-pressed:bg-surface aria-pressed:text-text aria-pressed:shadow"
+          className={`${BUTTON} ${BUTTON_SIZE[size]}`}
         >
           {option.label}
         </button>

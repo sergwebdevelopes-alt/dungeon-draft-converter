@@ -10,6 +10,7 @@ interface MapViewerProps {
   alt: string;
   grid?: Squares;
   morphId?: string;
+  fade?: boolean;
 }
 
 const FRAME = 'relative overflow-hidden bg-surface';
@@ -51,7 +52,7 @@ function Frame({
   );
 }
 
-function MapViewer({ picture, alt, grid, morphId }: MapViewerProps) {
+function MapViewer({ picture, alt, grid, morphId, fade }: MapViewerProps) {
   return (
     <div
       className="grid size-full place-items-center"
@@ -62,6 +63,7 @@ function MapViewer({ picture, alt, grid, morphId }: MapViewerProps) {
           key={picture.view}
           src={picture.view}
           alt={alt}
+          fade={fade}
           className="size-full object-cover"
         />
         {grid && <GridOverlay columns={grid.x} rows={grid.y} />}

@@ -7,14 +7,15 @@ import {
   type MouseEvent,
   type SyntheticEvent,
 } from 'react';
+import { useLoadedImages } from '../../../shared/lib/useLoadedImages.ts';
 import { useScrollLock } from '../../../shared/lib/useScrollLock.ts';
 import { ButtonLink } from '../../../shared/ui/Button.tsx';
 import { Segmented } from '../../../shared/ui/Segmented.tsx';
 import { Reveal, SwipeCarousel } from '../../../shared/ui/motion/index.ts';
 import {
-  captionOf,
   gridFits,
   mapPictures,
+  squaresLabel,
   wrapIndex,
   type MapEntry,
   type Picture,
@@ -80,18 +81,6 @@ function useArrowKeys(
   }, [enabled]);
 }
 
-function usePreload(...pictures: (Picture | undefined)[]) {
-  const urls = pictures
-    .flatMap((picture) => (picture ? [picture.view] : []))
-    .join(' ');
-
-  useEffect(() => {
-    for (const url of urls.split(' ').filter(Boolean)) {
-      new Image().src = url;
-    }
-  }, [urls]);
-}
-
 function MapModal({ map, morph, onClose }: MapModalProps) {
   const dialogRef = useModalDialog();
   const titleId = useId();
@@ -132,10 +121,7 @@ function MapModal({ map, morph, onClose }: MapModalProps) {
   }
 
   useArrowKeys(several, showPrevious, showNext);
-  usePreload(
-    several ? pictureAt(position - 1) : undefined,
-    several ? pictureAt(position + 1) : undefined,
-  );
+  const loaded = useLoadedImages(pictures.map((shown) => shown.view));
 
   function slide(at: number) {
     return {
@@ -148,6 +134,7 @@ function MapModal({ map, morph, onClose }: MapModalProps) {
             at === position && showGrid && canGrid ? map.squares : undefined
           }
           morphId={morphs && at === 0 ? `map-${map.slug}` : undefined}
+          fade={!loaded.has(pictureAt(at).view)}
         />
       ),
     };
@@ -170,7 +157,7 @@ function MapModal({ map, morph, onClose }: MapModalProps) {
       aria-labelledby={titleId}
       onCancel={handleCancel}
       onClick={handleBackdropClick}
-      className="m-auto h-dvh max-h-none w-full max-w-none bg-transparent p-0 text-text backdrop:bg-black/75 backdrop:backdrop-blur-sm sm:h-[min(92dvh,920px)] sm:w-[min(94vw,1280px)]"
+      className="m-auto h-dvh max-h-none w-full max-w-none overflow-hidden bg-transparent p-0 text-text backdrop:bg-black/75 backdrop:backdrop-blur-sm sm:h-[min(92dvh,920px)] sm:w-[min(94vw,1280px)]"
     >
       <Reveal className="grid h-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-surface sm:rounded-2xl sm:ring-1 sm:ring-line lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-1">
         <SwipeCarousel
@@ -224,39 +211,45 @@ function MapModal({ map, morph, onClose }: MapModalProps) {
         </SwipeCarousel>
 
         <div className="grid min-h-0 content-start gap-4 overflow-y-auto border-t border-line p-4 sm:p-6 lg:gap-5 lg:border-t-0 lg:border-l">
-          <div className="grid content-start gap-1 lg:min-h-[5.25rem]">
-            <h2
-              id={titleId}
-              className="line-clamp-2 font-display text-xl leading-tight font-bold tracking-wide sm:text-2xl lg:text-xl"
-            >
-              {map.title}
-            </h2>
-            <p className="text-muted">{captionOf(map)}</p>
-          </div>
-
-          <ul className="hidden flex-wrap gap-2 lg:flex" aria-label="Tags">
-            {map.tags.map((tag) => (
-              <li
-                key={tag}
-                className="rounded-full border border-line px-3 py-1 text-xs font-bold tracking-wide text-muted uppercase"
+          <div className="grid content-start gap-3">
+            <div className="grid content-start gap-2">
+              <h2
+                id={titleId}
+                className="font-display text-xl leading-tight font-bold tracking-wide sm:text-2xl lg:text-xl"
               >
-                {tag}
-              </li>
-            ))}
-          </ul>
-
-          {canGrid && (
-            <div className="hidden lg:block">
-              <Segmented
-                label="Grid"
-                options={GRID_OPTIONS}
-                value={showGrid ? 'with' : 'without'}
-                onChange={(choice) => setShowGrid(choice === 'with')}
-              />
+                {map.title}
+              </h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <ul className="contents" aria-label="Tags">
+                  {map.tags.map((tag) => (
+                    <li
+                      key={tag}
+                      className="rounded-full border border-line px-3 py-1 text-xs font-bold tracking-wide text-muted uppercase"
+                    >
+                      {tag}
+                    </li>
+                  ))}
+                </ul>
+                {map.squares && (
+                  <p className="text-muted">{squaresLabel(map.squares)}</p>
+                )}
+              </div>
             </div>
-          )}
 
-          <ButtonLink href={map.patreonUrl}>Get it on Patreon</ButtonLink>
+            {canGrid && (
+              <div className="hidden lg:block">
+                <Segmented
+                  label="Grid"
+                  size="small"
+                  options={GRID_OPTIONS}
+                  value={showGrid ? 'with' : 'without'}
+                  onChange={(choice) => setShowGrid(choice === 'with')}
+                />
+              </div>
+            )}
+
+            <ButtonLink href={map.patreonUrl}>Get it on Patreon</ButtonLink>
+          </div>
 
           {map.description && <MapDescription html={map.description} />}
         </div>

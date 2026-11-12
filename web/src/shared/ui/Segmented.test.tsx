@@ -35,6 +35,35 @@ describe('Segmented', () => {
     expect(onChange).toHaveBeenCalledWith('with');
   });
 
+  it('is regular size unless asked to be small', () => {
+    const { rerender } = render(
+      <Segmented
+        label="Grid"
+        options={[...OPTIONS]}
+        value="with"
+        onChange={vi.fn()}
+      />,
+    );
+    const button = () => screen.getByRole('button', { name: 'With' });
+
+    expect(button().className).toContain('min-h-11');
+    expect(button().className).toContain('aria-pressed:bg-surface');
+
+    rerender(
+      <Segmented
+        label="Grid"
+        options={[...OPTIONS]}
+        value="with"
+        size="small"
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(button().className).toContain('min-h-8');
+    expect(button().className).not.toContain('min-h-11');
+    expect(button().className).toContain('aria-pressed:bg-surface');
+  });
+
   it('can be disabled as a whole', () => {
     render(
       <Segmented

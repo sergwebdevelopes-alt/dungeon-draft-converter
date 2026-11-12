@@ -15,7 +15,7 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { MapsResponse } from '../../../../../src/contracts/gallery-api.ts';
 import type { GalleryApi } from '../api.ts';
 import type { MapEntry } from '../model/catalog.ts';
@@ -249,9 +249,13 @@ describe('GalleryPage', () => {
     expect(
       within(modal!).getByRole('heading', { name: 'Blue Inn' }),
     ).toBeInTheDocument();
-    expect(
-      within(modal!).getByText('Ground floor · 20 × 30 squares'),
-    ).toBeInTheDocument();
+    expect(within(modal!).getByText('20 × 30 squares')).toBeInTheDocument();
+    expect(within(modal!).queryByText(/Ground floor/)).toBeNull();
+    const squares = within(modal!).getByText('20 × 30 squares');
+    const tags = within(modal!).getByRole('list', { name: 'Tags' });
+    expect(within(tags).getByText('Interior')).toBeInTheDocument();
+    expect(tags.parentElement).toBe(squares.parentElement);
+    expect(tags.className).not.toMatch(/hidden/);
     expect(
       within(modal!).getByRole('link', { name: 'Get it on Patreon' }),
     ).toHaveAttribute(
@@ -457,6 +461,43 @@ describe('GalleryPage', () => {
     expect(cardImage('Castle')).not.toBeNull();
   });
 
+  it('shows a picture that has already loaded at once when the visitor jumps to it', async () => {
+    class LoadedAtOnce {
+      src = '';
+      addEventListener(_type: string, listener: () => void) {
+        queueMicrotask(listener);
+      }
+    }
+    vi.stubGlobal('Image', LoadedAtOnce);
+
+    try {
+      await renderCastle();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Picture 3 of 3' }),
+      );
+
+      const shown = within(dialog()!)
+        .getByTestId('swipe-track')
+        .querySelector('img[src="/maps/1/castle-cellar/view.webp"]')!;
+      expect(shown.className).toContain('opacity-100');
+      expect(shown.className).not.toContain('transition-');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('fades in a picture that has not loaded yet', async () => {
+    await renderCastle();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Picture 3 of 3' }),
+    );
+
+    const shown = within(dialog()!)
+      .getByTestId('swipe-track')
+      .querySelector('img[src="/maps/1/castle-cellar/view.webp"]')!;
+    expect(shown.className).toContain('transition-');
+  });
+
   it('goes round a map with two pictures in both directions', async () => {
     const two = { ...CASTLE, pictures: CASTLE.pictures?.slice(0, 2) };
     await renderGallery('/maps?map=castle', fakeApi([two, ...MAPS]));
@@ -530,6 +571,9 @@ describe('GalleryPage', () => {
     expect(
       within(modal).getByRole('button', { name: 'With grid' }),
     ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      within(modal).getByRole('button', { name: 'With grid' }).className,
+    ).toContain('min-h-8');
   });
 
   it('shows the description of a map from Patreon', async () => {
