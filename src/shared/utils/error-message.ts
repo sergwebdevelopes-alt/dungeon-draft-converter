@@ -1,5 +1,5 @@
-function messageOf(error: unknown): string {
+function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-export { messageOf };
+export { errorMessage };

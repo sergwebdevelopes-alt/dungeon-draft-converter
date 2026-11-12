@@ -38,7 +38,7 @@ function logToConsole(entry: WebhookLogEntry): void {
   console.log(JSON.stringify(entry));
 }
 
-function entryOf({ images }: GalleryStores, map: StoredMap) {
+function entryWithUrls({ images }: GalleryStores, map: StoredMap) {
   return toMapEntry(map, (key) => images.urlFor(key));
 }
 
@@ -52,7 +52,7 @@ async function listPage(
   ]);
 
   return {
-    maps: page.maps.map((map) => entryOf(stores, map)),
+    maps: page.maps.map((map) => entryWithUrls(stores, map)),
     total: page.total,
     tags,
   };
@@ -67,7 +67,7 @@ async function findEntry(
     throw new HttpError(404, 'There is no map at this address.');
   }
 
-  return { map: entryOf(stores, map) };
+  return { map: entryWithUrls(stores, map) };
 }
 
 const readRawBody = express.raw({
@@ -93,7 +93,7 @@ const rawBody: RequestHandler = (req, res, next) => {
   });
 };
 
-function rawBodyOf(req: Request): Buffer {
+function rawRequestBody(req: Request): Buffer {
   return Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
 }
 
@@ -144,7 +144,7 @@ function createRoutes({
     }
     if (
       !isValidSignature(
-        rawBodyOf(req),
+        rawRequestBody(req),
         req.get('X-Patreon-Signature'),
         webhookSecret,
       )

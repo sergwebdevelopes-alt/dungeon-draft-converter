@@ -98,7 +98,7 @@ interface FakeServer {
   linked: string[];
 }
 
-function pageOf(maps: MapEntry[], { tag, offset, limit }: PageRequest) {
+function pageFrom(maps: MapEntry[], { tag, offset, limit }: PageRequest) {
   const matching = tag ? maps.filter((map) => map.tags.includes(tag)) : maps;
 
   return {
@@ -124,7 +124,7 @@ function fakeServer(
     api: {
       fetchPage(request) {
         requests.push(request);
-        return answer(request, pageOf(maps, request));
+        return answer(request, pageFrom(maps, request));
       },
       fetchMap(slug) {
         linked.push(slug);

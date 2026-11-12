@@ -26,7 +26,7 @@ async function listen(app: express.Express): Promise<http.Server> {
   });
 }
 
-function baseOf(server: http.Server): string {
+function serverUrl(server: http.Server): string {
   const { port } = server.address() as { port: number };
 
   return `http://localhost:${port}`;
@@ -50,7 +50,7 @@ describe('securityHeaders outside production', () => {
     app.use(errorHandler);
 
     server = await listen(app);
-    base = baseOf(server);
+    base = serverUrl(server);
   });
 
   after(() => stop(server));
@@ -91,7 +91,7 @@ describe('blockCrossSiteRequests', () => {
     app.use(errorHandler);
 
     server = await listen(app);
-    base = baseOf(server);
+    base = serverUrl(server);
   });
 
   after(() => stop(server));

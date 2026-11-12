@@ -86,7 +86,7 @@ async function removeStaleUploadDirs(): Promise<number> {
   return removed;
 }
 
-function uploadDirOf(req: Request): string {
+function requestUploadDir(req: Request): string {
   const uploadDir = uploadDirs.get(req);
 
   if (!uploadDir) {
@@ -108,5 +108,5 @@ export {
   createUploadDir,
   keepUploadsDuring,
   removeStaleUploadDirs,
-  uploadDirOf,
+  requestUploadDir,
 };

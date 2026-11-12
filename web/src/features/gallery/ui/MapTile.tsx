@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import { captionOf, picturesLabel, type MapEntry } from '../model/catalog.ts';
+import { mapCaption, picturesLabel, type MapEntry } from '../model/catalog.ts';
 
 const TILE =
   'group relative block w-full overflow-hidden rounded-2xl bg-sunken text-left ring-1 ring-white/5 transition-shadow duration-500 hover:shadow-[0_30px_60px_-25px_rgb(0_0_0/0.7)]';
@@ -42,7 +42,7 @@ function TileCaption({ map, featured = false }: TileCaptionProps) {
       >
         {map.title}
       </strong>
-      <span className="text-sm text-white/75">{captionOf(map)}</span>
+      <span className="text-sm text-white/75">{mapCaption(map)}</span>
     </span>
   );
 }

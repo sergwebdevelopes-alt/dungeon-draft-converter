@@ -47,11 +47,11 @@ async function* toAsync<T>(items: Iterable<T>): AsyncGenerator<T> {
   }
 }
 
-function entriesOf(...entries: ZipEntry[]): AsyncGenerator<ZipEntry> {
+function entryStream(...entries: ZipEntry[]): AsyncGenerator<ZipEntry> {
   return toAsync(entries);
 }
 
-function chunksOf(...texts: string[]): AsyncGenerator<Buffer> {
+function chunkStream(...texts: string[]): AsyncGenerator<Buffer> {
   return toAsync(texts.map((text) => Buffer.from(text)));
 }
 
@@ -67,7 +67,7 @@ describe('streamZip', () => {
   it('sends a zip download named after the map', async () => {
     const res = new FakeResponse();
 
-    await send(res, entriesOf());
+    await send(res, entryStream());
 
     assert.equal(res.statusCode, 200);
     assert.equal(res.headers['Content-Type'], 'application/zip');
@@ -83,9 +83,9 @@ describe('streamZip', () => {
 
     await send(
       res,
-      entriesOf(
+      entryStream(
         { path: 'JPG_70/a.jpg', data: Buffer.from('image') },
-        { path: 'FOUNDRY/Castle.dd2vtt', data: chunksOf('{"a":', '1}') },
+        { path: 'FOUNDRY/Castle.dd2vtt', data: chunkStream('{"a":', '1}') },
       ),
     );
 
@@ -103,7 +103,7 @@ describe('streamZip', () => {
     await streamZip(
       res as unknown as Response,
       'Замок',
-      entriesOf(),
+      entryStream(),
       () => false,
     );
 
@@ -143,7 +143,7 @@ describe('streamZip', () => {
 
     const sending = send(
       res,
-      entriesOf({ path: 'a.txt', data: chunksOf('one', 'two') }),
+      entryStream({ path: 'a.txt', data: chunkStream('one', 'two') }),
     );
 
     await new Promise((resolve) => setImmediate(resolve));

@@ -26,7 +26,7 @@ function isSitePage(path: string): path is keyof typeof SITE_PAGES {
   return Object.hasOwn(SITE_PAGES, path);
 }
 
-function mapSlugOf(req: Request): string | null {
+function requestedMapSlug(req: Request): string | null {
   const slug = req.query.map;
   return req.path === '/maps' && typeof slug === 'string' && slug ? slug : null;
 }
@@ -103,7 +103,7 @@ function createPageFor(
   }
 
   return async (req) => {
-    const slug = mapSlugOf(req);
+    const slug = requestedMapSlug(req);
     const map = slug ? await mapPage(slug) : null;
     return map ?? sitePage(req.path);
   };

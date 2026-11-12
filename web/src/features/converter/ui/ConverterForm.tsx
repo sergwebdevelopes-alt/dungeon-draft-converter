@@ -8,7 +8,7 @@ import {
   tooLargePresets,
   visibleMaps,
 } from '../model/converter-reducer.ts';
-import { choiceOf, variantsFor } from '../model/grid-choice.ts';
+import { gridChoice, variantsFor } from '../model/grid-choice.ts';
 import { imageCount } from '../model/summary.ts';
 import { useConverter } from '../hooks/useConverter.ts';
 import { useMapPreview } from '../hooks/useMapPreview.ts';
@@ -56,7 +56,7 @@ function ConverterForm() {
         <div className="h-[min(62svh,560px)] lg:h-[clamp(460px,calc(100svh-13rem),820px)]">
           <MapStage
             preview={preview}
-            grid={choiceOf(state.variants)}
+            grid={gridChoice(state.variants)}
             logo={state.logo}
             placement={state.placement}
             busy={converting}
@@ -103,7 +103,7 @@ function ConverterForm() {
               onToggleFoundry={() => dispatch({ type: 'foundryToggled' })}
             />
             <GridSwitch
-              value={choiceOf(state.variants)}
+              value={gridChoice(state.variants)}
               disabled={converting || !config}
               onChange={(choice) =>
                 dispatch({

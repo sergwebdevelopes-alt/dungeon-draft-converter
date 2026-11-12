@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { KeyValueStore } from '../storage/index.ts';
-import { THEME_KEY, oppositeOf, savedTheme, saveTheme } from './theme.ts';
+import { THEME_KEY, oppositeTheme, savedTheme, saveTheme } from './theme.ts';
 
 function memoryStore(
   value?: unknown,
@@ -32,7 +32,7 @@ describe('theme', () => {
   });
 
   it('switches to the other theme', () => {
-    expect(oppositeOf('dark')).toBe('light');
-    expect(oppositeOf('light')).toBe('dark');
+    expect(oppositeTheme('dark')).toBe('light');
+    expect(oppositeTheme('light')).toBe('dark');
   });
 });

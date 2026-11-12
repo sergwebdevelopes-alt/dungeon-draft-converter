@@ -19,7 +19,7 @@ function squaresLabel({ x, y }: Squares): string {
   return `${x} × ${y} squares`;
 }
 
-function captionOf(map: MapEntry): string {
+function mapCaption(map: MapEntry): string {
   return [map.subtitle, map.squares && squaresLabel(map.squares)]
     .filter(Boolean)
     .join(' · ');
@@ -55,7 +55,7 @@ function gridFits(picture: Picture, squares: Squares): boolean {
 }
 
 export {
-  captionOf,
+  mapCaption,
   findMap,
   gridFits,
   hasSquares,

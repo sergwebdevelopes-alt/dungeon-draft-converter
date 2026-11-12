@@ -3,8 +3,8 @@ import { CONVERSION_TIMEOUT_MS } from '../../../config.ts';
 import { convertLevels } from '../application/convert-levels.ts';
 import type { ConversionQueue } from '../application/conversion-queue.ts';
 import { formatDuration } from '../../../shared/utils/format.ts';
-import { keepUploadsDuring, uploadDirOf } from './upload/upload-dir.ts';
-import { uploadsOf, type Uploads } from './upload/upload.ts';
+import { keepUploadsDuring, requestUploadDir } from './upload/upload-dir.ts';
+import { requestUploads, type Uploads } from './upload/upload.ts';
 import { addToConversionLog } from './conversion-log.ts';
 import { parseConvertRequest } from './parse-convert-request.ts';
 import { streamZip } from './stream-zip.ts';
@@ -28,7 +28,7 @@ function convertHandler(
       }
     });
 
-    const uploads = uploadsOf(req);
+    const uploads = requestUploads(req);
     addToConversionLog(res, {
       uploadedAt: Date.now(),
       uploadBytes: uploadedBytes(uploads),
@@ -43,7 +43,7 @@ function convertHandler(
       presets: request.presets.map((preset) => preset.name),
       variants: request.variants,
     });
-    const workDir = uploadDirOf(req);
+    const workDir = requestUploadDir(req);
 
     let timedOut = false;
 

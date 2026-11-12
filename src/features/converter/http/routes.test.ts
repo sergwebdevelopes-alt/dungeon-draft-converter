@@ -121,7 +121,7 @@ describe('GET /api/queue/:ticket', () => {
     server.close();
   });
 
-  async function positionOf(ticket: string): Promise<unknown> {
+  async function fetchPosition(ticket: string): Promise<unknown> {
     const res = await fetch(`${base}/queue/${ticket}`);
 
     assert.equal(res.status, 200);
@@ -131,7 +131,7 @@ describe('GET /api/queue/:ticket', () => {
   }
 
   it('reports an unknown ticket', async () => {
-    assert.deepEqual(await positionOf(TICKET_A), { state: 'unknown' });
+    assert.deepEqual(await fetchPosition(TICKET_A), { state: 'unknown' });
   });
 
   it('reports converting and waiting tickets with their place in line', async () => {
@@ -141,12 +141,12 @@ describe('GET /api/queue/:ticket', () => {
     const third = holdTask(queue, TICKET_C, stop.signal);
 
     try {
-      assert.deepEqual(await positionOf(TICKET_A), { state: 'converting' });
-      assert.deepEqual(await positionOf(TICKET_B), {
+      assert.deepEqual(await fetchPosition(TICKET_A), { state: 'converting' });
+      assert.deepEqual(await fetchPosition(TICKET_B), {
         state: 'waiting',
         ahead: 1,
       });
-      assert.deepEqual(await positionOf(TICKET_C), {
+      assert.deepEqual(await fetchPosition(TICKET_C), {
         state: 'waiting',
         ahead: 2,
       });
@@ -161,13 +161,13 @@ describe('GET /api/queue/:ticket', () => {
     const stop = new AbortController();
     const held = holdTask(queue, TICKET_A, stop.signal);
 
-    assert.deepEqual(await positionOf(TICKET_A), { state: 'converting' });
+    assert.deepEqual(await fetchPosition(TICKET_A), { state: 'converting' });
 
     stop.abort();
     held.finish();
     await held.done;
 
-    assert.deepEqual(await positionOf(TICKET_A), { state: 'unknown' });
+    assert.deepEqual(await fetchPosition(TICKET_A), { state: 'unknown' });
   });
 });
 

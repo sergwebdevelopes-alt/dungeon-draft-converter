@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  captionOf,
+  mapCaption,
   findMap,
   hasSquares,
   gridFits,
@@ -101,24 +101,24 @@ describe('wrapIndex', () => {
   });
 });
 
-describe('captionOf', () => {
+describe('mapCaption', () => {
   it('joins the subtitle and the size that a map has', () => {
     const map = entry('a');
 
     expect(
-      captionOf({
+      mapCaption({
         ...map,
         subtitle: 'Curse of Strahd',
         squares: { x: 60, y: 40 },
       }),
     ).toBe('Curse of Strahd · 60 × 40 squares');
-    expect(captionOf({ ...map, squares: { x: 60, y: 40 } })).toBe(
+    expect(mapCaption({ ...map, squares: { x: 60, y: 40 } })).toBe(
       '60 × 40 squares',
     );
-    expect(captionOf({ ...map, subtitle: 'Curse of Strahd' })).toBe(
+    expect(mapCaption({ ...map, subtitle: 'Curse of Strahd' })).toBe(
       'Curse of Strahd',
     );
-    expect(captionOf(map)).toBe('');
+    expect(mapCaption(map)).toBe('');
   });
 });
 

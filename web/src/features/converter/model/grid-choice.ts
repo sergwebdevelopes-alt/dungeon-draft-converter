@@ -12,7 +12,7 @@ function variantsFor(choice: GridChoice): Variant[] {
   return VARIANTS[choice];
 }
 
-function choiceOf(variants: Variant[]): GridChoice | null {
+function gridChoice(variants: Variant[]): GridChoice | null {
   const hasGrid = variants.includes('Grid');
   const hasNoGrid = variants.includes('NoGrid');
   if (hasGrid && hasNoGrid) {
@@ -25,5 +25,5 @@ function choiceOf(variants: Variant[]): GridChoice | null {
   return hasNoGrid ? 'without' : null;
 }
 
-export { choiceOf, variantsFor };
+export { gridChoice, variantsFor };
 export type { GridChoice };

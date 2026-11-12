@@ -105,7 +105,7 @@ async function pageAt(url: string): Promise<PageBody> {
   return (await res.json()) as PageBody;
 }
 
-function slugsOf(page: PageBody): string[] {
+function pageSlugs(page: PageBody): string[] {
   return page.maps.map((map) => map.slug);
 }
 
@@ -172,7 +172,7 @@ describe('GET /api/maps', () => {
 
     const page = await pageAt(`${served.url}?offset=1&limit=1`);
 
-    assert.deepEqual(slugsOf(page), ['new']);
+    assert.deepEqual(pageSlugs(page), ['new']);
     assert.equal(page.total, 3);
     assert.deepEqual(page.tags, ['Waterdeep', 'Barovia']);
   });
@@ -183,7 +183,7 @@ describe('GET /api/maps', () => {
 
     const page = await pageAt(`${served.url}?tag=Barovia`);
 
-    assert.deepEqual(slugsOf(page), ['new', 'old']);
+    assert.deepEqual(pageSlugs(page), ['new', 'old']);
     assert.equal(page.total, 2);
   });
 
@@ -194,7 +194,7 @@ describe('GET /api/maps', () => {
     const page = await pageAt(served.url);
     const tooLarge = await fetch(`${served.url}?limit=4`);
 
-    assert.deepEqual(slugsOf(page), ['newest', 'new']);
+    assert.deepEqual(pageSlugs(page), ['newest', 'new']);
     assert.equal(tooLarge.status, 400);
     assert.deepEqual(await tooLarge.json(), {
       error: 'limit must be a whole number from 1 to 3.',

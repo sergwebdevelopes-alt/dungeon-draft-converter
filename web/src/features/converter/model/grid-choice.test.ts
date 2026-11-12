@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { choiceOf, variantsFor } from './grid-choice.ts';
+import { gridChoice, variantsFor } from './grid-choice.ts';
 
 describe('grid choice', () => {
   it('turns a choice into the variants to export', () => {
@@ -9,9 +9,9 @@ describe('grid choice', () => {
   });
 
   it('reads the choice back from saved variants in any order', () => {
-    expect(choiceOf(['Grid', 'NoGrid'])).toBe('both');
-    expect(choiceOf(['Grid'])).toBe('with');
-    expect(choiceOf(['NoGrid'])).toBe('without');
-    expect(choiceOf([])).toBeNull();
+    expect(gridChoice(['Grid', 'NoGrid'])).toBe('both');
+    expect(gridChoice(['Grid'])).toBe('with');
+    expect(gridChoice(['NoGrid'])).toBe('without');
+    expect(gridChoice([])).toBeNull();
   });
 });

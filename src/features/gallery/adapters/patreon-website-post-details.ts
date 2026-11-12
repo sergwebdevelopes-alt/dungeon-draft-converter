@@ -150,7 +150,7 @@ function fromMedia(id: string, item: RawIncluded['attributes']): PostImage[] {
   ];
 }
 
-function imagesOf(post: RawPost, media: Included['media']): PostImage[] {
+function postImages(post: RawPost, media: Included['media']): PostImage[] {
   const main = fromPostFile(post.attributes.post_file, media);
   const mainIds = new Set(main.map((image) => image.mediaId));
   const attached = (post.relationships?.media?.data ?? [])
@@ -163,7 +163,7 @@ function imagesOf(post: RawPost, media: Included['media']): PostImage[] {
   return [...main, ...attached];
 }
 
-function collectionsOf(post: RawPost, names: Included['collections']) {
+function postCollections(post: RawPost, names: Included['collections']) {
   const refs = post.relationships?.collections?.data ?? [];
 
   return refs.flatMap(({ id }) => names.get(id) ?? []);
@@ -176,8 +176,8 @@ function toDetails(
   return {
     postId: post.id,
     publishedAt: post.attributes.published_at ?? '',
-    collections: collectionsOf(post, collections),
-    images: imagesOf(post, media),
+    collections: postCollections(post, collections),
+    images: postImages(post, media),
   };
 }
 

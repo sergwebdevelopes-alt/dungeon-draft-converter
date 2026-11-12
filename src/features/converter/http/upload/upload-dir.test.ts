@@ -13,7 +13,7 @@ const {
   createUploadDir,
   keepUploadsDuring,
   removeStaleUploadDirs,
-  uploadDirOf,
+  requestUploadDir,
 } = await import('./upload-dir.ts');
 
 const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
@@ -72,7 +72,7 @@ describe('upload dirs', () => {
 
   it('creates a folder for each request', async () => {
     const { req, res, nextError } = await startRequest();
-    const dir = uploadDirOf(req);
+    const dir = requestUploadDir(req);
 
     assert.equal(nextError, undefined);
     assert.equal(path.dirname(dir), root);
@@ -85,7 +85,7 @@ describe('upload dirs', () => {
 
   it('removes the folder only after the request work has finished', async () => {
     const { req, res } = await startRequest();
-    const dir = uploadDirOf(req);
+    const dir = requestUploadDir(req);
     let finishWork = () => undefined as void;
     keepUploadsDuring(
       req,
@@ -104,7 +104,7 @@ describe('upload dirs', () => {
 
   it('removes the folder even when the work failed', async () => {
     const { req, res } = await startRequest();
-    const dir = uploadDirOf(req);
+    const dir = requestUploadDir(req);
     keepUploadsDuring(req, Promise.reject(new Error('conversion failed')));
 
     res.emit('close');
@@ -113,7 +113,7 @@ describe('upload dirs', () => {
   });
 
   it('fails clearly when asked for a folder that was never created', () => {
-    assert.throws(() => uploadDirOf({} as Request), {
+    assert.throws(() => requestUploadDir({} as Request), {
       message: 'The upload folder was not created.',
     });
   });

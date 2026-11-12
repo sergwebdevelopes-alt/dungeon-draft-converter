@@ -23,7 +23,7 @@ function toSquares(match: RegExpExecArray | null): Squares | undefined {
   return match ? { x: Number(match[1]), y: Number(match[2]) } : undefined;
 }
 
-function sizeOf(labels: string[], rest: string): Squares | undefined {
+function sizeFromLabels(labels: string[], rest: string): Squares | undefined {
   for (const label of labels) {
     const squares = toSquares(SIZE.exec(label));
     if (squares) {
@@ -39,7 +39,7 @@ function parseTitle(raw: string): ParsedTitle {
     .map((m) => tidy(m[1] ?? m[2]))
     .filter(isLabel);
   const rest = raw.replace(GROUPS, ' ');
-  const squares = sizeOf(labels, rest);
+  const squares = sizeFromLabels(labels, rest);
   const names = rest
     .replace(new RegExp(INLINE_SIZE, 'gi'), ' ')
     .replace(BATTLEMAP_WORD, ' ')

@@ -1,6 +1,6 @@
 import type { RenderMapImages } from '../ports/map-image-renderer.ts';
 import type { FetchMapImage } from '../ports/map-image-source.ts';
-import { messageOf } from '../../../shared/utils/error-message.ts';
+import { errorMessage } from '../../../shared/utils/error-message.ts';
 import type { ImageStorage } from '../ports/image-storage.ts';
 import {
   coverImage,
@@ -94,7 +94,7 @@ function createMapImagePreparer({
         throw error;
       }
       console.error(
-        `Gallery images for post ${map.postId} failed: ${messageOf(error)}`,
+        `Gallery images for post ${map.postId} failed: ${errorMessage(error)}`,
       );
       return null;
     }

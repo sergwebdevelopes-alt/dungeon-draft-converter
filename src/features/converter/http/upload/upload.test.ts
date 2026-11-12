@@ -11,8 +11,8 @@ process.env.TMPDIR = root;
 
 const { errorHandler } =
   await import('../../../../infrastructure/http-server/http-errors.ts');
-const { createUploadDir, uploadDirOf } = await import('./upload-dir.ts');
-const { limitTotalUpload, uploadFiles, uploadsOf } =
+const { createUploadDir, requestUploadDir } = await import('./upload-dir.ts');
+const { limitTotalUpload, uploadFiles, requestUploads } =
   await import('./upload.ts');
 
 const IMAGE_BYTES = Buffer.from('decoded image bytes');
@@ -74,7 +74,7 @@ describe('uploadFiles', () => {
       createUploadDir,
       uploadFiles,
       async (req, res) => {
-        const files = uploadsOf(req);
+        const files = requestUploads(req);
         const summary: Record<string, StoredSummary[]> = {};
 
         for (const [field, list] of Object.entries(files)) {
@@ -90,7 +90,7 @@ describe('uploadFiles', () => {
           );
         }
 
-        res.json({ dir: uploadDirOf(req), files: summary });
+        res.json({ dir: requestUploadDir(req), files: summary });
       },
     );
     app.use(errorHandler);

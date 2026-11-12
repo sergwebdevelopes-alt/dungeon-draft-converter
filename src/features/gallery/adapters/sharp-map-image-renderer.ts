@@ -46,7 +46,7 @@ function scaledCrop(original: Size, crop: Crop): ScaledCrop {
   };
 }
 
-async function sizeOf(original: Buffer): Promise<Size> {
+async function originalSize(original: Buffer): Promise<Size> {
   const { width, height } = await sharp(original).metadata();
 
   return { width, height };
@@ -83,7 +83,7 @@ async function renderMapImagesWithSharp(
   original: Buffer,
   names: ImageName[],
 ): Promise<RenderedMapImages> {
-  const size = await sizeOf(original);
+  const size = await originalSize(original);
   const files: RenderedMapImages['files'] = {};
 
   for (const name of names) {

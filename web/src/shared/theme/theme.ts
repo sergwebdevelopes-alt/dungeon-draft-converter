@@ -19,9 +19,9 @@ function saveTheme(store: KeyValueStore, theme: Theme): void {
   store.write(THEME_KEY, theme);
 }
 
-function oppositeOf(theme: Theme): Theme {
+function oppositeTheme(theme: Theme): Theme {
   return theme === 'dark' ? 'light' : 'dark';
 }
 
-export { DEFAULT_THEME, THEME_KEY, oppositeOf, savedTheme, saveTheme };
+export { DEFAULT_THEME, THEME_KEY, oppositeTheme, savedTheme, saveTheme };
 export type { Theme };

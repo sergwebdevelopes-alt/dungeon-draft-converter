@@ -78,7 +78,7 @@ describe('errorHandler', () => {
     console.error = originalConsoleError;
   });
 
-  async function errorOf(route: string): Promise<{
+  async function fetchError(route: string): Promise<{
     status: number;
     body: unknown;
   }> {
@@ -88,7 +88,7 @@ describe('errorHandler', () => {
   }
 
   it('sends the status and message of an HttpError', async () => {
-    assert.deepEqual(await errorOf('/http'), {
+    assert.deepEqual(await fetchError('/http'), {
       status: 418,
       body: { error: 'Short and stout.' },
     });
@@ -96,35 +96,35 @@ describe('errorHandler', () => {
   });
 
   it('maps InvalidInputError to 400', async () => {
-    assert.deepEqual(await errorOf('/invalid'), {
+    assert.deepEqual(await fetchError('/invalid'), {
       status: 400,
       body: { error: 'The map is broken.' },
     });
   });
 
   it('maps subclasses of InvalidInputError to 400', async () => {
-    assert.deepEqual(await errorOf('/invalid-subclass'), {
+    assert.deepEqual(await fetchError('/invalid-subclass'), {
       status: 400,
       body: { error: 'The level is broken.' },
     });
   });
 
   it('maps UnprocessableError to 422', async () => {
-    assert.deepEqual(await errorOf('/unprocessable'), {
+    assert.deepEqual(await fetchError('/unprocessable'), {
       status: 422,
       body: { error: 'The map is too large.' },
     });
   });
 
   it('handles errors thrown by async handlers', async () => {
-    assert.deepEqual(await errorOf('/async'), {
+    assert.deepEqual(await fetchError('/async'), {
       status: 400,
       body: { error: 'Async failure.' },
     });
   });
 
   it('hides unexpected errors behind a 500 and logs them', async () => {
-    assert.deepEqual(await errorOf('/unexpected'), {
+    assert.deepEqual(await fetchError('/unexpected'), {
       status: 500,
       body: { error: 'Conversion failed.' },
     });

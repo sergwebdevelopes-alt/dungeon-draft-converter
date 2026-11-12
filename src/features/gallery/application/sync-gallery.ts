@@ -1,6 +1,6 @@
 import type { RenderMapImages } from '../ports/map-image-renderer.ts';
 import type { FetchMapImage } from '../ports/map-image-source.ts';
-import { messageOf } from '../../../shared/utils/error-message.ts';
+import { errorMessage } from '../../../shared/utils/error-message.ts';
 import { withoutUndefined } from '../../../shared/utils/object.ts';
 import { singleFlight } from '../../../shared/utils/single-flight.ts';
 import type { ImageStorage } from '../ports/image-storage.ts';
@@ -141,7 +141,7 @@ function createGallerySync({
         withoutUndefined({
           event: 'gallery-sync',
           result: cancelled ? 'cancelled' : 'failed',
-          error: cancelled ? undefined : messageOf(error),
+          error: cancelled ? undefined : errorMessage(error),
           tookMs: now() - startedAt,
         }),
       );

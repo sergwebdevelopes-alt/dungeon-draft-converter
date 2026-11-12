@@ -104,7 +104,7 @@ const envSchema = z
 
 type ParsedEnv = z.output<typeof envSchema>;
 
-function databaseOf(env: ParsedEnv): DatabaseConnection | undefined {
+function databaseSettings(env: ParsedEnv): DatabaseConnection | undefined {
   const { POSTGRES_USER: user, POSTGRES_PASSWORD: password } = env;
   if (!user || !password) {
     return undefined;
@@ -119,7 +119,7 @@ function databaseOf(env: ParsedEnv): DatabaseConnection | undefined {
   };
 }
 
-function patreonOf(env: ParsedEnv): PatreonSettings | undefined {
+function patreonSettings(env: ParsedEnv): PatreonSettings | undefined {
   const {
     PATREON_CAMPAIGN_ID: campaignId,
     PATREON_CLIENT_ID: clientId,
@@ -151,8 +151,8 @@ function patreonOf(env: ParsedEnv): PatreonSettings | undefined {
 }
 
 function toSettings(env: ParsedEnv): Settings {
-  const database = databaseOf(env);
-  const patreon = patreonOf(env);
+  const database = databaseSettings(env);
+  const patreon = patreonSettings(env);
   const { gallery } = DEFAULTS;
 
   return {

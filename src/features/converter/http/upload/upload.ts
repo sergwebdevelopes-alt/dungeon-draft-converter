@@ -24,7 +24,7 @@ import {
   type MultipartFile,
   type MultipartFiles,
 } from '../../ports/multipart-parser.ts';
-import { uploadDirOf } from './upload-dir.ts';
+import { requestUploadDir } from './upload-dir.ts';
 
 const MAP_FIELD = 'maps';
 const LOGO_FIELD = 'logo';
@@ -66,7 +66,7 @@ async function storeMap(
     );
   }
 
-  const uploadDir = uploadDirOf(req);
+  const uploadDir = requestUploadDir(req);
   const id = randomUUID();
   const paths = {
     raw: path.join(uploadDir, `${id}${MAP_EXTENSION}`),
@@ -156,9 +156,9 @@ const uploadFiles: RequestHandler = async (req, res, next) => {
   next();
 };
 
-function uploadsOf(req: Request): Uploads {
+function requestUploads(req: Request): Uploads {
   return uploadsByRequest.get(req) ?? {};
 }
 
-export { LOGO_FIELD, MAP_FIELD, limitTotalUpload, uploadFiles, uploadsOf };
+export { LOGO_FIELD, MAP_FIELD, limitTotalUpload, uploadFiles, requestUploads };
 export type { UploadedFile, Uploads };

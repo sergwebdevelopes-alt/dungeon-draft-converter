@@ -40,7 +40,7 @@ function loaded(
   });
 }
 
-function slugsOf(state: PagesState): string[] {
+function loadedSlugs(state: PagesState): string[] {
   return state.maps.map((map) => map.slug);
 }
 
@@ -63,7 +63,7 @@ describe('nextPage', () => {
 
 describe('pagesReducer', () => {
   it('keeps the first page with its total and every collection', () => {
-    expect(slugsOf(FIRST)).toEqual(['a', 'b']);
+    expect(loadedSlugs(FIRST)).toEqual(['a', 'b']);
     expect(FIRST.total).toBe(5);
     expect(FIRST.tags).toEqual(['Waterdeep', 'Barovia']);
     expect(FIRST.status).toBe('ready');
@@ -74,7 +74,7 @@ describe('pagesReducer', () => {
     const more = loaded(asked, nextPage(FIRST), ['b', 'c', 'd']);
 
     expect(asked.status).toBe('loadingMore');
-    expect(slugsOf(more)).toEqual(['a', 'b', 'c', 'd']);
+    expect(loadedSlugs(more)).toEqual(['a', 'b', 'c', 'd']);
     expect(more.status).toBe('ready');
   });
 
@@ -113,7 +113,7 @@ describe('pagesReducer', () => {
 
     expect(first.status).toBe('error');
     expect(next.status).toBe('moreFailed');
-    expect(slugsOf(next)).toEqual(['a', 'b']);
+    expect(loadedSlugs(next)).toEqual(['a', 'b']);
   });
 
   it('asks for more only once at a time and only while maps are left', () => {
