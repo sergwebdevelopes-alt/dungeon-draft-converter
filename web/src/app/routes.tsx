@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 import { Route, Routes } from 'react-router';
-import { galleryApi } from '../features/gallery/api.ts';
+import { galleryApi } from '../features/gallery/api/gallery-api.ts';
 import type { SiteConfig } from '../shared/config/site.ts';
 import { PageShell } from './layout/PageShell.tsx';
 import { NotFoundPage } from './NotFoundPage.tsx';
@@ -15,8 +15,7 @@ const HomePage = lazy(async () => {
 });
 
 const ConverterPage = lazy(async () => ({
-  default: (await import('../features/converter/ui/ConverterPage.tsx'))
-    .ConverterPage,
+  default: (await import('../features/converter/index.ts')).ConverterPage,
 }));
 
 const GalleryPage = lazy(async () => {

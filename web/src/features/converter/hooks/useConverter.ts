@@ -1,9 +1,9 @@
 import { useEffect, useReducer, useRef } from 'react';
-import { isAbortError } from '../../shared/http/index.ts';
-import { saveFile } from '../../shared/lib/save-file.ts';
-import { storage, type KeyValueStore } from '../../shared/storage/index.ts';
-import { converterApi, type ConverterApi } from './api.ts';
-import { toConvertRequest } from './model/convert-request.ts';
+import { isAbortError } from '../../../shared/http/index.ts';
+import { saveFile } from '../../../shared/lib/save-file.ts';
+import { storage, type KeyValueStore } from '../../../shared/storage/index.ts';
+import { converterApi, type ConverterApi } from '../api/converter-api.ts';
+import { toConvertRequest } from '../model/convert-request.ts';
 import {
   canSubmit,
   converterReducer,
@@ -11,10 +11,10 @@ import {
   visibleMaps,
   type ConverterAction,
   type ConverterState,
-} from './model/converter-reducer.ts';
-import { loadSettings, saveSettings } from './model/settings.ts';
-import { zipName } from './model/summary.ts';
-import { newTicket } from './model/ticket.ts';
+} from '../model/converter-reducer.ts';
+import { loadSettings, saveSettings } from '../model/settings.ts';
+import { zipName } from '../model/summary.ts';
+import { newTicket } from '../model/ticket.ts';
 
 const QUEUE_POLL_MS = 2000;
 

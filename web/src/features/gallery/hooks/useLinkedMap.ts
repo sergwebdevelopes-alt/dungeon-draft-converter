@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { isAbortError } from '../../shared/http/index.ts';
-import { galleryApi, type GalleryApi } from './api.ts';
-import type { MapEntry } from './model/catalog.ts';
+import { isAbortError } from '../../../shared/http/index.ts';
+import { galleryApi, type GalleryApi } from '../api/gallery-api.ts';
+import type { MapEntry } from '../model/catalog.ts';
 
 function useLinkedMap(
   slug: string | null,

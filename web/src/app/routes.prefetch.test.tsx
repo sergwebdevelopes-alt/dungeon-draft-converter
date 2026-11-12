@@ -10,7 +10,7 @@ const galleryApi = vi.hoisted(() => ({
   prefetchFirstPage: vi.fn(() => Promise.resolve()),
 }));
 
-vi.mock('../features/gallery/api.ts', () => ({ galleryApi }));
+vi.mock('../features/gallery/api/gallery-api.ts', () => ({ galleryApi }));
 
 describe('AppRoutes page loading', () => {
   it('starts loading the maps while the home page itself loads', async () => {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { MapPreview, PreviewState } from './model/map-preview.ts';
-import { readPreviewInWorker } from './preview-worker.ts';
+import type { MapPreview, PreviewState } from '../model/map-preview.ts';
+import { readPreviewInWorker } from '../workers/preview-worker.ts';
 
 type LevelPreview =
   | { status: 'loading' }

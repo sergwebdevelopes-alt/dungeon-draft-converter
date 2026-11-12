@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { previewReply } from './model/map-preview.ts';
+import { previewReply } from '../model/map-preview.ts';
 import { readPreviewInWorker } from './preview-worker.ts';
 
 const UNREADABLE = 'This file could not be read as a Dungeondraft map.';

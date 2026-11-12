@@ -3,7 +3,7 @@ import {
   readMapPreview,
   type MapPreview,
   type PreviewReply,
-} from './model/map-preview.ts';
+} from '../model/map-preview.ts';
 
 function startWorker(): Worker {
   return new Worker(new URL('./preview.worker.ts', import.meta.url), {

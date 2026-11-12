@@ -12,8 +12,8 @@ import {
 } from '../model/converter-reducer.ts';
 import { choiceOf, variantsFor } from '../model/grid-choice.ts';
 import { imageCount } from '../model/summary.ts';
-import { useConverter } from '../useConverter.ts';
-import { useMapPreview } from '../useMapPreview.ts';
+import { useConverter } from '../hooks/useConverter.ts';
+import { useMapPreview } from '../hooks/useMapPreview.ts';
 import { ConvertPanel } from './ConvertPanel.tsx';
 import { DropZone } from './DropZone.tsx';
 import { FormatChips } from './FormatChips.tsx';

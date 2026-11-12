@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { HttpClient, RequestOptions } from '../../shared/http/index.ts';
-import { createConverterApi } from './api.ts';
+import type { HttpClient, RequestOptions } from '../../../shared/http/index.ts';
+import { createConverterApi } from './converter-api.ts';
 
 function fakeHttp() {
   const getJson = vi.fn<

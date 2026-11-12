@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useRef } from 'react';
-import { isAbortError } from '../../shared/http/index.ts';
-import { galleryApi, type GalleryApi } from './api.ts';
+import { isAbortError } from '../../../shared/http/index.ts';
+import { galleryApi, type GalleryApi } from '../api/gallery-api.ts';
 import {
   canLoadMore,
   firstPage,
@@ -9,7 +9,7 @@ import {
   pagesReducer,
   type PageRequest,
   type PagesAction,
-} from './model/map-pages.ts';
+} from '../model/map-pages.ts';
 
 async function load(
   api: GalleryApi,
