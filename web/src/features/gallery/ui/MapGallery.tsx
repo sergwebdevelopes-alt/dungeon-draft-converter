@@ -1,12 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useNearViewport } from '../../../shared/lib/useNearViewport.ts';
 import { Button } from '../../../shared/ui/Button.tsx';
-import { SITE, type SiteConfig } from '../../../shared/config/site.ts';
 import { Alert } from '../../../shared/ui/Alert.tsx';
-import { Container } from '../../../shared/ui/Container.tsx';
 import { Reveal } from '../../../shared/ui/motion/index.ts';
 import { PageTitle } from '../../../shared/ui/PageTitle.tsx';
-import { MembershipSection } from '../../membership/index.ts';
 import type { GalleryApi } from '../api/gallery-api.ts';
 import { findMap } from '../model/catalog.ts';
 import { hasMore, type PagesState } from '../model/map-pages.ts';
@@ -141,62 +138,37 @@ function Gallery({ state, api, onLoadMore }: GalleryProps) {
   );
 }
 
-interface GalleryPageProps {
+interface MapGalleryProps {
   api?: GalleryApi;
-  site?: SiteConfig;
 }
 
-function GalleryPage({ api, site = SITE }: GalleryPageProps) {
+function MapGallery({ api }: MapGalleryProps) {
   const { state, chooseTag, loadMore } = useMapPages(api);
   const loaded = state.status !== 'loading' && state.status !== 'error';
 
   return (
     <>
       {!loaded && <PageTitle title="Maps" />}
-      <Container className="grid gap-8 pt-12 pb-4 sm:pt-16">
-        <header className="grid gap-4">
-          <p className="text-sm font-bold tracking-[0.2em] text-gold uppercase">
-            Gallery
-          </p>
-          <h1 className="font-display text-4xl font-bold tracking-tight sm:text-6xl">
-            Maps from the Lair
-          </h1>
-          <p className="max-w-2xl text-lg text-muted">
-            Battle maps drawn in Dungeondraft. Open one to see it up close, with
-            or without the grid.
-          </p>
-        </header>
 
-        {state.tags.length > 0 && (
-          <TagFilter
-            tags={state.tags}
-            active={state.tag}
-            onChange={chooseTag}
-          />
-        )}
+      {state.tags.length > 0 && (
+        <TagFilter tags={state.tags} active={state.tag} onChange={chooseTag} />
+      )}
 
-        {loaded && <Gallery state={state} api={api} onLoadMore={loadMore} />}
+      {loaded && <Gallery state={state} api={api} onLoadMore={loadMore} />}
 
-        {state.status === 'loading' && (
-          <ul aria-label="Loading maps" className={GRID}>
-            <CardSkeletons />
-          </ul>
-        )}
+      {state.status === 'loading' && (
+        <ul aria-label="Loading maps" className={GRID}>
+          <CardSkeletons />
+        </ul>
+      )}
 
-        {state.status === 'error' && (
-          <Alert tone="error">
-            The maps could not be loaded. Reload the page to try again.
-          </Alert>
-        )}
-      </Container>
-
-      <MembershipSection
-        siteName={site.name}
-        plans={site.membership.plans}
-        followUrl={site.links.patreon}
-      />
+      {state.status === 'error' && (
+        <Alert tone="error">
+          The maps could not be loaded. Reload the page to try again.
+        </Alert>
+      )}
     </>
   );
 }
 
-export { GalleryPage };
+export { MapGallery };

@@ -2,7 +2,7 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Config } from '../model/types.ts';
-import { ConverterPage } from './ConverterPage.tsx';
+import { ConverterForm } from './ConverterForm.tsx';
 
 const CONFIG: Config = {
   presets: [
@@ -45,8 +45,8 @@ function mapFile(name = 'Cave.dd2vtt', size = 10): File {
   return new File(['x'.repeat(size)], name);
 }
 
-async function renderPage() {
-  render(<ConverterPage />);
+async function renderForm() {
+  render(<ConverterForm />);
   await screen.findByRole('button', { name: /JPG · 70 px/ });
 }
 
@@ -54,7 +54,7 @@ function mapInput(): HTMLInputElement {
   return document.querySelector('input[accept=".dd2vtt"]')!;
 }
 
-describe('ConverterPage', () => {
+describe('ConverterForm', () => {
   beforeEach(() => {
     localStorage.clear();
     Object.assign(URL, {
@@ -73,7 +73,7 @@ describe('ConverterPage', () => {
 
   it('disables Convert until a map is added', async () => {
     mockServer();
-    await renderPage();
+    await renderForm();
 
     const convert = screen.getByRole('button', { name: 'Convert & download' });
     expect(convert).toBeDisabled();
@@ -86,7 +86,7 @@ describe('ConverterPage', () => {
 
   it('disables Convert when no format is chosen', async () => {
     mockServer();
-    await renderPage();
+    await renderForm();
     await userEvent.upload(mapInput(), mapFile());
 
     await userEvent.click(screen.getByRole('button', { name: /JPG · 70 px/ }));
@@ -101,7 +101,7 @@ describe('ConverterPage', () => {
 
   it('rejects files that are not .dd2vtt', async () => {
     mockServer();
-    await renderPage();
+    await renderForm();
 
     await userEvent.upload(mapInput(), mapFile('notes.txt'), {
       applyAccept: false,
@@ -114,7 +114,7 @@ describe('ConverterPage', () => {
 
   it('rejects maps over the size limit', async () => {
     mockServer();
-    await renderPage();
+    await renderForm();
 
     await userEvent.upload(mapInput(), mapFile('Huge.dd2vtt', 1001));
 
@@ -125,7 +125,7 @@ describe('ConverterPage', () => {
 
   it('converts and offers the zip again', async () => {
     const fetchMock = mockServer();
-    await renderPage();
+    await renderForm();
     await userEvent.upload(mapInput(), mapFile());
 
     await userEvent.click(
@@ -148,7 +148,7 @@ describe('ConverterPage', () => {
 
   it('leaves hidden levels out of the conversion', async () => {
     const fetchMock = mockServer();
-    await renderPage();
+    await renderForm();
     await userEvent.upload(mapInput(), mapFile('Ground.dd2vtt'));
     await userEvent.upload(mapInput(), mapFile('Upper.dd2vtt'));
 
@@ -174,7 +174,7 @@ describe('ConverterPage', () => {
 
   it('cannot convert while every level is hidden', async () => {
     mockServer();
-    await renderPage();
+    await renderForm();
     await userEvent.upload(mapInput(), mapFile('Ground.dd2vtt'));
 
     await userEvent.click(
@@ -198,7 +198,7 @@ describe('ConverterPage', () => {
             }),
       ),
     );
-    await renderPage();
+    await renderForm();
     await userEvent.upload(mapInput(), mapFile());
 
     await userEvent.click(
@@ -212,7 +212,7 @@ describe('ConverterPage', () => {
 
   it('offers more levels above the list and puts each new one on top', async () => {
     mockServer();
-    await renderPage();
+    await renderForm();
     await userEvent.upload(mapInput(), mapFile('Ground.dd2vtt'));
 
     const addMore = screen.getByText('Add more levels');
@@ -232,7 +232,7 @@ describe('ConverterPage', () => {
 
   it('previews the main map as soon as it is added', async () => {
     mockServer();
-    await renderPage();
+    await renderForm();
     const map = new File(
       [
         JSON.stringify({
@@ -252,7 +252,7 @@ describe('ConverterPage', () => {
 
   it('turns off a format whose image would be too large for the map', async () => {
     const fetchMock = mockServer({ ...CONFIG, maxOutputPixels: 1_000_000 });
-    await renderPage();
+    await renderForm();
     const map = new File(
       [
         JSON.stringify({
@@ -286,7 +286,7 @@ describe('ConverterPage', () => {
 
   it('adds the Foundry file only once it is turned on', async () => {
     const fetchMock = mockServer();
-    await renderPage();
+    await renderForm();
     await userEvent.upload(mapInput(), mapFile());
     const foundry = screen.getByRole('button', { name: /Foundry VTT/ });
     const conversion = screen.getByRole('complementary', {
@@ -315,11 +315,11 @@ describe('ConverterPage', () => {
 
   it('remembers the Foundry choice for the next visit', async () => {
     mockServer();
-    await renderPage();
+    await renderForm();
     await userEvent.click(screen.getByRole('button', { name: /Foundry VTT/ }));
     cleanup();
 
-    await renderPage();
+    await renderForm();
 
     expect(screen.getByRole('button', { name: /Foundry VTT/ })).toHaveAttribute(
       'aria-pressed',
@@ -329,7 +329,7 @@ describe('ConverterPage', () => {
 
   it('exports only the grid version when the grid is chosen', async () => {
     const fetchMock = mockServer();
-    await renderPage();
+    await renderForm();
     await userEvent.upload(mapInput(), mapFile());
 
     await userEvent.click(screen.getByRole('button', { name: 'With' }));
@@ -348,7 +348,7 @@ describe('ConverterPage', () => {
 
   it('does not show the old storage footnote', async () => {
     mockServer();
-    await renderPage();
+    await renderForm();
 
     expect(screen.queryByText(/never stored on the server/)).toBeNull();
   });

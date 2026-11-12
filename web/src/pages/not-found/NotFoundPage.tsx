@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
-import { Container } from '../shared/ui/Container.tsx';
-import { PageTitle } from '../shared/ui/PageTitle.tsx';
+import { Container } from '../../shared/ui/Container.tsx';
+import { PageTitle } from '../../shared/ui/PageTitle.tsx';
 
 function NotFoundPage() {
   return (

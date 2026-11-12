@@ -20,7 +20,7 @@ import type { MapsResponse } from '../../../../../src/contracts/gallery-api.ts';
 import type { GalleryApi } from '../api/gallery-api.ts';
 import type { MapEntry } from '../model/catalog.ts';
 import type { PageRequest } from '../model/map-pages.ts';
-import { GalleryPage } from './GalleryPage.tsx';
+import { MapGallery } from './MapGallery.tsx';
 
 function entry(slug: string, title: string, tags: MapEntry['tags']): MapEntry {
   return {
@@ -159,7 +159,7 @@ async function renderGallery(path = '/maps', api = fakeApi(), from = '/') {
           path="/maps"
           element={
             <>
-              <GalleryPage api={api} />
+              <MapGallery api={api} />
               <Probe />
             </>
           }
@@ -178,7 +178,7 @@ function cardImage(title: string) {
 async function renderGalleryError() {
   render(
     <MemoryRouter initialEntries={['/maps']}>
-      <GalleryPage api={fakeApi(new Error('down'))} />
+      <MapGallery api={fakeApi(new Error('down'))} />
     </MemoryRouter>,
   );
   await screen.findByRole('alert');
@@ -217,7 +217,7 @@ function card(title: string) {
   return screen.getByRole('button', { name: new RegExp(title) });
 }
 
-describe('GalleryPage', () => {
+describe('MapGallery', () => {
   it('shows every map and filters by tag', async () => {
     await renderGallery();
 
@@ -616,7 +616,7 @@ describe('GalleryPage', () => {
     document.title = '';
     render(
       <MemoryRouter initialEntries={['/maps']}>
-        <GalleryPage
+        <MapGallery
           api={fakeServer(MAPS, () => new Promise(() => undefined)).api}
         />
       </MemoryRouter>,
@@ -632,14 +632,6 @@ describe('GalleryPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'The maps could not be loaded.',
     );
-  });
-
-  it('invites visitors to become members', async () => {
-    await renderGallery();
-
-    expect(
-      screen.getByRole('region', { name: 'Join the Lair of Artificer' }),
-    ).toBeInTheDocument();
   });
 
   it('builds the filter from the collections the server lists', async () => {

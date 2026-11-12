@@ -3,27 +3,26 @@ import { Route, Routes } from 'react-router';
 import { galleryApi } from '../features/gallery/api/gallery-api.ts';
 import type { SiteConfig } from '../shared/config/site.ts';
 import { PageShell } from './layout/PageShell.tsx';
-import { NotFoundPage } from './NotFoundPage.tsx';
+import { NotFoundPage } from '../pages/not-found/NotFoundPage.tsx';
 import { PageChange } from './PageChange.tsx';
 
 const HomePage = lazy(async () => {
   void galleryApi.prefetchFirstPage();
 
   return {
-    default: (await import('../features/home/ui/HomePage.tsx')).HomePage,
+    default: (await import('../pages/home/HomePage.tsx')).HomePage,
   };
 });
 
 const ConverterPage = lazy(async () => ({
-  default: (await import('../features/converter/index.ts')).ConverterPage,
+  default: (await import('../pages/converter/ConverterPage.tsx')).ConverterPage,
 }));
 
 const GalleryPage = lazy(async () => {
   void galleryApi.prefetchFirstPage();
 
   return {
-    default: (await import('../features/gallery/ui/GalleryPage.tsx'))
-      .GalleryPage,
+    default: (await import('../pages/gallery/GalleryPage.tsx')).GalleryPage,
   };
 });
 

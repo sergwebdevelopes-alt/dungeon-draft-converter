@@ -1,9 +1,9 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { ButtonLink } from '../../../shared/ui/Button.tsx';
-import { Container } from '../../../shared/ui/Container.tsx';
-import { GridOverlay } from '../../../shared/ui/GridOverlay.tsx';
-import type { GriddedMap } from '../../gallery/index.ts';
-import { teaserCoverWidth, teaserFrameRatio } from '../model/teaser-frame.ts';
+import { ButtonLink } from '../../shared/ui/Button.tsx';
+import { Container } from '../../shared/ui/Container.tsx';
+import { GridOverlay } from '../../shared/ui/GridOverlay.tsx';
+import type { GriddedMap } from '../../features/gallery/index.ts';
+import { teaserCoverWidth, teaserFrameRatio } from './teaser-frame.ts';
 
 const STATS = [
   { value: 'JPG · WebP', label: 'Formats', accent: true },

@@ -1,0 +1,40 @@
+import { MapGallery, type GalleryApi } from '../../features/gallery/index.ts';
+import { MembershipSection } from '../../features/membership/index.ts';
+import { SITE, type SiteConfig } from '../../shared/config/site.ts';
+import { Container } from '../../shared/ui/Container.tsx';
+
+interface GalleryPageProps {
+  api?: GalleryApi;
+  site?: SiteConfig;
+}
+
+function GalleryPage({ api, site = SITE }: GalleryPageProps) {
+  return (
+    <>
+      <Container className="grid gap-8 pt-12 pb-4 sm:pt-16">
+        <header className="grid gap-4">
+          <p className="text-sm font-bold tracking-[0.2em] text-gold uppercase">
+            Gallery
+          </p>
+          <h1 className="font-display text-4xl font-bold tracking-tight sm:text-6xl">
+            Maps from the Lair
+          </h1>
+          <p className="max-w-2xl text-lg text-muted">
+            Battle maps drawn in Dungeondraft. Open one to see it up close, with
+            or without the grid.
+          </p>
+        </header>
+
+        <MapGallery api={api} />
+      </Container>
+
+      <MembershipSection
+        siteName={site.name}
+        plans={site.membership.plans}
+        followUrl={site.links.patreon}
+      />
+    </>
+  );
+}
+
+export { GalleryPage };

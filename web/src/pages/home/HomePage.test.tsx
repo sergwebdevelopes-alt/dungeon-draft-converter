@@ -2,8 +2,8 @@ import { render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { SITE, type SiteConfig } from '../../../shared/config/site.ts';
-import type { GalleryApi, MapEntry } from '../../gallery/index.ts';
+import { SITE, type SiteConfig } from '../../shared/config/site.ts';
+import type { GalleryApi, MapEntry } from '../../features/gallery/index.ts';
 import { HomePage } from './HomePage.tsx';
 
 function entry(slug: string, title: string, x = 30, y = 20): MapEntry {
