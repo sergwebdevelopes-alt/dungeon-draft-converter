@@ -20,12 +20,14 @@ function map(overrides: Partial<MapRecord> = {}): MapRecord {
     squares: { x: 60, y: 40 },
     patreonUrl: 'https://www.patreon.com/LairofArtificer/posts/tser-166553789',
     publishedAt: '2025-07-01T10:00:00.000Z',
-    image: {
-      url: 'https://cdn.test/falls.jpg',
-      width: 8400,
-      height: 5600,
-      mediaId: '717019350',
-    },
+    images: [
+      {
+        url: 'https://cdn.test/falls.jpg',
+        width: 8400,
+        height: 5600,
+        mediaId: '717019350',
+      },
+    ],
     ...overrides,
   };
 }
@@ -272,6 +274,46 @@ describe('createPostgresMapRepository', () => {
     assert.equal(found?.postId, '2');
     assert.deepEqual(found?.tags, ['Waterdeep', 'Barovia']);
     assert.equal(await store.findMap('nope'), null);
+  });
+
+  it('saves every image of a map, the cover first, and reads them back', async () => {
+    const roof = {
+      url: 'https://cdn.test/roof.jpg',
+      width: 8400,
+      height: 5600,
+      mediaId: '717019351',
+    };
+    const [cover] = map().images;
+
+    await store.replaceMaps([map({ images: [cover, roof] })]);
+
+    assert.deepEqual((await store.listMaps())[0].images, [cover, roof]);
+    const [row] = await test.db.query<{ image_media_id: string }>(
+      'SELECT image_media_id FROM maps',
+    );
+    assert.equal(row.image_media_id, cover.mediaId);
+  });
+
+  it('counts a map as updated when its images change, and only then', async () => {
+    const roof = { ...map().images[0], mediaId: 'roof' };
+    await store.replaceMaps([map()]);
+
+    assert.deepEqual(await store.replaceMaps([map()]), {
+      added: 0,
+      updated: 0,
+      removed: 0,
+    });
+    assert.deepEqual(
+      await store.replaceMaps([map({ images: [map().images[0], roof] })]),
+      { added: 0, updated: 1, removed: 0 },
+    );
+  });
+
+  it('reads the cover of a map saved before maps had several images', async () => {
+    await store.replaceMaps([map()]);
+    await test.db.query("UPDATE maps SET images = '[]'");
+
+    assert.deepEqual((await store.listMaps())[0].images, map().images);
   });
 
   it('knows when the newest check of a map happened, or that none did', async () => {

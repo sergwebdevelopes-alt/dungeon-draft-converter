@@ -14,12 +14,14 @@ function map(overrides: Partial<MapRecord> = {}): MapRecord {
     squares: { x: 60, y: 40 },
     patreonUrl: 'https://www.patreon.com/posts/tser-166553789',
     publishedAt: '2025-07-01T10:00:00.000Z',
-    image: {
-      url: 'https://cdn.test/falls.jpg',
-      width: 8400,
-      height: 5600,
-      mediaId: '717019350',
-    },
+    images: [
+      {
+        url: 'https://cdn.test/falls.jpg',
+        width: 8400,
+        height: 5600,
+        mediaId: '717019350',
+      },
+    ],
     ...overrides,
   };
 }

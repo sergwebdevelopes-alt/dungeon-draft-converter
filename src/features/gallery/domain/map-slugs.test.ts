@@ -12,7 +12,7 @@ function map(postId: string, slug: string, publishedAt: string): MapRecord {
     tags: [],
     patreonUrl: '',
     publishedAt,
-    image: { url: '', width: 1, height: 1, mediaId: postId },
+    images: [{ url: '', width: 1, height: 1, mediaId: postId }],
   };
 }
 

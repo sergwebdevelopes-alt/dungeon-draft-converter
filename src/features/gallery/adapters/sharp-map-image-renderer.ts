@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import type { ImageName } from '../domain/map-image-keys.ts';
 import type { RenderedMapImages } from '../ports/map-image-renderer.ts';
 
 interface Size {
@@ -19,6 +20,7 @@ interface ScaledCrop {
 
 const CARD: Crop = { zoom: 0.8, width: 640, height: 800, quality: 70 };
 const BACKDROP: Crop = { zoom: 0.55, width: 2400, height: 1500, quality: 60 };
+const THUMB: Crop = { zoom: 1, width: 240, height: 160, quality: 60 };
 const VIEW_LONG_EDGE = 2000;
 const VIEW_QUALITY = 72;
 
@@ -71,16 +73,27 @@ async function renderView(original: Buffer): Promise<Buffer> {
     .toBuffer();
 }
 
+const CROPS: Partial<Record<ImageName, Crop>> = {
+  card: CARD,
+  backdrop: BACKDROP,
+  thumb: THUMB,
+};
+
 async function renderMapImagesWithSharp(
   original: Buffer,
+  names: ImageName[],
 ): Promise<RenderedMapImages> {
   const size = await sizeOf(original);
+  const rendered: RenderedMapImages = {};
 
-  const card = await renderCrop(original, size, CARD);
-  const backdrop = await renderCrop(original, size, BACKDROP);
-  const view = await renderView(original);
+  for (const name of names) {
+    const crop = CROPS[name];
+    rendered[name] = crop
+      ? await renderCrop(original, size, crop)
+      : await renderView(original);
+  }
 
-  return { card, view, backdrop };
+  return rendered;
 }
 
 export { renderMapImagesWithSharp, scaledCrop };

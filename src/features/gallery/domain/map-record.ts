@@ -17,7 +17,7 @@ interface MapRecord {
   squares?: Squares;
   patreonUrl: string;
   publishedAt: string;
-  image: MapImage;
+  images: MapImage[];
 }
 
 export type { MapImage, MapRecord };

@@ -48,12 +48,14 @@ describe('postToMap', () => {
       patreonUrl:
         'https://www.patreon.com/LairofArtificer/posts/battlemap-tser-166553789',
       publishedAt: '2025-07-01T10:00:00.000+00:00',
-      image: {
-        url: 'https://cdn.test/falls.jpg',
-        width: 8400,
-        height: 5600,
-        mediaId: '717019350',
-      },
+      images: [
+        {
+          url: 'https://cdn.test/falls.jpg',
+          width: 8400,
+          height: 5600,
+          mediaId: '717019350',
+        },
+      ],
     });
   });
 
@@ -92,11 +94,33 @@ describe('postToMap', () => {
     assert.equal(map && 'squares' in map, false);
   });
 
-  it('uses the chosen image when the post has several', () => {
+  it('keeps every image of the post, the chosen one first, without gridded copies', () => {
     const grid = { ...IMAGE, mediaId: 'grid', fileName: 'TserFalls_Grid.jpg' };
+    const top = {
+      ...IMAGE,
+      url: 'https://cdn.test/top.jpg',
+      width: 4200,
+      height: 2800,
+      mediaId: 'top',
+      fileName: 'TserFalls_Top_30x20_140px_NoGrid.jpg',
+    };
 
-    const map = postToMap(post(), details({ images: [grid, IMAGE] }));
+    const map = postToMap(post(), details({ images: [grid, IMAGE, top] }));
 
-    assert.equal(map?.image.mediaId, '717019350');
+    assert.deepEqual(map?.images, [
+      {
+        url: 'https://cdn.test/falls.jpg',
+        width: 8400,
+        height: 5600,
+        mediaId: '717019350',
+      },
+      {
+        url: 'https://cdn.test/top.jpg',
+        width: 4200,
+        height: 2800,
+        mediaId: 'top',
+      },
+    ]);
+    assert.deepEqual(map?.squares, { x: 60, y: 40 });
   });
 });

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import type { ImageName } from '../domain/map-image-keys.ts';
 import type { RenderedMapImages } from '../ports/map-image-renderer.ts';
 import type { FetchMapImage } from '../ports/map-image-source.ts';
 import type { ImageStorage } from '../ports/image-storage.ts';
@@ -131,12 +132,18 @@ function fakeImageStore() {
   return { images, files };
 }
 
-function render(original: Buffer): Promise<RenderedMapImages> {
-  return Promise.resolve({
-    card: Buffer.from(`card of ${original.toString()}`),
-    view: Buffer.from(`view of ${original.toString()}`),
-    backdrop: Buffer.from(`backdrop of ${original.toString()}`),
-  });
+function render(
+  original: Buffer,
+  names: ImageName[],
+): Promise<RenderedMapImages> {
+  return Promise.resolve(
+    Object.fromEntries(
+      names.map((name) => [
+        name,
+        Buffer.from(`${name} of ${original.toString()}`),
+      ]),
+    ),
+  );
 }
 
 function setUp(state: FakePatreon, signal?: AbortSignal) {
@@ -261,11 +268,43 @@ describe('createGallerySync', () => {
     await sync.run();
 
     assert.deepEqual(
-      maps.stored().map((map) => [map.postId, map.image.mediaId]),
+      maps.stored().map((map) => [map.postId, map.images[0].mediaId]),
       [['1', 'm1']],
     );
     assert.deepEqual(folders(files), ['1/m1']);
     assert.equal(logs[1].failed, 2);
+  });
+
+  it('stores every image of a post and removes the ones that leave it', async () => {
+    const withImages = (...mediaIds: string[]): PostDetails => ({
+      ...details('1'),
+      images: mediaIds.map((mediaId, index) => ({
+        url: `https://cdn.test/${mediaId}`,
+        width: 2000,
+        height: 1000,
+        mediaId,
+        isMain: index === 0,
+      })),
+    });
+    const state = { posts: [post('1')], details: [withImages('m1', 'roof')] };
+    const { sync, maps, files, downloads, logs } = setUp(state);
+
+    await sync.run();
+    assert.deepEqual(
+      maps.stored()[0].images.map((image) => image.mediaId),
+      ['m1', 'roof'],
+    );
+    assert.deepEqual(folders(files), ['1/m1', '1/roof']);
+
+    await sync.run();
+    assert.equal(downloads.length, 2);
+    assert.deepEqual(folders(files), ['1/m1', '1/roof']);
+
+    state.details = [withImages('m1', 'cellar')];
+    await sync.run();
+
+    assert.deepEqual(folders(files), ['1/cellar', '1/m1']);
+    assert.equal(logs[2].updated, 1);
   });
 
   it('keeps the gallery when Patreon fails', async () => {

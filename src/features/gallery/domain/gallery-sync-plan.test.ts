@@ -47,7 +47,7 @@ function map(
     tags: [],
     patreonUrl: `https://www.patreon.com/posts/${postId}`,
     publishedAt: '2026-01-01T00:00:00.000Z',
-    image: { url: 'u', width: 2, height: 1, mediaId },
+    images: [{ url: 'u', width: 2, height: 1, mediaId }],
     ...overrides,
   };
 }
@@ -75,5 +75,19 @@ describe('foldersToRemove', () => {
       ),
       ['2/m2', '3/m3'],
     );
+  });
+
+  it('removes one image of a map that keeps its others', () => {
+    const image = (mediaId: string) => ({
+      url: 'u',
+      width: 2,
+      height: 1,
+      mediaId,
+    });
+    const before = map('1', 'm1', { images: [image('m1'), image('roof')] });
+    const after = map('1', 'm1', { images: [image('m1'), image('cellar')] });
+
+    assert.deepEqual(foldersToRemove([before], [after]), ['1/roof']);
+    assert.deepEqual(foldersToRemove([before], [before]), []);
   });
 });

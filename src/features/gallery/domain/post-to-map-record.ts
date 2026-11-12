@@ -1,6 +1,6 @@
 import type { PatreonPost } from './patreon-post.ts';
 import type { PostDetails, PostImage } from './patreon-post.ts';
-import { chooseImage } from './choose-map-image.ts';
+import { chooseImages } from './choose-map-image.ts';
 import { collectionChips } from './collection-chips.ts';
 import { slugify } from './map-slugs.ts';
 import { parseTitle, sizeFromFileName } from './parse-post-title.ts';
@@ -14,18 +14,18 @@ function postToMap(
   post: PatreonPost,
   details: PostDetails | undefined,
 ): MapRecord | null {
-  const image = details && chooseImage(details.images);
+  const images = details ? chooseImages(details.images) : [];
   if (
     !post.isPublic ||
     !details ||
-    !image ||
+    images.length === 0 ||
     details.collections.length === 0
   ) {
     return null;
   }
 
   const parsed = parseTitle(post.title);
-  const squares = parsed.squares ?? sizeFromFileName(image.fileName);
+  const squares = parsed.squares ?? sizeFromFileName(images[0].fileName);
 
   return {
     postId: post.id,
@@ -36,7 +36,7 @@ function postToMap(
     tags: collectionChips(details.collections),
     patreonUrl: post.url,
     publishedAt: post.publishedAt,
-    image: toMapImage(image),
+    images: images.map(toMapImage),
   };
 }
 

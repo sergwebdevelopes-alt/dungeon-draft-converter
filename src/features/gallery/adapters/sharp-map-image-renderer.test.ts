@@ -43,11 +43,16 @@ describe('scaledCrop', () => {
 });
 
 describe('renderMapImagesWithSharp', () => {
-  it('renders the card, view and backdrop as WebP at their sizes', async () => {
-    const images = await renderMapImagesWithSharp(await original(4760, 2240));
+  it('renders the card, view, backdrop and thumbnail as WebP at their sizes', async () => {
+    const images = await renderMapImagesWithSharp(await original(4760, 2240), [
+      'card',
+      'view',
+      'backdrop',
+      'thumb',
+    ]);
 
     const sizes = await Promise.all(
-      [images.card, images.view, images.backdrop].map((image) =>
+      [images.card, images.view, images.backdrop, images.thumb].map((image) =>
         sharp(image).metadata(),
       ),
     );
@@ -57,18 +62,33 @@ describe('renderMapImagesWithSharp', () => {
         ['webp', 640, 800],
         ['webp', 2000, 941],
         ['webp', 2400, 1500],
+        ['webp', 240, 160],
       ],
     );
   });
 
+  it('renders only the images it is asked for', async () => {
+    const images = await renderMapImagesWithSharp(await original(600, 400), [
+      'view',
+      'thumb',
+    ]);
+
+    assert.deepEqual(Object.keys(images), ['view', 'thumb']);
+  });
+
   it('keeps a tall view within the long edge', async () => {
-    const { view } = await renderMapImagesWithSharp(await original(1500, 3000));
+    const { view } = await renderMapImagesWithSharp(
+      await original(1500, 3000),
+      ['view'],
+    );
 
     const { width, height } = await sharp(view).metadata();
     assert.deepEqual([width, height], [1000, 2000]);
   });
 
   it('rejects data that is not an image', async () => {
-    await assert.rejects(renderMapImagesWithSharp(Buffer.from('not an image')));
+    await assert.rejects(
+      renderMapImagesWithSharp(Buffer.from('not an image'), ['view']),
+    );
   });
 });

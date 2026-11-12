@@ -8,7 +8,7 @@ import type {
   StoredMap,
   SyncCounts,
 } from '../ports/map-repository.ts';
-import type { MapRecord } from '../domain/map-record.ts';
+import type { MapImage, MapRecord } from '../domain/map-record.ts';
 
 interface MapRow {
   post_id: string;
@@ -25,6 +25,7 @@ interface MapRow {
   image_width: number;
   image_height: number;
   image_media_id: string;
+  images: MapImage[];
   checked_at: Date;
 }
 
@@ -73,6 +74,15 @@ async function removeOthers(tx: Queryable, maps: MapRecord[]): Promise<number> {
   return removed.length;
 }
 
+function coverImageOfRow(row: MapRow): MapImage {
+  return {
+    url: row.image_url,
+    width: row.image_width,
+    height: row.image_height,
+    mediaId: row.image_media_id,
+  };
+}
+
 function toStoredMap(row: MapRow): StoredMap {
   return {
     postId: row.post_id,
@@ -86,17 +96,14 @@ function toStoredMap(row: MapRow): StoredMap {
       : {}),
     patreonUrl: row.patreon_url,
     publishedAt: row.published_at.toISOString(),
-    image: {
-      url: row.image_url,
-      width: row.image_width,
-      height: row.image_height,
-      mediaId: row.image_media_id,
-    },
+    images: row.images.length > 0 ? row.images : [coverImageOfRow(row)],
     checkedAt: row.checked_at.toISOString(),
   };
 }
 
 function toRow(map: MapRecord): Record<string, unknown> {
+  const [cover] = map.images;
+
   return {
     post_id: map.postId,
     slug: map.slug,
@@ -108,10 +115,11 @@ function toRow(map: MapRecord): Record<string, unknown> {
     squares_y: map.squares?.y ?? null,
     patreon_url: map.patreonUrl,
     published_at: map.publishedAt,
-    image_url: map.image.url,
-    image_width: map.image.width,
-    image_height: map.image.height,
-    image_media_id: map.image.mediaId,
+    image_url: cover.url,
+    image_width: cover.width,
+    image_height: cover.height,
+    image_media_id: cover.mediaId,
+    images: JSON.stringify(map.images),
   };
 }
 

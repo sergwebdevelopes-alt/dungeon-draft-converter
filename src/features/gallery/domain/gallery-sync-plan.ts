@@ -1,6 +1,6 @@
 import type { PatreonPost } from './patreon-post.ts';
 import type { PostDetails } from './patreon-post.ts';
-import { imageFolder } from './map-image-keys.ts';
+import { imageFolders } from './map-image-keys.ts';
 import { postToMap } from './post-to-map-record.ts';
 import type { MapRecord } from './map-record.ts';
 
@@ -17,9 +17,9 @@ function galleryMaps(
 }
 
 function foldersToRemove(previous: MapRecord[], next: MapRecord[]): string[] {
-  const kept = new Set(next.map(imageFolder));
+  const kept = new Set(next.flatMap(imageFolders));
 
-  return previous.map(imageFolder).filter((folder) => !kept.has(folder));
+  return previous.flatMap(imageFolders).filter((folder) => !kept.has(folder));
 }
 
 export { foldersToRemove, galleryMaps };
