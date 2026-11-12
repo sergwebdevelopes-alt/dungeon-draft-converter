@@ -1,4 +1,4 @@
-import type { KeyValueStore } from '../../../shared/storage/index.ts';
+import type { KeyValueStore } from '@/shared/storage/index.ts';
 import { clampPlacement, defaultPlacement } from './placement.ts';
 import type { Config, LogoPlacement, Variant } from './types.ts';
 

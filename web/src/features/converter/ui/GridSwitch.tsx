@@ -1,4 +1,4 @@
-import { Segmented } from '../../../shared/ui/Segmented.tsx';
+import { Segmented } from '@/shared/ui/Segmented.tsx';
 import type { GridChoice } from '../model/grid-choice.ts';
 import { PanelSection } from './PanelSection.tsx';
 

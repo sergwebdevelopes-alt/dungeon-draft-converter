@@ -1,13 +1,6 @@
-import {
-  http,
-  HttpError,
-  type HttpClient,
-} from '../../../shared/http/index.ts';
-import { abortable } from '../../../shared/lib/abortable.ts';
-import type {
-  MapResponse,
-  MapsResponse,
-} from '../../../../../src/contracts/gallery-api.ts';
+import { http, HttpError, type HttpClient } from '@/shared/http/index.ts';
+import { abortable } from '@/shared/lib/abortable.ts';
+import type { MapResponse, MapsResponse } from '@contracts/gallery-api.ts';
 import type { MapEntry } from '../model/catalog.ts';
 import { firstPage, type PageRequest } from '../model/map-pages.ts';
 

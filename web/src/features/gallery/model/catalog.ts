@@ -1,7 +1,4 @@
-import type {
-  MapEntry,
-  Squares,
-} from '../../../../../src/contracts/gallery-api.ts';
+import type { MapEntry, Squares } from '@contracts/gallery-api.ts';
 
 type GriddedMap = MapEntry & { squares: Squares };
 

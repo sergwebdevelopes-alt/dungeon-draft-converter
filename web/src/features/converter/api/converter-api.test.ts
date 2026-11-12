@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { HttpClient, RequestOptions } from '../../../shared/http/index.ts';
+import type { HttpClient, RequestOptions } from '@/shared/http/index.ts';
 import { createConverterApi } from './converter-api.ts';
 
 function fakeHttp() {

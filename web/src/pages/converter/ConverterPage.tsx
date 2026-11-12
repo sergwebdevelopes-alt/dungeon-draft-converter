@@ -1,6 +1,6 @@
-import { ConverterForm } from '../../features/converter/index.ts';
-import { Container } from '../../shared/ui/Container.tsx';
-import { PageTitle } from '../../shared/ui/PageTitle.tsx';
+import { ConverterForm } from '@/features/converter/index.ts';
+import { Container } from '@/shared/ui/Container.tsx';
+import { PageTitle } from '@/shared/ui/PageTitle.tsx';
 
 function ConverterPage() {
   return (

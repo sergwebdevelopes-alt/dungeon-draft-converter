@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SITE } from '../shared/config/site.ts';
+import { SITE } from '@/shared/config/site.ts';
 import { AppRoutes } from './routes.tsx';
 
 const CONFIG = {

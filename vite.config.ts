@@ -8,6 +8,12 @@ const FEATURE_CODE = /\/web\/src\/features\//;
 export default defineConfig({
   root: fileURLToPath(new URL('./web', import.meta.url)),
   plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./web/src', import.meta.url)),
+      '@contracts': fileURLToPath(new URL('./src/contracts', import.meta.url)),
+    },
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

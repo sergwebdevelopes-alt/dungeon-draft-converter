@@ -7,11 +7,11 @@ import {
   type MouseEvent,
   type SyntheticEvent,
 } from 'react';
-import { useLoadedImages } from '../../../shared/lib/useLoadedImages.ts';
-import { useScrollLock } from '../../../shared/lib/useScrollLock.ts';
-import { ButtonLink } from '../../../shared/ui/Button.tsx';
-import { Segmented } from '../../../shared/ui/Segmented.tsx';
-import { Reveal, SwipeCarousel } from '../../../shared/ui/motion/index.ts';
+import { useLoadedImages } from '@/shared/lib/useLoadedImages.ts';
+import { useScrollLock } from '@/shared/lib/useScrollLock.ts';
+import { ButtonLink } from '@/shared/ui/Button.tsx';
+import { Segmented } from '@/shared/ui/Segmented.tsx';
+import { Reveal, SwipeCarousel } from '@/shared/ui/motion/index.ts';
 import {
   gridFits,
   mapPictures,

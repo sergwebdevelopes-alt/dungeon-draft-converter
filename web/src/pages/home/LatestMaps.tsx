@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
-import { Container } from '../../shared/ui/Container.tsx';
-import { MapTileLink, type MapEntry } from '../../features/gallery/index.ts';
+import { Container } from '@/shared/ui/Container.tsx';
+import { MapTileLink, type MapEntry } from '@/features/gallery/index.ts';
 
 function LatestMaps({ maps, total }: { maps: MapEntry[]; total: number }) {
   if (maps.length === 0) {

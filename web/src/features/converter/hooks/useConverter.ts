@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef } from 'react';
-import { isAbortError } from '../../../shared/http/index.ts';
-import { saveFile } from '../../../shared/lib/save-file.ts';
-import { storage, type KeyValueStore } from '../../../shared/storage/index.ts';
+import { isAbortError } from '@/shared/http/index.ts';
+import { saveFile } from '@/shared/lib/save-file.ts';
+import { storage, type KeyValueStore } from '@/shared/storage/index.ts';
 import { converterApi, type ConverterApi } from '../api/converter-api.ts';
 import { toConvertRequest } from '../model/convert-request.ts';
 import {

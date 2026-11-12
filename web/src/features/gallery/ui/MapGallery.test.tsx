@@ -16,7 +16,7 @@ import {
   useNavigate,
 } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import type { MapsResponse } from '../../../../../src/contracts/gallery-api.ts';
+import type { MapsResponse } from '@contracts/gallery-api.ts';
 import type { GalleryApi } from '../api/gallery-api.ts';
 import type { MapEntry } from '../model/catalog.ts';
 import type { PageRequest } from '../model/map-pages.ts';

@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import type { SiteConfig } from '../../shared/config/site.ts';
+import type { SiteConfig } from '@/shared/config/site.ts';
 import { PageShell } from './PageShell.tsx';
 
 const SITE: SiteConfig = {

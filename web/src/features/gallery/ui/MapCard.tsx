@@ -1,5 +1,5 @@
 import type { Ref } from 'react';
-import { SharedFrame } from '../../../shared/ui/motion/index.ts';
+import { SharedFrame } from '@/shared/ui/motion/index.ts';
 import type { MapEntry } from '../model/catalog.ts';
 import { TILE, TileCaption, TileFrame, TileImage } from './MapTile.tsx';
 

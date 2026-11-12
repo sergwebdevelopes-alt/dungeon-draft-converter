@@ -1,6 +1,6 @@
 import { useId } from 'react';
-import { formatBytes } from '../../../shared/lib/format.ts';
-import { useObjectUrl } from '../../../shared/lib/useObjectUrl.ts';
+import { formatBytes } from '@/shared/lib/format.ts';
+import { useObjectUrl } from '@/shared/lib/useObjectUrl.ts';
 import { LOGO_TYPES } from '../model/map-rules.ts';
 import { clamp, isDefaultPlacement, type Limit } from '../model/placement.ts';
 import type { LogoLimits, LogoPlacement } from '../model/types.ts';

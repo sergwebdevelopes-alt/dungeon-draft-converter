@@ -1,10 +1,10 @@
 import { useState, type FocusEvent } from 'react';
-import { useRotation } from '../../shared/lib/useRotation.ts';
-import { Backdrop } from '../../shared/ui/Backdrop.tsx';
-import { ButtonLink, buttonClass } from '../../shared/ui/Button.tsx';
-import { Container } from '../../shared/ui/Container.tsx';
-import { Reveal } from '../../shared/ui/motion/index.ts';
-import type { MapEntry } from '../../features/gallery/index.ts';
+import { useRotation } from '@/shared/lib/useRotation.ts';
+import { Backdrop } from '@/shared/ui/Backdrop.tsx';
+import { ButtonLink, buttonClass } from '@/shared/ui/Button.tsx';
+import { Container } from '@/shared/ui/Container.tsx';
+import { Reveal } from '@/shared/ui/motion/index.ts';
+import type { MapEntry } from '@/features/gallery/index.ts';
 
 const ROTATE_MS = 8000;
 

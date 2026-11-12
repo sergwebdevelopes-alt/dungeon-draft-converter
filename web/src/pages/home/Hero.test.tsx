@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { MapEntry } from '../../features/gallery/index.ts';
+import type { MapEntry } from '@/features/gallery/index.ts';
 import { Hero } from './Hero.tsx';
 
 function entry(slug: string, title: string): MapEntry {

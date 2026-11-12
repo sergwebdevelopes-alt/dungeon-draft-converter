@@ -1,7 +1,7 @@
-import { MapGallery, type GalleryApi } from '../../features/gallery/index.ts';
-import { MembershipSection } from '../../features/membership/index.ts';
-import { SITE, type SiteConfig } from '../../shared/config/site.ts';
-import { Container } from '../../shared/ui/Container.tsx';
+import { MapGallery, type GalleryApi } from '@/features/gallery/index.ts';
+import { MembershipSection } from '@/features/membership/index.ts';
+import { SITE, type SiteConfig } from '@/shared/config/site.ts';
+import { Container } from '@/shared/ui/Container.tsx';
 
 interface GalleryPageProps {
   api?: GalleryApi;

@@ -1,4 +1,4 @@
-import { formatBytes } from '../../../shared/lib/format.ts';
+import { formatBytes } from '@/shared/lib/format.ts';
 import type { Config } from './types.ts';
 
 type MapLimits = Pick<

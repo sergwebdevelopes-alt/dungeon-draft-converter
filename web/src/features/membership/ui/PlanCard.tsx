@@ -1,5 +1,5 @@
-import type { MembershipPlan } from '../../../shared/config/site.ts';
-import { ButtonLink } from '../../../shared/ui/Button.tsx';
+import type { MembershipPlan } from '@/shared/config/site.ts';
+import { ButtonLink } from '@/shared/ui/Button.tsx';
 import { formatPrice, periodLabel } from '../model/price.ts';
 
 function PlanCard({ plan }: { plan: MembershipPlan }) {

@@ -3,7 +3,7 @@ import {
   HttpError,
   type HttpClient,
   type RequestOptions,
-} from '../../../shared/http/index.ts';
+} from '@/shared/http/index.ts';
 import { createGalleryApi } from './gallery-api.ts';
 import { firstPage } from '../model/map-pages.ts';
 

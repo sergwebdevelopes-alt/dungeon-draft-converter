@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { KeyValueStore } from '../../../shared/storage/index.ts';
+import type { KeyValueStore } from '@/shared/storage/index.ts';
 import { STORAGE_KEY, loadSettings, saveSettings } from './settings.ts';
 import { TEST_CONFIG } from './test-config.ts';
 

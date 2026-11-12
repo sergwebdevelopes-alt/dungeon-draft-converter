@@ -1,8 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react';
-import type { Squares } from '../../../../../src/contracts/gallery-api.ts';
-import { FadeImage } from '../../../shared/ui/FadeImage.tsx';
-import { GridOverlay } from '../../../shared/ui/GridOverlay.tsx';
-import { SharedFrame } from '../../../shared/ui/motion/index.ts';
+import type { Squares } from '@contracts/gallery-api.ts';
+import { FadeImage } from '@/shared/ui/FadeImage.tsx';
+import { GridOverlay } from '@/shared/ui/GridOverlay.tsx';
+import { SharedFrame } from '@/shared/ui/motion/index.ts';
 import type { Picture } from '../model/catalog.ts';
 
 interface MapViewerProps {

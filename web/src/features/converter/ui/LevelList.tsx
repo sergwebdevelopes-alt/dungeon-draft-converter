@@ -1,5 +1,5 @@
 import { useRef, useState, type DragEvent } from 'react';
-import { formatBytes } from '../../../shared/lib/format.ts';
+import { formatBytes } from '@/shared/lib/format.ts';
 import { levelKey } from '../model/map-rules.ts';
 
 const DRAG_TYPE = 'application/x-dd-level';

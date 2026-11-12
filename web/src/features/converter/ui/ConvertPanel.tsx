@@ -1,7 +1,7 @@
-import { formatDuration } from '../../../shared/lib/format.ts';
-import { useElapsed } from '../../../shared/lib/useElapsed.ts';
-import { Alert } from '../../../shared/ui/Alert.tsx';
-import { Button } from '../../../shared/ui/Button.tsx';
+import { formatDuration } from '@/shared/lib/format.ts';
+import { useElapsed } from '@/shared/lib/useElapsed.ts';
+import { Alert } from '@/shared/ui/Alert.tsx';
+import { Button } from '@/shared/ui/Button.tsx';
 import {
   progressLabel,
   type Progress,

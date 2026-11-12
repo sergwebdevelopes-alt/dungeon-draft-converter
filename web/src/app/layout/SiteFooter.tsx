@@ -1,8 +1,8 @@
 import { Link } from 'react-router';
-import logoUrl from '../../assets/logo.webp';
-import type { SiteConfig } from '../../shared/config/site.ts';
-import { Container } from '../../shared/ui/Container.tsx';
-import { ExternalLink } from '../../shared/ui/ExternalLink.tsx';
+import logoUrl from '@/assets/logo.webp';
+import type { SiteConfig } from '@/shared/config/site.ts';
+import { Container } from '@/shared/ui/Container.tsx';
+import { ExternalLink } from '@/shared/ui/ExternalLink.tsx';
 
 const FOOTER_LINK = 'text-muted transition-colors hover:text-text';
 

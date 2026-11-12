@@ -1,13 +1,13 @@
-import { SITE, type SiteConfig } from '../../shared/config/site.ts';
-import { PageTitle } from '../../shared/ui/PageTitle.tsx';
+import { SITE, type SiteConfig } from '@/shared/config/site.ts';
+import { PageTitle } from '@/shared/ui/PageTitle.tsx';
 import {
   hasSquares,
   useLatestMaps,
   type GalleryApi,
   type GriddedMap,
   type MapEntry,
-} from '../../features/gallery/index.ts';
-import { MembershipSection } from '../../features/membership/index.ts';
+} from '@/features/gallery/index.ts';
+import { MembershipSection } from '@/features/membership/index.ts';
 import { ConverterTeaser } from './ConverterTeaser.tsx';
 import { Hero } from './Hero.tsx';
 import { LatestMaps } from './LatestMaps.tsx';

@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { MembershipPlan } from '../../../shared/config/site.ts';
+import type { MembershipPlan } from '@/shared/config/site.ts';
 import { MembershipSection } from './MembershipSection.tsx';
 
 function plan(overrides: Partial<MembershipPlan> = {}): MembershipPlan {

@@ -1,7 +1,4 @@
-import type {
-  MapEntry,
-  MapsResponse,
-} from '../../../../../src/contracts/gallery-api.ts';
+import type { MapEntry, MapsResponse } from '@contracts/gallery-api.ts';
 
 const FIRST_PAGE_SIZE = 21;
 const PAGE_SIZE = 24;

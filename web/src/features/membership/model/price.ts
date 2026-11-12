@@ -1,4 +1,4 @@
-import type { PlanPrice } from '../../../shared/config/site.ts';
+import type { PlanPrice } from '@/shared/config/site.ts';
 
 function formatPrice({ cents, currency }: PlanPrice, locale = 'en-US'): string {
   const whole = cents % 100 === 0;

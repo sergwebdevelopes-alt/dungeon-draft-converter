@@ -5,7 +5,7 @@ import type {
   LogoSetting,
   QueuePosition,
   Variant,
-} from '../../../../../src/contracts/converter-api.ts';
+} from '@contracts/converter-api.ts';
 
 type LogoPlacement = Record<LogoSetting, number>;
 

@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { Outlet } from 'react-router';
-import type { SiteConfig } from '../../shared/config/site.ts';
-import { MotionProvider } from '../../shared/ui/motion/index.ts';
+import type { SiteConfig } from '@/shared/config/site.ts';
+import { MotionProvider } from '@/shared/ui/motion/index.ts';
 import { MAIN_ID } from './main-content.ts';
 import { SiteFooter } from './SiteFooter.tsx';
 import { SiteHeader } from './SiteHeader.tsx';

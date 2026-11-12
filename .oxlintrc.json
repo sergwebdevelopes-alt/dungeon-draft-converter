@@ -356,6 +356,10 @@
               {
                 "regex": "^(\\.\\./)+(converter|gallery|membership)/",
                 "message": "One feature never imports another; a page puts them together."
+              },
+              {
+                "regex": "^@/features/",
+                "message": "Inside a feature use relative imports; one feature never imports another."
               }
             ]
           }
@@ -380,6 +384,10 @@
               {
                 "regex": "^\\.\\./(home|gallery|converter|not-found)/",
                 "message": "One page never imports another."
+              },
+              {
+                "regex": "^@/pages/",
+                "message": "Inside a page use relative imports; one page never imports another."
               }
             ]
           }

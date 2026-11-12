@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef } from 'react';
-import { isAbortError } from '../../../shared/http/index.ts';
+import { isAbortError } from '@/shared/http/index.ts';
 import { galleryApi, type GalleryApi } from '../api/gallery-api.ts';
 import {
   canLoadMore,

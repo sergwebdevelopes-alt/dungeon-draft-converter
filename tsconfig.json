@@ -10,7 +10,11 @@
     "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["./web/src/*"],
+      "@contracts/*": ["./src/contracts/*"]
+    }
   },
   "include": ["src", "scripts", "web/src", "vite.config.ts"]
 }

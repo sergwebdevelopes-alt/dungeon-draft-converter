@@ -6,8 +6,9 @@ import { describe, expect, it } from 'vitest';
 const WEB_SRC = path.dirname(fileURLToPath(import.meta.url));
 const THIS_FILE = path.basename(fileURLToPath(import.meta.url));
 const SOURCE_FILE = /\.tsx?$/;
-const SERVER_IMPORT = /^\s*import\s+[^'"]*?from\s+'((?:\.\.\/)+src\/[^']+)'/gm;
-const CONTRACT = /(?:\.\.\/)+src\/contracts\/[^/]+\.ts$/;
+const SERVER_IMPORT =
+  /^\s*import\s+[^'"]*?from\s+'((?:(?:\.\.\/)+src|@contracts)\/[^']+)'/gm;
+const CONTRACT = /^@contracts\/[^/]+\.ts$/;
 
 interface ServerImport {
   file: string;
@@ -32,7 +33,7 @@ function serverImports(): ServerImport[] {
 }
 
 describe('imports from the server', () => {
-  it('come only from src/contracts/', () => {
+  it('come only from src/contracts/, through the @contracts alias', () => {
     const imports = serverImports();
     const outsideContracts = imports.filter(
       (entry) => !CONTRACT.test(entry.from),

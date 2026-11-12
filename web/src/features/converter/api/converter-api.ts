@@ -1,4 +1,4 @@
-import { http, type HttpClient } from '../../../shared/http/index.ts';
+import { http, type HttpClient } from '@/shared/http/index.ts';
 import type { Config, ConvertRequest, QueuePosition } from '../model/types.ts';
 
 interface ConverterApi {

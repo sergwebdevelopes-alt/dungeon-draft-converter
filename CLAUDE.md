@@ -80,7 +80,7 @@ src/
 - **Adapters only translate:** they fetch and translate into our types, with no business rules.
 - **Errors:** they extend `InvalidInputError` (→ 400) or `UnprocessableError` (→ 422) from `shared/errors.ts`, and `infrastructure/http-server/http-errors.ts` maps them by kind. HTTP-only errors use `HttpError`.
 - **Dependencies are passed in**, not kept in module-level globals. For example, `createApp` creates the `ConversionQueue` and hands it to `converter.createRoutes`.
-- **Imports stay relative.** Node runs the `.ts` files directly and ignores tsconfig `paths`.
+- **Imports stay relative** in the back end. Node runs the `.ts` files directly and ignores tsconfig `paths`, so the `@/` and `@contracts/` aliases are for the web app only.
 - **No barrels:** no `index.ts` files in the back end. (A front-end feature's `index.ts` is its entry; see Front end.)
 
 ### Adding a feature
@@ -134,6 +134,7 @@ web/src/
   - `app/` uses a feature through its `index.ts`. The one exception: `routes.tsx` imports `galleryApi` from the feature's `api/` to prefetch the first page of maps without loading the gallery's UI.
 - A feature keeps only `index.ts` at its root; everything else goes in `api/`, `model/`, `hooks/`, `workers/` or `ui/` (only the folders it needs). Unlike the back end, a front-end feature's `index.ts` is its entry, not a barrel to avoid.
 - Feature modules run nothing when imported. `vite.config.ts` tells the bundler so (`moduleSideEffects`), which keeps a page from loading the parts of a feature's `index.ts` it does not use. After changing what an `index.ts` exports or what a page imports, compare the files in `web/dist/assets` before and after `npm run build`.
+- **Imports:** inside one feature or page, relative (`../model/catalog.ts`). To another layer, `@/` from `web/src` (`@/shared/ui/Alert.tsx`, `@/features/gallery/index.ts`). Server contracts, `@contracts/` (`@contracts/gallery-api.ts`). The aliases are set in `tsconfig.json` (`paths`) and `vite.config.ts` (`resolve.alias`).
 - **Adding a page:** a folder in `pages/` with `<Name>Page.tsx`, loaded lazily in `app/routes.tsx`. Parts only that page uses live next to it.
 - **Adding a feature:** a folder in `features/` with `index.ts` and the folders it needs, and its name in the "One feature never imports another" pattern in `.oxlintrc.json`.
 - Components never fetch or touch storage; logic goes in `model/` with its own tests.
@@ -141,7 +142,7 @@ web/src/
 - No DI container: modules export ready instances (`http`, `storage`, `converterApi`); hooks take them as default parameters so tests can pass fakes.
 - The ports rule covers runtime libraries (HTTP, storage, animation). UI frameworks and build tools (React, Tailwind, Vite, Vitest) are used directly.
 - Membership plans live in `web/src/shared/config/site.ts` (`membership.plans`); adding a Patreon tier means adding one entry there. Pages use `Container` for width and padding; sections may run full width.
-- The web app imports from the server only `src/contracts/` (API shapes and the export grid style), and `web/src/server-imports.test.ts` enforces this. The server checks its JSON answers against the same types (`satisfies ConfigResponse` / `MapsResponse` / `QueuePosition`), so a change to the API breaks typecheck on both sides.
+- The web app imports from the server only `src/contracts/` (API shapes and the export grid style), always as `@contracts/…`, and `web/src/server-imports.test.ts` enforces this. The server checks its JSON answers against the same types (`satisfies ConfigResponse` / `MapsResponse` / `QueuePosition`), so a change to the API breaks typecheck on both sides.
 - Use the shared `Button`/`ButtonLink`, `Alert` and `Segmented` instead of repeating their classes.
 - Motion is imported only in `web/src/shared/ui/motion/`; features use its wrappers (`MotionProvider`, `Reveal`, `SharedFrame`, `SwipeCarousel`).
 - Patreon post HTML is sanitised once, in the sync (the official adapter gets the sanitiser passed in), and stored as `maps.description`; the modal inserts it with `dangerouslySetInnerHTML` in `MapDescription.tsx`, the only place raw HTML is rendered.

@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { useNearViewport } from '../../../shared/lib/useNearViewport.ts';
-import { Button } from '../../../shared/ui/Button.tsx';
-import { Alert } from '../../../shared/ui/Alert.tsx';
-import { Reveal } from '../../../shared/ui/motion/index.ts';
-import { PageTitle } from '../../../shared/ui/PageTitle.tsx';
+import { useNearViewport } from '@/shared/lib/useNearViewport.ts';
+import { Button } from '@/shared/ui/Button.tsx';
+import { Alert } from '@/shared/ui/Alert.tsx';
+import { Reveal } from '@/shared/ui/motion/index.ts';
+import { PageTitle } from '@/shared/ui/PageTitle.tsx';
 import type { GalleryApi } from '../api/gallery-api.ts';
 import { findMap } from '../model/catalog.ts';
 import { hasMore, type PagesState } from '../model/map-pages.ts';

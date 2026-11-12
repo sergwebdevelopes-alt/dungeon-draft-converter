@@ -1,9 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { startAnalytics } from '../shared/analytics/cloudflare-analytics.ts';
-import { SITE } from '../shared/config/site.ts';
+import { startAnalytics } from '@/shared/analytics/cloudflare-analytics.ts';
+import { SITE } from '@/shared/config/site.ts';
 import { App } from './App.tsx';
-import '../styles.css';
+import '@/styles.css';
 
 startAnalytics(SITE.analytics);
 

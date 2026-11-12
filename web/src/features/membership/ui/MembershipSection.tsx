@@ -1,6 +1,6 @@
-import type { MembershipPlan } from '../../../shared/config/site.ts';
-import { Container } from '../../../shared/ui/Container.tsx';
-import { ExternalLink } from '../../../shared/ui/ExternalLink.tsx';
+import type { MembershipPlan } from '@/shared/config/site.ts';
+import { Container } from '@/shared/ui/Container.tsx';
+import { ExternalLink } from '@/shared/ui/ExternalLink.tsx';
 import { PlanCard } from './PlanCard.tsx';
 
 interface MembershipSectionProps {
