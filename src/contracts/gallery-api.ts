@@ -9,6 +9,13 @@ interface MapImageUrls {
   backdrop: string;
 }
 
+interface MapPicture {
+  view: string;
+  thumb: string;
+  width: number;
+  height: number;
+}
+
 interface MapEntry {
   slug: string;
   title: string;
@@ -20,6 +27,7 @@ interface MapEntry {
   height: number;
   patreonUrl: string;
   images: MapImageUrls;
+  pictures?: MapPicture[];
 }
 
 interface MapsResponse {
@@ -32,4 +40,11 @@ interface MapResponse {
   map: MapEntry;
 }
 
-export type { MapEntry, MapImageUrls, MapResponse, MapsResponse, Squares };
+export type {
+  MapEntry,
+  MapImageUrls,
+  MapPicture,
+  MapResponse,
+  MapsResponse,
+  Squares,
+};

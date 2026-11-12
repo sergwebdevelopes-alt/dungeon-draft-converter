@@ -1,12 +1,14 @@
 import { coverImage, imageKey } from '../domain/map-image-keys.ts';
-import type { MapImageUrls } from '../../../contracts/gallery-api.ts';
-import type { MapEntry } from '../../../contracts/gallery-api.ts';
+import type {
+  MapEntry,
+  MapImageUrls,
+  MapPicture,
+} from '../../../contracts/gallery-api.ts';
 import type { MapRecord } from '../domain/map-record.ts';
 
-function imageUrls(
-  map: MapRecord,
-  urlFor: (key: string) => string,
-): MapImageUrls {
+type UrlFor = (key: string) => string;
+
+function imageUrls(map: MapRecord, urlFor: UrlFor): MapImageUrls {
   const cover = coverImage(map);
 
   return {
@@ -16,7 +18,16 @@ function imageUrls(
   };
 }
 
-function toMapEntry(map: MapRecord, urlFor: (key: string) => string): MapEntry {
+function pictures(map: MapRecord, urlFor: UrlFor): MapPicture[] {
+  return map.images.map((image) => ({
+    view: urlFor(imageKey(map, image, 'view')),
+    thumb: urlFor(imageKey(map, image, 'thumb')),
+    width: image.width,
+    height: image.height,
+  }));
+}
+
+function toMapEntry(map: MapRecord, urlFor: UrlFor): MapEntry {
   return {
     slug: map.slug,
     title: map.title,
@@ -28,6 +39,7 @@ function toMapEntry(map: MapRecord, urlFor: (key: string) => string): MapEntry {
     height: coverImage(map).height,
     patreonUrl: map.patreonUrl,
     images: imageUrls(map, urlFor),
+    ...(map.images.length > 1 ? { pictures: pictures(map, urlFor) } : {}),
   };
 }
 

@@ -58,4 +58,37 @@ describe('toMapEntry', () => {
     assert.equal('squares' in entry, false);
     assert.equal('description' in entry, false);
   });
+
+  it('lists every picture of a map with several images, the cover first', () => {
+    const [cover] = map().images;
+    const roof = {
+      url: 'https://cdn.test/roof.jpg',
+      width: 4200,
+      height: 2800,
+      mediaId: '717019351',
+    };
+
+    const entry = toMapEntry(map({ images: [cover, roof] }), urlFor);
+
+    assert.deepEqual(entry.pictures, [
+      {
+        view: '/maps/166553789/717019350/view.webp',
+        thumb: '/maps/166553789/717019350/thumb.webp',
+        width: 8400,
+        height: 5600,
+      },
+      {
+        view: '/maps/166553789/717019351/view.webp',
+        thumb: '/maps/166553789/717019351/thumb.webp',
+        width: 4200,
+        height: 2800,
+      },
+    ]);
+    assert.equal(entry.images.view, '/maps/166553789/717019350/view.webp');
+    assert.deepEqual([entry.width, entry.height], [8400, 5600]);
+  });
+
+  it('lists no pictures for a map with one image', () => {
+    assert.equal('pictures' in toMapEntry(map(), urlFor), false);
+  });
 });

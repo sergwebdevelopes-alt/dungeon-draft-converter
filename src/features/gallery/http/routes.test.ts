@@ -227,6 +227,42 @@ describe('GET /api/maps/:slug', () => {
     assert.equal(body.map.images.view, '/maps/2/m/view.webp');
   });
 
+  it('gives the pictures of a map with several images', async () => {
+    const levels: StoredMap = {
+      ...stored('4', 'castle'),
+      images: [
+        { url: 'u', width: 3, height: 2, mediaId: 'm' },
+        { url: 'u2', width: 6, height: 4, mediaId: 'roof' },
+      ],
+    };
+    const served = await serve(gallery([levels, ...MAPS]));
+    servers.push(served.server);
+
+    const one = (await (await fetch(`${served.url}/castle`)).json()) as {
+      map: { pictures?: unknown };
+    };
+    const page = await pageAt(served.url);
+
+    assert.deepEqual(one.map.pictures, [
+      {
+        view: '/maps/4/m/view.webp',
+        thumb: '/maps/4/m/thumb.webp',
+        width: 3,
+        height: 2,
+      },
+      {
+        view: '/maps/4/roof/view.webp',
+        thumb: '/maps/4/roof/thumb.webp',
+        width: 6,
+        height: 4,
+      },
+    ]);
+    assert.deepEqual(
+      page.maps.map((map) => 'pictures' in map),
+      [true, false, false, false],
+    );
+  });
+
   it('answers 404 for an unknown map and without a database', async () => {
     const withMaps = await serve(gallery(MAPS));
     const withoutDatabase = await serve(undefined);
