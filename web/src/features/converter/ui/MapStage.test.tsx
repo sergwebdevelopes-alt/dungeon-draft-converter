@@ -172,6 +172,26 @@ describe('MapStage', () => {
     ).toBeInTheDocument();
   });
 
+  it('fills the whole preview area, so a wide map sits inside a marked space with one frame', () => {
+    renderStage();
+    const map = screen.getByRole('img', { name: 'Preview of the main map' });
+    const area = map.closest('.place-items-center');
+
+    expect(area).toHaveClass('bg-sunken', 'p-3');
+    expect(area?.className).not.toMatch(/\bring-/);
+    expect(map.closest('.ring-1')).not.toBeNull();
+  });
+
+  it('marks the frame while files are dragged over it', () => {
+    renderStage();
+    const map = screen.getByRole('img', { name: 'Preview of the main map' });
+    const area = map.closest('.place-items-center')!;
+
+    fireEvent.dragOver(map);
+
+    expect(area).toHaveClass('ring-2', 'ring-gold');
+  });
+
   it('adds maps dropped onto the preview', () => {
     const { onAddMaps } = renderStage();
     const level = new File(['x'], 'Cellar.dd2vtt');

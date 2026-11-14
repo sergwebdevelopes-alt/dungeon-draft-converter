@@ -218,7 +218,7 @@ function MapStage({
   return (
     <div
       {...drop.handlers}
-      className={`relative grid size-full place-items-center rounded-2xl transition-shadow ${drop.over ? 'ring-2 ring-gold ring-offset-4 ring-offset-bg' : ''}`}
+      className={`relative grid size-full place-items-center rounded-2xl bg-sunken p-3 transition-shadow ${drop.over ? 'ring-2 ring-gold ring-offset-4 ring-offset-bg' : ''}`}
       style={{ containerType: 'size' }}
     >
       {preview.status === 'loading' && (
