@@ -4,15 +4,13 @@ import { Button } from '@/shared/ui/Button.tsx';
 import { Alert } from '@/shared/ui/Alert.tsx';
 import { Reveal } from '@/shared/ui/motion/index.ts';
 import { usePageTitle } from '@/shared/hooks/usePageTitle.ts';
-import { SITE_PAGES, mapPageTitle } from '@contracts/site-pages.ts';
+import { SITE_PAGES, collectionPageText } from '@contracts/site-pages.ts';
 import type { GalleryApi } from '../api/gallery-api.ts';
-import { findMap } from '../model/catalog.ts';
+import { collectionAt, findMap } from '../model/catalog.ts';
 import { hasMore, type PagesState } from '../model/map-pages.ts';
-import { useLinkedMap } from '../hooks/useLinkedMap.ts';
 import { useMapPages } from '../hooks/useMapPages.ts';
 import { useOpenMap } from '../hooks/useOpenMap.ts';
 import { MapCard } from './MapCard.tsx';
-import { MapModal } from './MapModal.tsx';
 import { TagFilter } from './TagFilter.tsx';
 
 const SKELETON_CARDS = 8;
@@ -65,11 +63,11 @@ const GALLERY_TITLE = SITE_PAGES['/maps'].title;
 
 interface GalleryProps {
   state: PagesState;
-  api?: GalleryApi;
+  title: string;
   onLoadMore: () => void;
 }
 
-function MoreMaps({ state, onLoadMore }: Omit<GalleryProps, 'api'>) {
+function MoreMaps({ state, onLoadMore }: Omit<GalleryProps, 'title'>) {
   const more = hasMore(state);
   const sentinel = useNearViewport<HTMLDivElement>(onLoadMore, {
     enabled: more && state.status === 'ready',
@@ -97,14 +95,13 @@ function MoreMaps({ state, onLoadMore }: Omit<GalleryProps, 'api'>) {
   );
 }
 
-function Gallery({ state, api, onLoadMore }: GalleryProps) {
-  const { slug, open, close } = useOpenMap();
+function Gallery({ state, title, onLoadMore }: GalleryProps) {
+  const { slug, open } = useOpenMap();
   const { maps } = state;
 
   const listed = findMap(maps, slug);
-  const openMap = useLinkedMap(slug, listed, api);
-  const registerCard = useCardFocus(openMap?.slug ?? null);
-  usePageTitle(openMap ? mapPageTitle(openMap) : GALLERY_TITLE);
+  const registerCard = useCardFocus(listed?.slug ?? null);
+  usePageTitle(title);
 
   return (
     <>
@@ -120,7 +117,7 @@ function Gallery({ state, api, onLoadMore }: GalleryProps) {
                 featured={i === 0}
                 isOpen={map === listed}
                 buttonRef={registerCard(map.slug)}
-                onOpen={() => open(map.slug)}
+                onOpen={() => open(map)}
               />
             </Reveal>
           </li>
@@ -128,35 +125,33 @@ function Gallery({ state, api, onLoadMore }: GalleryProps) {
       </ul>
 
       <MoreMaps state={state} onLoadMore={onLoadMore} />
-
-      {openMap && (
-        <MapModal
-          key={openMap.slug}
-          map={openMap}
-          morph={listed !== null}
-          onClose={close}
-        />
-      )}
     </>
   );
 }
 
 interface MapGalleryProps {
   api?: GalleryApi;
+  collection?: string | null;
 }
 
-function MapGallery({ api }: MapGalleryProps) {
-  const { state, chooseTag, loadMore } = useMapPages(api);
+function MapGallery({ api, collection = null }: MapGalleryProps) {
+  const { state, loadMore } = useMapPages(api, collection);
   const loaded = state.status !== 'loading' && state.status !== 'error';
-  usePageTitle(GALLERY_TITLE, { enabled: !loaded });
+  const shown = collectionAt(state.collections, collection);
+  const title = shown ? collectionPageText(shown.name).title : GALLERY_TITLE;
+  const named = collection === null || shown !== null;
+  usePageTitle(title, { enabled: !loaded && named });
 
   return (
     <>
-      {state.tags.length > 0 && (
-        <TagFilter tags={state.tags} active={state.tag} onChange={chooseTag} />
+      {state.collections.length > 0 && (
+        <TagFilter
+          collections={state.collections}
+          active={shown?.path ?? null}
+        />
       )}
 
-      {loaded && <Gallery state={state} api={api} onLoadMore={loadMore} />}
+      {loaded && <Gallery state={state} title={title} onLoadMore={loadMore} />}
 
       {state.status === 'loading' && (
         <ul aria-label="Loading maps" className={GRID}>

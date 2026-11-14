@@ -93,6 +93,24 @@ describe('PageShell', () => {
     ).toBeInTheDocument();
   });
 
+  it('draws what it is given over the page, outside the main content', () => {
+    render(
+      <MemoryRouter>
+        <Routes>
+          <Route
+            element={<PageShell site={SITE} overlay={<p>A map window</p>} />}
+          >
+            <Route index element={<p>Home content</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const overlay = screen.getByText('A map window');
+    expect(screen.getByRole('main')).not.toContainElement(overlay);
+    expect(screen.getByRole('main')).toHaveTextContent('Home content');
+  });
+
   it('says a page is loading, but shows the mark only when loading takes a while', () => {
     const Slow = lazy(() => new Promise<never>(() => undefined));
     render(

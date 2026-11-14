@@ -1,16 +1,18 @@
 import { useEffect, useRef } from 'react';
 import { NavigationType, useLocation, useNavigationType } from 'react-router';
+import { useOpenedMapWindow } from '@/features/gallery/index.ts';
 import { focusMain } from './layout/main-content.ts';
 
 function PageChange() {
   const { pathname, hash } = useLocation();
   const navigationType = useNavigationType();
+  const mapWindow = useOpenedMapWindow() !== null;
   const lastPathname = useRef(pathname);
 
   useEffect(() => {
     const newPage = lastPathname.current !== pathname;
     lastPathname.current = pathname;
-    if (navigationType === NavigationType.Pop) {
+    if (navigationType === NavigationType.Pop || mapWindow) {
       return;
     }
 
@@ -25,7 +27,7 @@ function PageChange() {
     }
 
     window.scrollTo(0, 0);
-  }, [pathname, hash, navigationType]);
+  }, [pathname, hash, navigationType, mapWindow]);
 
   return null;
 }

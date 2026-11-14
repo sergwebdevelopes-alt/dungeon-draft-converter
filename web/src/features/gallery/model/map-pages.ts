@@ -1,4 +1,8 @@
-import type { MapEntry, MapsResponse } from '@contracts/gallery-api.ts';
+import type {
+  CollectionLink,
+  MapEntry,
+  MapsResponse,
+} from '@contracts/gallery-api.ts';
 
 const FIRST_PAGE_SIZE = 21;
 const PAGE_SIZE = 24;
@@ -10,6 +14,7 @@ interface PagesState {
   maps: MapEntry[];
   total: number;
   tags: string[];
+  collections: CollectionLink[];
   status: PagesStatus;
 }
 
@@ -30,6 +35,7 @@ const initialPages: PagesState = {
   maps: [],
   total: 0,
   tags: [],
+  collections: [],
   status: 'loading',
 };
 
@@ -81,6 +87,7 @@ function pagesReducer(state: PagesState, action: PagesAction): PagesState {
         maps: withPage(state.maps, action.page.maps),
         total: action.page.total,
         tags: action.page.tags,
+        collections: action.page.collections,
         status: 'ready',
       };
 

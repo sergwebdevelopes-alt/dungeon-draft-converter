@@ -41,7 +41,7 @@ function loaded(
       maps: entries(...slugs),
       total,
       tags: ['Waterdeep', 'Barovia'],
-      collections: [],
+      collections: [{ name: 'Waterdeep', path: '/maps/waterdeep' }],
     },
   });
 }
@@ -72,6 +72,9 @@ describe('pagesReducer', () => {
     expect(loadedSlugs(FIRST)).toEqual(['a', 'b']);
     expect(FIRST.total).toBe(5);
     expect(FIRST.tags).toEqual(['Waterdeep', 'Barovia']);
+    expect(FIRST.collections).toEqual([
+      { name: 'Waterdeep', path: '/maps/waterdeep' },
+    ]);
     expect(FIRST.status).toBe('ready');
   });
 

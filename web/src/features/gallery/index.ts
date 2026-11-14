@@ -1,6 +1,12 @@
 export type { GalleryApi } from './api/gallery-api.ts';
+export { collectionAt } from './model/catalog.ts';
 export type { MapEntry } from './model/catalog.ts';
+export { useCollectionMaps } from './hooks/useCollectionMaps.ts';
 export { useHighlights } from './hooks/useHighlights.ts';
 export { useLatestMaps } from './hooks/useLatestMaps.ts';
+export { useLinkedMap } from './hooks/useLinkedMap.ts';
+export { OpenMapSlug, useOpenedMapWindow } from './hooks/useOpenMap.ts';
 export { MapTileLink } from './ui/MapTile.tsx';
 export { MapGallery } from './ui/MapGallery.tsx';
+export { MapView } from './ui/MapView.tsx';
+export { MapWindow } from './ui/MapWindow.tsx';

@@ -2,7 +2,16 @@ import { act, render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { Link, MemoryRouter, Route, Routes, useNavigate } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MapTileLink, type MapEntry } from '@/features/gallery/index.ts';
 import { PageChange } from './PageChange.tsx';
+
+const CAVE = {
+  slug: 'cave',
+  path: '/maps/caves/cave',
+  title: 'Cave in a window',
+  tags: [],
+  images: { card: '/cave.webp' },
+} as unknown as MapEntry;
 
 let goBack: () => void = () => undefined;
 
@@ -15,6 +24,8 @@ function Page({ name }: { name: string }) {
       <h1>{name}</h1>
       <Link to="/maps">Maps</Link>
       <Link to="/maps?map=cave">Open cave</Link>
+      <MapTileLink map={CAVE} />
+      <Link to="/maps/caves/cave">Cave page</Link>
       <Link to="/#membership">Membership</Link>
       <section id="membership">Plans</section>
     </>
@@ -29,6 +40,7 @@ function renderApp() {
         <Routes>
           <Route path="/" element={<Page name="Home" />} />
           <Route path="/maps" element={<Page name="Maps" />} />
+          <Route path="/maps/caves/cave" element={<Page name="Cave" />} />
         </Routes>
       </main>
     </MemoryRouter>,
@@ -88,6 +100,28 @@ describe('PageChange', () => {
     await userEvent.click(screen.getByRole('link', { name: 'Open cave' }));
 
     expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  it('stays put and leaves focus alone when a map window opens over the page', async () => {
+    renderApp();
+    const link = screen.getByRole('link', { name: /Cave in a window/ });
+    link.focus();
+    scrollTo.mockClear();
+
+    await userEvent.click(link);
+
+    expect(screen.getByRole('heading', { name: 'Cave' })).toBeInTheDocument();
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(screen.getByRole('main')).not.toHaveFocus();
+  });
+
+  it('starts the page of a map at the top like any other page', async () => {
+    renderApp();
+    scrollTo.mockClear();
+
+    await userEvent.click(screen.getByRole('link', { name: 'Cave page' }));
+
+    expect(scrollTo).toHaveBeenCalledWith(0, 0);
   });
 
   it('leaves going back to the browser', async () => {

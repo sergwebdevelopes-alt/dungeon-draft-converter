@@ -3,12 +3,22 @@ import { isAbortError } from '@/shared/http/index.ts';
 import { galleryApi, type GalleryApi } from '../api/gallery-api.ts';
 import type { MapEntry } from '../model/catalog.ts';
 
+interface LinkedMap {
+  map: MapEntry | null;
+  missing: boolean;
+}
+
+interface Answer {
+  slug: string;
+  map: MapEntry | null;
+}
+
 function useLinkedMap(
   slug: string | null,
   loaded: MapEntry | null,
   api: GalleryApi = galleryApi,
-): MapEntry | null {
-  const [linked, setLinked] = useState<MapEntry | null>(null);
+): LinkedMap {
+  const [answer, setAnswer] = useState<Answer | null>(null);
   const missing = slug !== null && loaded === null;
 
   useEffect(() => {
@@ -20,10 +30,13 @@ function useLinkedMap(
 
     async function find(wanted: string) {
       try {
-        setLinked(await api.fetchMap(wanted, controller.signal));
+        setAnswer({
+          slug: wanted,
+          map: await api.fetchMap(wanted, controller.signal),
+        });
       } catch (error) {
         if (!isAbortError(error)) {
-          setLinked(null);
+          setAnswer({ slug: wanted, map: null });
         }
       }
     }
@@ -33,10 +46,13 @@ function useLinkedMap(
   }, [api, slug, missing]);
 
   if (loaded) {
-    return loaded;
+    return { map: loaded, missing: false };
   }
 
-  return linked?.slug === slug ? linked : null;
+  const answered = answer?.slug === slug ? answer : null;
+
+  return { map: answered?.map ?? null, missing: answered?.map === null };
 }
 
 export { useLinkedMap };
+export type { LinkedMap };

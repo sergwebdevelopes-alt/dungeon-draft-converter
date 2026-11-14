@@ -177,7 +177,7 @@ describe('HomePage', () => {
     expect(buttons[0]).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('links the newest map of each collection straight to its gallery modal', async () => {
+  it('links the newest map of each collection to its own address', async () => {
     await renderHome();
 
     const latest = within(
@@ -185,12 +185,12 @@ describe('HomePage', () => {
     );
     const links = latest
       .getAllByRole('link')
-      .filter((link) => link.getAttribute('href')?.includes('?map='));
+      .filter((link) => link.getAttribute('href')?.startsWith('/maps/'));
     expect(links.map((link) => link.getAttribute('href'))).toEqual([
-      '/maps?map=library',
-      '/maps?map=shrine',
-      '/maps?map=field',
-      '/maps?map=brothel',
+      '/maps/interior/library',
+      '/maps/interior/shrine',
+      '/maps/interior/field',
+      '/maps/interior/brothel',
     ]);
     expect(
       latest.getByRole('link', { name: 'See all 7 maps' }),

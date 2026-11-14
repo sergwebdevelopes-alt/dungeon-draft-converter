@@ -1,4 +1,10 @@
-import { MapGallery, type GalleryApi } from '@/features/gallery/index.ts';
+import { useParams } from 'react-router';
+import {
+  MapGallery,
+  collectionAt,
+  useLatestMaps,
+  type GalleryApi,
+} from '@/features/gallery/index.ts';
 import { MembershipSection } from '@/features/membership/index.ts';
 import { SITE, type SiteConfig } from '@/shared/config/site.ts';
 import { Container } from '@/shared/ui/Container.tsx';
@@ -9,15 +15,22 @@ interface GalleryPageProps {
 }
 
 function GalleryPage({ api, site = SITE }: GalleryPageProps) {
+  const { collection = null } = useParams();
+  const latest = useLatestMaps(api);
+  const shown =
+    latest.status === 'ready'
+      ? collectionAt(latest.collections, collection)
+      : null;
+
   return (
     <>
       <Container className="grid gap-8 pt-12 pb-4 sm:pt-16">
         <header className="grid gap-4">
           <p className="text-sm font-bold tracking-[0.2em] text-gold uppercase">
-            Gallery
+            {shown ? 'Collection' : 'Gallery'}
           </p>
           <h1 className="font-display text-4xl font-bold tracking-tight sm:text-6xl">
-            Maps from the Lair
+            {shown ? shown.name : 'Maps from the Lair'}
           </h1>
           <p className="max-w-2xl text-lg text-muted">
             Battle maps drawn in Dungeondraft. Open one to see it up close, with
@@ -25,7 +38,7 @@ function GalleryPage({ api, site = SITE }: GalleryPageProps) {
           </p>
         </header>
 
-        <MapGallery api={api} />
+        <MapGallery api={api} collection={collection} />
       </Container>
 
       <MembershipSection

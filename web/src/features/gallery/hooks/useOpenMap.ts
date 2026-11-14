@@ -1,43 +1,37 @@
-import { useLocation, useNavigate, useSearchParams } from 'react-router';
+import { createContext, useContext } from 'react';
+import { useLocation, useNavigate } from 'react-router';
+import type { MapEntry } from '../model/catalog.ts';
+import {
+  mapWindowState,
+  openedMapWindow,
+  type MapWindowState,
+  type OpenedMapWindow,
+} from '../model/map-window.ts';
 
-const PARAM = 'map';
+const OpenMapSlug = createContext<string | null>(null);
 
-interface OpenedState {
-  openedFromGallery?: boolean;
+function useOpenedMapWindow(): OpenedMapWindow | null {
+  return openedMapWindow(useLocation());
 }
 
 function useOpenMap() {
-  const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const slug = params.get(PARAM);
+  const slug = useContext(OpenMapSlug);
 
-  function paramsWith(next: string | null): URLSearchParams {
-    const updated = new URLSearchParams(params);
-    if (next) {
-      updated.set(PARAM, next);
-    } else {
-      updated.delete(PARAM);
-    }
-
-    return updated;
+  function windowState(map: MapEntry, morph = false): MapWindowState {
+    return mapWindowState(location, map, morph);
   }
 
-  function open(next: string) {
-    setParams(paramsWith(next), { state: { openedFromGallery: true } });
+  function open(map: MapEntry) {
+    void navigate(map.path, { state: windowState(map, true) });
   }
 
   function close() {
-    const state = location.state as OpenedState | null;
-    if (state?.openedFromGallery) {
-      void navigate(-1);
-      return;
-    }
-
-    setParams(paramsWith(null), { replace: true });
+    void navigate(-1);
   }
 
-  return { slug, open, close };
+  return { slug, open, close, windowState };
 }
 
-export { useOpenMap };
+export { OpenMapSlug, useOpenMap, useOpenedMapWindow };

@@ -1,6 +1,11 @@
-import { lazy } from 'react';
-import { Route, Routes } from 'react-router';
+import { Suspense, lazy } from 'react';
+import { Route, Routes, useLocation } from 'react-router';
 import { galleryApi } from '@/features/gallery/api/gallery-api.ts';
+import {
+  OpenMapSlug,
+  useOpenedMapWindow,
+  type MapWindow as MapWindowComponent,
+} from '@/features/gallery/index.ts';
 import type { SiteConfig } from '@/shared/config/site.ts';
 import { PageShell } from './layout/PageShell.tsx';
 import { NotFoundPage } from '@/pages/not-found/NotFoundPage.tsx';
@@ -18,27 +23,57 @@ const ConverterPage = lazy(async () => ({
   default: (await import('@/pages/converter/ConverterPage.tsx')).ConverterPage,
 }));
 
+const mapWindow: { ready: typeof MapWindowComponent | null } = { ready: null };
+
+async function loadMapWindow() {
+  const { MapWindow } = await import('@/features/gallery/index.ts');
+  mapWindow.ready = MapWindow;
+
+  return { default: MapWindow };
+}
+
+const LazyMapWindow = lazy(loadMapWindow);
+
 const GalleryPage = lazy(async () => {
   void galleryApi.prefetchFirstPage();
+  const [page] = await Promise.all([
+    import('@/pages/gallery/GalleryPage.tsx'),
+    loadMapWindow(),
+  ]);
 
-  return {
-    default: (await import('@/pages/gallery/GalleryPage.tsx')).GalleryPage,
-  };
+  return { default: page.GalleryPage };
 });
 
+const MapPage = lazy(async () => ({
+  default: (await import('@/pages/map/MapPage.tsx')).MapPage,
+}));
+
 function AppRoutes({ site }: { site: SiteConfig }) {
+  const location = useLocation();
+  const opened = useOpenedMapWindow();
+  const MapWindow = mapWindow.ready ?? LazyMapWindow;
+  const openedWindow = opened && (
+    <Suspense fallback={null}>
+      <MapWindow map={opened.map} morph={opened.morph} />
+    </Suspense>
+  );
+
   return (
-    <>
+    <OpenMapSlug value={opened?.map.slug ?? null}>
       <PageChange />
-      <Routes>
-        <Route element={<PageShell site={site} />}>
+      <Routes location={opened?.background ?? location}>
+        <Route element={<PageShell site={site} overlay={openedWindow} />}>
           <Route index element={<HomePage />} />
-          <Route path="maps" element={<GalleryPage />} />
+          <Route path="maps/:collection?" element={<GalleryPage />} />
+          <Route
+            path="maps/:collection/:map"
+            element={<MapPage notFound={<NotFoundPage />} />}
+          />
           <Route path="converter" element={<ConverterPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
-    </>
+    </OpenMapSlug>
   );
 }
 

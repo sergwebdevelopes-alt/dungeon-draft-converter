@@ -58,6 +58,28 @@ describe('MapDetails', () => {
     expect(screen.getByText('safe haven')).toBeInTheDocument();
   });
 
+  it('titles the map with a second-level heading in a window and scrolls inside it', () => {
+    renderDetails();
+
+    const title = screen.getByRole('heading', { name: 'Blue Water Inn' });
+    expect(title.tagName).toBe('H2');
+    expect(title.closest('.overflow-y-auto')).not.toBeNull();
+    expect(screen.getByRole('region', { name: 'Description' })).toHaveClass(
+      'line-clamp-2',
+    );
+  });
+
+  it('titles the map with the page heading on its own page and scrolls with the page', () => {
+    renderDetails({ heading: 'h1', scrollsInside: false });
+
+    const title = screen.getByRole('heading', { name: 'Blue Water Inn' });
+    expect(title.tagName).toBe('H1');
+    expect(title.closest('.overflow-y-auto')).toBeNull();
+    expect(screen.getByRole('region', { name: 'Description' })).not.toHaveClass(
+      'line-clamp-2',
+    );
+  });
+
   it('leaves out the size and the description a map does not have', () => {
     renderDetails({
       map: { ...MAP, squares: undefined, description: undefined },

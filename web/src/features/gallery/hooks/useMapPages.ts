@@ -27,9 +27,16 @@ async function load(
   }
 }
 
-function useMapPages(api: GalleryApi = galleryApi) {
-  const [state, dispatch] = useReducer(pagesReducer, initialPages);
+function useMapPages(api: GalleryApi = galleryApi, tag: string | null = null) {
+  const [state, dispatch] = useReducer(pagesReducer, {
+    ...initialPages,
+    tag,
+  });
   const more = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    dispatch({ type: 'tagChosen', tag });
+  }, [tag]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -41,10 +48,6 @@ function useMapPages(api: GalleryApi = galleryApi) {
     };
   }, [api, state.tag]);
 
-  function chooseTag(tag: string | null) {
-    dispatch({ type: 'tagChosen', tag });
-  }
-
   function loadMore() {
     if (!canLoadMore(state)) {
       return;
@@ -55,7 +58,7 @@ function useMapPages(api: GalleryApi = galleryApi) {
     void load(api, nextPage(state), more.current.signal, dispatch);
   }
 
-  return { state, chooseTag, loadMore };
+  return { state, loadMore };
 }
 
 export { useMapPages };

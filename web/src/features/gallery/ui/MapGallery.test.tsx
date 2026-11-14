@@ -14,18 +14,25 @@ import {
   Routes,
   useLocation,
   useNavigate,
+  useParams,
 } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import type { MapsResponse } from '@contracts/gallery-api.ts';
 import type { GalleryApi } from '../api/gallery-api.ts';
 import type { MapEntry } from '../model/catalog.ts';
 import type { PageRequest } from '../model/map-pages.ts';
+import { OpenMapSlug, useOpenedMapWindow } from '../hooks/useOpenMap.ts';
 import { MapGallery } from './MapGallery.tsx';
+import { MapWindow } from './MapWindow.tsx';
+
+function collectionSlug(name: string): string {
+  return name.toLowerCase();
+}
 
 function entry(slug: string, title: string, tags: MapEntry['tags']): MapEntry {
   return {
     slug,
-    path: `/maps/interior/${slug}`,
+    path: `/maps/${collectionSlug(tags[0])}/${slug}`,
     title,
     subtitle: 'Ground floor',
     squares: { x: 20, y: 30 },
@@ -80,11 +87,13 @@ function many(count: number): MapEntry[] {
 }
 
 let navigateBack: () => void = () => undefined;
+let navigateForward: () => void = () => undefined;
 
 function Probe() {
   const location = useLocation();
   const navigate = useNavigate();
   navigateBack = () => void navigate(-1);
+  navigateForward = () => void navigate(1);
 
   return (
     <output data-testid="location">
@@ -100,13 +109,19 @@ interface FakeServer {
 }
 
 function pageFrom(maps: MapEntry[], { tag, offset, limit }: PageRequest) {
-  const matching = tag ? maps.filter((map) => map.tags.includes(tag)) : maps;
+  const matching = tag
+    ? maps.filter((map) => map.tags.map(collectionSlug).includes(tag))
+    : maps;
+  const tags = [...new Set(maps.flatMap((map) => map.tags))];
 
   return {
     maps: matching.slice(offset, offset + limit),
     total: matching.length,
-    tags: [...new Set(maps.flatMap((map) => map.tags))],
-    collections: [],
+    tags,
+    collections: tags.map((name) => ({
+      name,
+      path: `/maps/${collectionSlug(name)}`,
+    })),
   };
 }
 
@@ -154,24 +169,45 @@ function heading() {
   return within(dialog()!).getByRole('heading').textContent;
 }
 
-async function renderGallery(path = '/maps', api = fakeApi(), from = '/') {
+function GalleryRoute({ api }: { api: GalleryApi }) {
+  const { collection = null } = useParams();
+
+  return <MapGallery api={api} collection={collection} />;
+}
+
+function Site({ api }: { api: GalleryApi }) {
+  const location = useLocation();
+  const opened = useOpenedMapWindow();
+
+  return (
+    <OpenMapSlug value={opened?.map.slug ?? null}>
+      <Routes location={opened?.background ?? location}>
+        <Route path="/maps/:collection?" element={<GalleryRoute api={api} />} />
+        <Route path="/maps/:collection/:map" element={<p>The map page</p>} />
+        <Route path="/" element={<p>The home page</p>} />
+      </Routes>
+      {opened && <MapWindow map={opened.map} morph={opened.morph} />}
+      <Probe />
+    </OpenMapSlug>
+  );
+}
+
+function renderSite(path: string, api = fakeApi(), from = '/') {
   render(
     <MemoryRouter initialEntries={[from, path]} initialIndex={1}>
-      <Routes>
-        <Route
-          path="/maps"
-          element={
-            <>
-              <MapGallery api={api} />
-              <Probe />
-            </>
-          }
-        />
-        <Route path="/" element={<Probe />} />
-      </Routes>
+      <Site api={api} />
     </MemoryRouter>,
   );
-  await screen.findByRole('group', { name: 'Filter maps' });
+}
+
+async function renderGallery(path = '/maps', api = fakeApi(), from = '/') {
+  renderSite(path, api, from);
+  await screen.findByRole('navigation', { name: 'Filter maps' });
+}
+
+async function renderOpen(title: string, api = fakeApi()) {
+  await renderGallery('/maps', api);
+  await userEvent.click(card(title));
 }
 
 function cardImage(title: string) {
@@ -188,7 +224,7 @@ async function renderGalleryError() {
 }
 
 async function renderCastle() {
-  await renderGallery('/maps?map=castle', fakeApi([CASTLE, ...MAPS]));
+  await renderOpen('Castle', fakeApi([CASTLE, ...MAPS]));
 }
 
 function trackImages() {
@@ -239,13 +275,18 @@ describe('MapGallery', () => {
       '/maps/1/cave/card.webp',
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'Underground' }));
+    await userEvent.click(screen.getByRole('link', { name: 'Underground' }));
     await waitFor(() =>
       expect(screen.getAllByRole('listitem')).toHaveLength(2),
     );
     expect(screen.queryByText('Blue Inn')).toBeNull();
+    expect(location()).toBe('/maps/underground');
+    expect(screen.getByRole('link', { name: 'Underground' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
 
-    await userEvent.click(screen.getByRole('button', { name: 'All maps' }));
+    await userEvent.click(screen.getByRole('link', { name: 'All maps' }));
     await waitFor(() =>
       expect(screen.getAllByRole('listitem')).toHaveLength(3),
     );
@@ -274,7 +315,7 @@ describe('MapGallery', () => {
       'href',
       'https://www.patreon.com/LairofArtificer/posts/inn',
     );
-    expect(location()).toBe('/maps?map=inn');
+    expect(location()).toBe('/maps/interior/inn');
   });
 
   it('names the tab after the open map', async () => {
@@ -291,16 +332,6 @@ describe('MapGallery', () => {
     fireEvent(dialog()!, new Event('cancel', { cancelable: true }));
     await waitFor(() =>
       expect(document.title).toBe('D&D Battle Map Gallery · Lair of Artificer'),
-    );
-  });
-
-  it('names the tab after a linked map from the first render', async () => {
-    await renderGallery('/maps?map=inn');
-
-    await waitFor(() =>
-      expect(document.title).toBe(
-        'Blue Inn, Ground floor Battle Map · Interior · Lair of Artificer',
-      ),
     );
   });
 
@@ -381,24 +412,46 @@ describe('MapGallery', () => {
     expect(location()).toBe('/maps');
   });
 
-  it('opens the map from a shared link and closes to the gallery', async () => {
-    await renderGallery('/maps?map=crypt');
+  it('shows the map page, not the window, to a visitor who comes by a link', async () => {
+    renderSite('/maps/underground/crypt');
 
-    expect(
-      within(dialog()!).getByRole('heading', { name: 'Old Crypt' }),
-    ).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
-
-    await waitFor(() => expect(dialog()).toBeNull());
-    expect(location()).toBe('/maps');
+    expect(await screen.findByText('The map page')).toBeInTheDocument();
+    expect(dialog()).toBeNull();
   });
 
-  it('shows just the gallery for an unknown map', async () => {
-    await renderGallery('/maps?map=nope');
+  it('shows the map page again after the page is reloaded with the window open', async () => {
+    await renderOpen('Old Crypt');
+    const afterReload = { ...window.history.state } as { usr?: object };
+    expect(dialog()).not.toBeNull();
+    cleanup();
 
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/maps/underground/crypt',
+            state: { ...afterReload.usr, visit: 'an earlier visit' },
+          },
+        ]}
+      >
+        <Site api={fakeApi()} />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('The map page')).toBeInTheDocument();
     expect(dialog()).toBeNull();
-    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+  });
+
+  it('opens the window again when the visitor goes forward to it', async () => {
+    await renderOpen('Old Crypt');
+    act(() => navigateBack());
+    await waitFor(() => expect(dialog()).toBeNull());
+
+    act(() => navigateForward());
+
+    await waitFor(() => expect(dialog()).not.toBeNull());
+    expect(location()).toBe('/maps/underground/crypt');
+    expect(screen.getAllByRole('listitem').length).toBeGreaterThanOrEqual(3);
   });
 
   it('moves between the pictures of a map with the arrow keys and buttons, going round at the ends', async () => {
@@ -410,7 +463,7 @@ describe('MapGallery', () => {
       'Castle, picture 2 of 3',
     );
     expect(heading()).toBe('Castle');
-    expect(location()).toBe('/maps?map=castle');
+    expect(location()).toBe('/maps/underground/castle');
 
     await userEvent.click(
       screen.getByRole('button', { name: 'Previous picture' }),
@@ -551,28 +604,30 @@ describe('MapGallery', () => {
     expect(shownPicture()).toBe('/maps/1/castle-roof/view.webp');
   });
 
-  it('starts from the first picture when the visitor goes back to another open map', async () => {
-    const tower: MapEntry = {
-      ...entry('tower', 'Tower', ['Underground']),
-      pictures: [
-        picture('tower', 2000, 3000),
-        picture('tower-top', 2000, 3000),
-      ],
-    };
-    await renderGallery(
-      '/maps?map=castle',
-      fakeApi([CASTLE, tower, ...MAPS]),
-      '/maps?map=tower',
-    );
-    await userEvent.keyboard('{ArrowRight}');
-    expect(shownPicture()).toBe('/maps/1/castle-roof/view.webp');
+  it('scrolls the text inside the window and zooms the picture with the plain wheel', async () => {
+    await renderOpen('Blue Inn');
+    const modal = dialog()!;
 
-    act(() => navigateBack());
+    expect(
+      within(modal)
+        .getByRole('heading', { level: 2, name: 'Blue Inn' })
+        .closest('.overflow-y-auto'),
+    ).not.toBeNull();
+    expect(
+      fireEvent.wheel(within(modal).getByRole('img', { name: /Blue Inn/ }), {
+        deltaY: -300,
+      }),
+    ).toBe(false);
+  });
 
-    await waitFor(() => expect(heading()).toBe('Tower'));
-    expect(shownPicture()).toBe('/maps/1/tower/view.webp');
-    expect(cardImage('Tower')).toBeNull();
+  it('hands the picture of the open map over from its card', async () => {
+    await renderGallery('/maps', fakeApi([CASTLE, ...MAPS]));
     expect(cardImage('Castle')).not.toBeNull();
+
+    await userEvent.click(card('Castle'));
+
+    expect(cardImage('Castle')).toBeNull();
+    expect(cardImage('Ice Cave')).not.toBeNull();
   });
 
   it('shows a picture that has already loaded at once when the visitor jumps to it', async () => {
@@ -614,7 +669,7 @@ describe('MapGallery', () => {
 
   it('goes round a map with two pictures in both directions', async () => {
     const two = { ...CASTLE, pictures: CASTLE.pictures?.slice(0, 2) };
-    await renderGallery('/maps?map=castle', fakeApi([two, ...MAPS]));
+    await renderOpen('Castle', fakeApi([two, ...MAPS]));
 
     const seen = [shownPicture()];
     for (const key of ['{ArrowRight}', '{ArrowRight}', '{ArrowLeft}']) {
@@ -672,7 +727,7 @@ describe('MapGallery', () => {
   });
 
   it('shows the grid version on request', async () => {
-    await renderGallery('/maps?map=cave');
+    await renderOpen('Ice Cave');
     const modal = dialog()!;
 
     expect(modal.querySelector('svg line')).toBeNull();
@@ -691,7 +746,7 @@ describe('MapGallery', () => {
   });
 
   it('shows the description of a map from Patreon', async () => {
-    await renderGallery('/maps?map=inn');
+    await renderOpen('Blue Inn');
     const description = within(dialog()!).getByRole('region', {
       name: 'Description',
     });
@@ -706,7 +761,7 @@ describe('MapGallery', () => {
   });
 
   it('shows no description when the post has none', async () => {
-    await renderGallery('/maps?map=cave');
+    await renderOpen('Ice Cave');
 
     expect(
       within(dialog()!).queryByRole('region', { name: 'Description' }),
@@ -714,7 +769,7 @@ describe('MapGallery', () => {
   });
 
   it('shows a map without a known size without the grid choice', async () => {
-    await renderGallery('/maps?map=crypt');
+    await renderOpen('Old Crypt');
     const modal = dialog()!;
 
     expect(
@@ -751,12 +806,22 @@ describe('MapGallery', () => {
   it('builds the filter from the collections the server lists', async () => {
     await renderGallery();
 
-    const filters = within(screen.getByRole('group', { name: 'Filter maps' }));
-    expect(filters.getAllByRole('button').map((b) => b.textContent)).toEqual([
-      'All maps',
-      'Underground',
-      'Interior',
+    const filters = within(
+      screen.getByRole('navigation', { name: 'Filter maps' }),
+    );
+    expect(
+      filters
+        .getAllByRole('link')
+        .map((link) => [link.textContent, link.getAttribute('href')]),
+    ).toEqual([
+      ['All maps', '/maps'],
+      ['Underground', '/maps/underground'],
+      ['Interior', '/maps/interior'],
     ]);
+    expect(filters.getByRole('link', { name: 'All maps' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
   });
 
   it('offers the grid only on the pictures it fits', async () => {
@@ -806,17 +871,82 @@ describe('MapGallery', () => {
     const server = fakeServer();
     await renderGallery('/maps', server.api);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Interior' }));
+    await userEvent.click(screen.getByRole('link', { name: 'Interior' }));
     await waitFor(() => expect(listedMaps()).toHaveLength(1));
 
     expect(server.requests.at(-1)).toEqual({
-      tag: 'Interior',
+      tag: 'interior',
       offset: 0,
       limit: 21,
     });
-    expect(screen.getByRole('button', { name: 'Interior' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
+    expect(screen.getByRole('link', { name: 'Interior' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(screen.getByRole('link', { name: 'All maps' })).not.toHaveAttribute(
+      'aria-current',
+    );
+    expect(document.title).toBe('Interior Battle Maps · Lair of Artificer');
+  });
+
+  it('shows the collection named in the address from the start', async () => {
+    const server = fakeServer();
+    await renderGallery('/maps/underground', server.api);
+
+    await waitFor(() => expect(listedMaps()).toHaveLength(2));
+    expect(server.requests).toEqual([
+      { tag: 'underground', offset: 0, limit: 21 },
+    ]);
+    expect(document.title).toBe('Underground Battle Maps · Lair of Artificer');
+  });
+
+  it('names the tab after the chosen collection while its maps are still loading', async () => {
+    const server = fakeServer(MAPS, (request, page) =>
+      request.tag === 'interior'
+        ? new Promise(() => undefined)
+        : Promise.resolve(page),
+    );
+    await renderGallery('/maps/underground', server.api);
+    await waitFor(() =>
+      expect(document.title).toBe(
+        'Underground Battle Maps · Lair of Artificer',
+      ),
+    );
+
+    await userEvent.click(screen.getByRole('link', { name: 'Interior' }));
+
+    expect(
+      screen.getByRole('list', { name: 'Loading maps' }),
+    ).toBeInTheDocument();
+    expect(document.title).toBe('Interior Battle Maps · Lair of Artificer');
+  });
+
+  it('leaves the tab as the server named it until it knows the collection', () => {
+    document.title = 'Named by the server';
+    renderSite(
+      '/maps/underground',
+      fakeServer(MAPS, () => new Promise(() => undefined)).api,
+    );
+
+    expect(
+      screen.getByRole('list', { name: 'Loading maps' }),
+    ).toBeInTheDocument();
+    expect(document.title).toBe('Named by the server');
+  });
+
+  it('keeps the gallery where it was when a map window opens over it', async () => {
+    const server = fakeServer();
+    await renderGallery('/maps/underground', server.api);
+    await waitFor(() => expect(listedMaps()).toHaveLength(2));
+
+    await userEvent.click(card('Old Crypt'));
+
+    expect(dialog()).not.toBeNull();
+    expect(location()).toBe('/maps/underground/crypt');
+    expect(server.requests).toHaveLength(1);
+    expect(screen.getByRole('link', { name: 'Underground' })).toHaveAttribute(
+      'aria-current',
+      'page',
     );
   });
 
@@ -840,20 +970,5 @@ describe('MapGallery', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(listedMaps()).toHaveLength(30));
-  });
-
-  it('opens a linked map that is not loaded yet', async () => {
-    const server = fakeServer(many(30));
-    await renderGallery('/maps?map=map-30', server.api);
-
-    await waitFor(() => expect(dialog()).not.toBeNull());
-
-    expect(heading()).toBe('Map 30');
-    expect(server.linked).toEqual(['map-30']);
-    expect(within(dialog()!).getByRole('status')).toHaveTextContent(/^Map 30$/);
-    expect(
-      within(dialog()!).getByTestId('swipe-track').querySelector('img')!
-        .parentElement!.className,
-    ).toContain('bg-surface');
   });
 });

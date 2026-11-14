@@ -18,6 +18,7 @@ interface Gestures {
   onPinch: (pinching: boolean) => void;
   onHold: (holding: boolean) => void;
   onWheel: () => void;
+  wheelNeedsKey: () => boolean;
 }
 
 function distance(one: Point, other: Point): number {
@@ -61,6 +62,10 @@ function watchGestures(stage: HTMLElement, gestures: Gestures): () => void {
   }
 
   function handleWheel(event: WheelEvent) {
+    if (gestures.wheelNeedsKey() && !event.ctrlKey && !event.metaKey) {
+      return;
+    }
+
     event.preventDefault();
     gestures.onWheel();
     const view = gestures.view();

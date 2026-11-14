@@ -20,6 +20,7 @@ interface ZoomControls {
   view: ZoomView;
   onChange: (view: ZoomView) => void;
   onPinch: (pinching: boolean) => void;
+  wheelNeedsKey?: boolean;
 }
 
 interface ZoomPanProps {
@@ -126,6 +127,7 @@ function ZoomPan({ zoom, className, style, children }: ZoomPanProps) {
       onPinch: (pinching) => latest.current.zoom?.onPinch(pinching),
       onHold: setHolding,
       onWheel: () => latest.current.noteWheel(),
+      wheelNeedsKey: () => latest.current.zoom?.wheelNeedsKey === true,
     });
   }, [zoomable]);
 

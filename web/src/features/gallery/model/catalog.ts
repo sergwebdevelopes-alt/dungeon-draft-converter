@@ -1,4 +1,8 @@
-import type { MapEntry, Squares } from '@contracts/gallery-api.ts';
+import type {
+  CollectionLink,
+  MapEntry,
+  Squares,
+} from '@contracts/gallery-api.ts';
 
 interface Picture {
   view: string;
@@ -21,6 +25,16 @@ function mapCaption(map: MapEntry): string {
 
 function findMap(maps: MapEntry[], slug: string | null): MapEntry | null {
   return maps.find((map) => map.slug === slug) ?? null;
+}
+
+function collectionAt(
+  collections: CollectionLink[],
+  slug: string | null | undefined,
+): CollectionLink | null {
+  return (
+    collections.find((collection) => collection.path.endsWith(`/${slug}`)) ??
+    null
+  );
 }
 
 function mapPictures(map: MapEntry): Picture[] {
@@ -49,6 +63,7 @@ function gridFits(picture: Picture, squares: Squares): boolean {
 }
 
 export {
+  collectionAt,
   mapCaption,
   findMap,
   gridFits,

@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { Outlet } from 'react-router';
 import type { SiteConfig } from '@/shared/config/site.ts';
 import { MotionProvider } from '@/shared/ui/motion/index.ts';
@@ -17,7 +17,12 @@ function PageLoading() {
   );
 }
 
-function PageShell({ site }: { site: SiteConfig }) {
+interface PageShellProps {
+  site: SiteConfig;
+  overlay?: ReactNode;
+}
+
+function PageShell({ site, overlay }: PageShellProps) {
   return (
     <MotionProvider>
       <div className="flex min-h-screen flex-col">
@@ -30,6 +35,7 @@ function PageShell({ site }: { site: SiteConfig }) {
         </main>
         <SiteFooter site={site} />
       </div>
+      {overlay}
     </MotionProvider>
   );
 }

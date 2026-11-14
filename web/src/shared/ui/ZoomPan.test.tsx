@@ -13,6 +13,7 @@ interface HarnessProps {
   onPinch?: (pinching: boolean) => void;
   onChange?: (view: ZoomView) => void;
   zoomable?: boolean;
+  wheelNeedsKey?: boolean;
 }
 
 function Harness({
@@ -20,6 +21,7 @@ function Harness({
   onPinch = () => undefined,
   onChange = () => undefined,
   zoomable = true,
+  wheelNeedsKey,
 }: HarnessProps) {
   const [view, setView] = useState(start);
 
@@ -30,7 +32,11 @@ function Harness({
 
   return (
     <ZoomPan
-      zoom={zoomable ? { view, onChange: change, onPinch } : undefined}
+      zoom={
+        zoomable
+          ? { view, onChange: change, onPinch, wheelNeedsKey }
+          : undefined
+      }
       className="stage"
     >
       <img src="/map.webp" alt="Map" />
@@ -174,6 +180,28 @@ describe('ZoomPan', () => {
 
     fireEvent.pointerCancel(stage(), finger(1, -50, 0));
     expect(content().style.transition).toBe(BOUNCE);
+  });
+
+  it('leaves the wheel to the page where zooming needs a key, and zooms with Ctrl, Cmd or a pinch', () => {
+    render(<Harness wheelNeedsKey />);
+
+    expect(fireEvent.wheel(stage(), { deltaY: DOUBLE, ...at(0, 0) })).toBe(
+      true,
+    );
+    expect(content().style.transform).toBe('');
+
+    expect(
+      fireEvent.wheel(stage(), { deltaY: DOUBLE, ctrlKey: true, ...at(0, 0) }),
+    ).toBe(false);
+    expect(content().style.transform).not.toBe('');
+
+    fireEvent.dblClick(stage(), at(0, 0));
+    expect(content().style.transform).toBe('');
+
+    expect(
+      fireEvent.wheel(stage(), { deltaY: DOUBLE, metaKey: true, ...at(0, 0) }),
+    ).toBe(false);
+    expect(content().style.transform).not.toBe('');
   });
 
   it('follows the wheel without a bounce, and bounces again once it rests', () => {

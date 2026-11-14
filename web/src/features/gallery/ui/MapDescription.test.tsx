@@ -55,4 +55,14 @@ describe('MapDescription', () => {
 
     expect(screen.getByText('safe haven').tagName).toBe('STRONG');
   });
+
+  it('shows the whole text without More where it is not meant to fold', () => {
+    measure(200, 40);
+    render(<MapDescription html={HTML} collapsible={false} />);
+
+    expect(screen.getByRole('region', { name: 'Description' })).not.toHaveClass(
+      'line-clamp-2',
+    );
+    expect(screen.queryByRole('button')).toBeNull();
+  });
 });

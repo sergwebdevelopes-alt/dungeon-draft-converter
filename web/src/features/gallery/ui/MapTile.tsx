@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
+import { useOpenMap } from '../hooks/useOpenMap.ts';
 import { mapCaption, picturesLabel, type MapEntry } from '../model/catalog.ts';
 
 const TILE =
@@ -51,9 +52,20 @@ function TileFrame({ children }: { children: ReactNode }) {
   return <span className="absolute inset-0 block">{children}</span>;
 }
 
-function MapTileLink({ map }: { map: MapEntry }) {
+interface MapTileLinkProps {
+  map: MapEntry;
+  opensWindow?: boolean;
+}
+
+function MapTileLink({ map, opensWindow = true }: MapTileLinkProps) {
+  const { windowState } = useOpenMap();
+
   return (
-    <Link to={`/maps?map=${map.slug}`} className={`${TILE} aspect-[4/5]`}>
+    <Link
+      to={map.path}
+      state={opensWindow ? windowState(map) : undefined}
+      className={`${TILE} aspect-[4/5]`}
+    >
       <TileFrame>
         <TileImage map={map} />
       </TileFrame>

@@ -34,8 +34,13 @@ function useClipped(open: boolean, html: string) {
   return { ref, clipped };
 }
 
-function MapDescription({ html }: { html: string }) {
-  const [open, setOpen] = useState(false);
+interface MapDescriptionProps {
+  html: string;
+  collapsible?: boolean;
+}
+
+function MapDescription({ html, collapsible = true }: MapDescriptionProps) {
+  const [open, setOpen] = useState(!collapsible);
   const { ref, clipped } = useClipped(open, html);
 
   return (
@@ -47,7 +52,7 @@ function MapDescription({ html }: { html: string }) {
         className={`${DESCRIPTION} ${open ? '' : COLLAPSED}`}
         dangerouslySetInnerHTML={{ __html: html }}
       />
-      {(clipped || open) && (
+      {collapsible && (clipped || open) && (
         <button
           type="button"
           aria-expanded={open}

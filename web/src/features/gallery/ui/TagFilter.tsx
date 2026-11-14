@@ -1,39 +1,40 @@
+import { Link } from 'react-router';
+import type { CollectionLink } from '@contracts/gallery-api.ts';
+
 interface TagFilterProps {
-  tags: string[];
+  collections: CollectionLink[];
   active: string | null;
-  onChange: (tag: string | null) => void;
 }
 
-const CHIP =
-  'inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-bold whitespace-nowrap text-muted transition-colors hover:text-text aria-pressed:bg-text aria-pressed:text-bg';
+const ALL_MAPS = '/maps';
 
-function TagFilter({ tags, active, onChange }: TagFilterProps) {
+const CHIP =
+  'inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-bold whitespace-nowrap text-muted transition-colors hover:text-text aria-[current=page]:bg-text aria-[current=page]:text-bg';
+
+function TagFilter({ collections, active }: TagFilterProps) {
   return (
-    <div
-      role="group"
+    <nav
       aria-label="Filter maps"
       className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:w-fit sm:flex-wrap sm:rounded-[26px] sm:bg-surface/70 sm:p-1 sm:ring-1 sm:ring-line"
     >
-      <button
-        type="button"
+      <Link
+        to={ALL_MAPS}
         className={CHIP}
-        aria-pressed={active === null}
-        onClick={() => onChange(null)}
+        aria-current={active === null ? 'page' : undefined}
       >
         All maps
-      </button>
-      {tags.map((tag) => (
-        <button
-          key={tag}
-          type="button"
+      </Link>
+      {collections.map((collection) => (
+        <Link
+          key={collection.path}
+          to={collection.path}
           className={CHIP}
-          aria-pressed={active === tag}
-          onClick={() => onChange(tag)}
+          aria-current={collection.path === active ? 'page' : undefined}
         >
-          {tag}
-        </button>
+          {collection.name}
+        </Link>
       ))}
-    </div>
+    </nav>
   );
 }
 

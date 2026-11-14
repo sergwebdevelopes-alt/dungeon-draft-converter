@@ -1,6 +1,6 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, useLocation } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SITE } from '@/shared/config/site.ts';
 import { AppRoutes } from './routes.tsx';
@@ -115,5 +115,169 @@ describe('AppRoutes', () => {
     expect(document.title).toBe(
       'Free dd2vtt Converter for Dungeondraft · Lair of Artificer',
     );
+  });
+});
+
+const CASTLE = {
+  slug: 'castle',
+  path: '/maps/curse-of-strahd/castle',
+  title: 'Castle Ravenloft',
+  tags: ['Curse of Strahd'],
+  width: 2000,
+  height: 3000,
+  patreonUrl: 'https://www.patreon.com/posts/castle',
+  images: {
+    card: '/maps/1/castle/card.webp',
+    view: '/maps/1/castle/view.webp',
+    backdrop: '/maps/1/castle/backdrop.webp',
+  },
+};
+
+const GALLERY = {
+  maps: [CASTLE],
+  total: 1,
+  tags: ['Curse of Strahd'],
+  collections: [{ name: 'Curse of Strahd', path: '/maps/curse-of-strahd' }],
+};
+
+function answerFor(url: string): unknown {
+  if (url === '/api/highlights') {
+    return { maps: [CASTLE] };
+  }
+  if (url === '/api/maps/castle') {
+    return { map: CASTLE };
+  }
+
+  return url.startsWith('/api/maps?') ? GALLERY : CONFIG;
+}
+
+function Address() {
+  const location = useLocation();
+
+  return <output data-testid="address">{location.pathname}</output>;
+}
+
+function renderSite(path: string) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <AppRoutes site={SITE} />
+      <Address />
+    </MemoryRouter>,
+  );
+}
+
+describe('AppRoutes with maps', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          url === '/api/maps/nope'
+            ? Response.json({ error: 'No map.' }, { status: 404 })
+            : Response.json(answerFor(url)),
+        ),
+      ),
+    );
+    vi.stubGlobal('scrollTo', vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('opens a map from the home page in a window over the home page', async () => {
+    renderSite('/');
+    const latest = within(
+      await screen.findByRole('region', { name: 'Latest maps' }),
+    );
+
+    await userEvent.click(
+      latest.getByRole('link', { name: /Castle Ravenloft/ }),
+    );
+
+    const window = await screen.findByRole('dialog');
+    expect(
+      within(window).getByRole('heading', { name: 'Castle Ravenloft' }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('address')).toHaveTextContent(
+      '/maps/curse-of-strahd/castle',
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Battle maps for epic adventures' }),
+    ).toBeInTheDocument();
+    expect(document.title).toBe(
+      'Castle Ravenloft Battle Map · Curse of Strahd · Lair of Artificer',
+    );
+
+    await userEvent.click(
+      within(window).getByRole('button', { name: 'Close' }),
+    );
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.getByTestId('address')).toHaveTextContent(/^\/$/);
+    expect(document.title).toBe(
+      'D&D Battle Maps for Foundry VTT & Roll20 · Lair of Artificer',
+    );
+  });
+
+  it('opens a map from the gallery in a window over the gallery', async () => {
+    renderSite('/maps');
+
+    const card = await screen.findByRole('button', {
+      name: /Castle Ravenloft/,
+    });
+    expect(card.querySelector('img')).not.toBeNull();
+
+    await userEvent.click(card);
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(card.querySelector('img')).toBeNull();
+    expect(screen.getByTestId('address')).toHaveTextContent(
+      '/maps/curse-of-strahd/castle',
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Maps from the Lair' }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the page of a map to a visitor who comes by its address', async () => {
+    renderSite('/maps/curse-of-strahd/castle');
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Castle Ravenloft',
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(
+      screen.getByRole('navigation', { name: 'Breadcrumb' }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the not-found page for a map that does not exist', async () => {
+    renderSite('/maps/curse-of-strahd/nope');
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'This passage leads nowhere',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows a collection at its own address, named in the heading and the tab', async () => {
+    renderSite('/maps/curse-of-strahd');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Curse of Strahd' }),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(document.title).toBe(
+        'Curse of Strahd Battle Maps · Lair of Artificer',
+      ),
+    );
+    expect(
+      screen.getByRole('link', { name: 'Curse of Strahd' }),
+    ).toHaveAttribute('aria-current', 'page');
   });
 });
