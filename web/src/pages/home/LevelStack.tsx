@@ -85,7 +85,7 @@ function liftStyle(level: number, merged: boolean): CSSProperties {
 }
 
 function outlineClass(merged: boolean): string {
-  return `${OUTLINE} ${merged ? 'bg-transparent ring-transparent' : 'bg-white/4 ring-gold/45'}`;
+  return `${OUTLINE} ${merged ? 'bg-transparent ring-transparent' : 'bg-text/5 ring-gold/45'}`;
 }
 
 function outlineFade(merged: boolean): CSSProperties {

@@ -33,7 +33,7 @@ function TileCaption({ map, featured = false }: TileCaptionProps) {
   return (
     <span className="pointer-events-none absolute inset-x-0 bottom-0 grid gap-1 bg-linear-to-t from-black/85 via-black/40 to-transparent p-4 pt-20 text-white sm:p-5 sm:pt-24">
       {levels && (
-        <span className="text-xs font-bold tracking-[0.15em] text-gold uppercase">
+        <span className="text-xs font-bold tracking-[0.15em] text-on-picture uppercase">
           {levels}
         </span>
       )}

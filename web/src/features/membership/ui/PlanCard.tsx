@@ -4,7 +4,7 @@ import { formatPrice, periodLabel } from '../model/price.ts';
 
 function PlanCard({ plan }: { plan: MembershipPlan }) {
   const ring = plan.featured
-    ? 'ring-2 ring-gold shadow-[0_24px_60px_-20px_rgb(241_214_119/0.35)]'
+    ? 'ring-2 ring-gold shadow-[0_24px_60px_-20px] shadow-gold/35'
     : 'ring-1 ring-line';
 
   return (

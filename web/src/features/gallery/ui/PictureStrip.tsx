@@ -8,8 +8,8 @@ interface PictureStripProps {
 }
 
 const THUMB =
-  'block h-12 w-[4.5rem] overflow-hidden rounded-md transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold';
-const ACTIVE = 'ring-2 ring-gold';
+  'block h-12 w-[4.5rem] overflow-hidden rounded-md transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-picture';
+const ACTIVE = 'ring-2 ring-on-picture';
 const INACTIVE = 'opacity-60 ring-1 ring-white/25 hover:opacity-100';
 
 function centreInList(list: HTMLElement, item: HTMLElement) {

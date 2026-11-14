@@ -17,7 +17,7 @@ function Benefits() {
       {BENEFITS.map((benefit) => (
         <li
           key={benefit.title}
-          className="grid content-start gap-1.5 rounded-2xl bg-white/4 p-4 ring-1 ring-line/60"
+          className="grid content-start gap-1.5 rounded-2xl bg-text/5 p-4 ring-1 ring-line/60"
         >
           <span className="text-sm font-bold text-gold sm:text-base">
             {benefit.title}
