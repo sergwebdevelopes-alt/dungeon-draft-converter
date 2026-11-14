@@ -1,4 +1,10 @@
-import { useId, useState, type MouseEvent, type SyntheticEvent } from 'react';
+import {
+  useId,
+  useRef,
+  useState,
+  type MouseEvent,
+  type SyntheticEvent,
+} from 'react';
 import { useArrowKeys } from '@/shared/lib/useArrowKeys.ts';
 import { useLoadedImages } from '@/shared/lib/useLoadedImages.ts';
 import { useModalDialog } from '@/shared/lib/useModalDialog.ts';
@@ -58,6 +64,7 @@ function MapModal({ map, morph, onClose }: MapModalProps) {
 
   const zoom = useZoom(position);
   const [pinching, setPinching] = useState(false);
+  const pressedBackdrop = useRef(false);
   const zoomed = isZoomed(zoom.view);
 
   useArrowKeys(several, showPrevious, showNext);
@@ -94,8 +101,12 @@ function MapModal({ map, morph, onClose }: MapModalProps) {
     onClose();
   }
 
+  function handleBackdropPress(event: MouseEvent) {
+    pressedBackdrop.current = event.target === event.currentTarget;
+  }
+
   function handleBackdropClick(event: MouseEvent) {
-    if (event.target === event.currentTarget) {
+    if (pressedBackdrop.current && event.target === event.currentTarget) {
       onClose();
     }
   }
@@ -105,6 +116,7 @@ function MapModal({ map, morph, onClose }: MapModalProps) {
       ref={dialogRef}
       aria-labelledby={titleId}
       onCancel={handleCancel}
+      onMouseDown={handleBackdropPress}
       onClick={handleBackdropClick}
       className="m-auto h-dvh max-h-none w-full max-w-none overflow-hidden bg-transparent p-0 text-text backdrop:bg-black/75 backdrop:backdrop-blur-sm sm:h-[min(92dvh,920px)] sm:w-[min(94vw,1280px)]"
     >

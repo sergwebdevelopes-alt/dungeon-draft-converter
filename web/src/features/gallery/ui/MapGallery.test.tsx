@@ -424,6 +424,24 @@ describe('MapGallery', () => {
     expect(shownPicture()).toBe('/maps/1/castle-cellar/view.webp');
   });
 
+  it('closes when the visitor clicks outside the window', async () => {
+    await renderCastle();
+
+    await userEvent.click(dialog()!);
+
+    expect(dialog()).toBeNull();
+  });
+
+  it('stays open when a drag that began on the picture ends outside the window', async () => {
+    await renderCastle();
+    const window = dialog()!;
+
+    fireEvent.mouseDown(within(window).getByTestId('swipe-track'));
+    fireEvent.click(window);
+
+    expect(dialog()).toBe(window);
+  });
+
   it('zooms the picture with one button and goes back with the same one', async () => {
     await renderCastle();
 
