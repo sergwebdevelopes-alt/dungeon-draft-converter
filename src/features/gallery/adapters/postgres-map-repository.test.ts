@@ -276,6 +276,54 @@ describe('createPostgresMapRepository', () => {
     assert.equal(await store.findMap('nope'), null);
   });
 
+  async function newestSlugs(count: number): Promise<string[]> {
+    return (await store.listNewestPerCollection(count)).map((m) => m.slug);
+  }
+
+  it('picks the newest map of each collection, newest first', async () => {
+    await store.replaceMaps([
+      published('1', 2021, ['Barovia']),
+      published('2', 2022, ['Waterdeep']),
+      published('3', 2023, ['Barovia']),
+      published('4', 2024, ['Ships']),
+      published('5', 2025, ['Barovia']),
+    ]);
+
+    assert.deepEqual(await newestSlugs(3), ['map-5', 'map-4', 'map-2']);
+  });
+
+  it('keeps to the collections with the newest maps when there are too many', async () => {
+    await store.replaceMaps([
+      published('1', 2021, ['Barovia']),
+      published('2', 2022, ['Waterdeep']),
+      published('3', 2023, ['Ships']),
+    ]);
+
+    assert.deepEqual(await newestSlugs(2), ['map-3', 'map-2']);
+  });
+
+  it('fills up with the next newest maps when there are too few collections', async () => {
+    await store.replaceMaps([
+      published('1', 2021, ['Barovia']),
+      published('2', 2022, ['Barovia']),
+      published('3', 2023, ['Waterdeep']),
+      published('4', 2024, ['Barovia']),
+    ]);
+
+    assert.deepEqual(await newestSlugs(3), ['map-4', 'map-3', 'map-2']);
+  });
+
+  it('shows a map that is the newest of two collections once', async () => {
+    await store.replaceMaps(SHELF);
+
+    assert.deepEqual(await newestSlugs(3), ['map-5', 'map-4', 'map-2']);
+    assert.deepEqual(await newestSlugs(1), ['map-5']);
+  });
+
+  it('picks nothing from an empty gallery', async () => {
+    assert.deepEqual(await newestSlugs(4), []);
+  });
+
   it('saves every image of a map, the cover first, and reads them back', async () => {
     const roof = {
       url: 'https://cdn.test/roof.jpg',

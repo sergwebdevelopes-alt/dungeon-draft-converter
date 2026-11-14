@@ -56,9 +56,17 @@ const SITE_WITH_PLANS: SiteConfig = {
   },
 };
 
+const HIGHLIGHTS = [
+  entry('library', 'Submerged Library', 56, 73),
+  entry('shrine', 'Shrine of Shar'),
+  entry('field', 'Field of Triumph'),
+  entry('brothel', 'Elite Brothel'),
+];
+
 function api(
   maps: MapEntry[] | null = MAPS,
   total = maps?.length ?? 0,
+  highlights: MapEntry[] = HIGHLIGHTS,
 ): GalleryApi {
   return {
     fetchPage: () =>
@@ -66,6 +74,8 @@ function api(
         ? Promise.resolve({ maps, total, tags: [] })
         : new Promise(() => undefined),
     fetchMap: () => Promise.resolve(null),
+    fetchHighlights: () =>
+      maps ? Promise.resolve(highlights) : new Promise(() => undefined),
     prefetchFirstPage: () => Promise.resolve(),
   };
 }
@@ -111,18 +121,20 @@ describe('HomePage', () => {
     expect(buttons[0]).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('links the latest maps straight to their gallery modal', async () => {
+  it('links the newest map of each collection straight to its gallery modal', async () => {
     await renderHome();
 
-    const latest = within(screen.getByRole('region', { name: 'Latest maps' }));
+    const latest = within(
+      await screen.findByRole('region', { name: 'Latest maps' }),
+    );
     const links = latest
       .getAllByRole('link')
       .filter((link) => link.getAttribute('href')?.includes('?map='));
     expect(links.map((link) => link.getAttribute('href'))).toEqual([
       '/maps?map=library',
-      '/maps?map=falls',
-      '/maps?map=portal',
-      '/maps?map=cavern',
+      '/maps?map=shrine',
+      '/maps?map=field',
+      '/maps?map=brothel',
     ]);
     expect(
       latest.getByRole('link', { name: 'See all 7 maps' }),

@@ -130,6 +130,7 @@ function fakeServer(
         linked.push(slug);
         return Promise.resolve(maps.find((map) => map.slug === slug) ?? null);
       },
+      fetchHighlights: () => Promise.resolve([]),
       prefetchFirstPage: () => Promise.resolve(),
     },
   };

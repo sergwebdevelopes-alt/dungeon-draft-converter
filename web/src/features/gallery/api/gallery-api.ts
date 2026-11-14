@@ -1,12 +1,17 @@
 import { http, HttpError, type HttpClient } from '@/shared/http/index.ts';
 import { abortable } from '@/shared/lib/abortable.ts';
-import type { MapResponse, MapsResponse } from '@contracts/gallery-api.ts';
+import type {
+  HighlightsResponse,
+  MapResponse,
+  MapsResponse,
+} from '@contracts/gallery-api.ts';
 import type { MapEntry } from '../model/catalog.ts';
 import { firstPage, type PageRequest } from '../model/map-pages.ts';
 
 interface GalleryApi {
   fetchPage(request: PageRequest, signal: AbortSignal): Promise<MapsResponse>;
   fetchMap(slug: string, signal: AbortSignal): Promise<MapEntry | null>;
+  fetchHighlights(signal: AbortSignal): Promise<MapEntry[]>;
   prefetchFirstPage(): Promise<void>;
 }
 
@@ -95,6 +100,18 @@ function createGalleryApi(client: HttpClient): GalleryApi {
 
     fetchMap(slug, signal) {
       return loadMap(client, slug, signal);
+    },
+
+    async fetchHighlights(signal) {
+      const { maps } = await client.getJson<Partial<HighlightsResponse>>(
+        '/api/highlights',
+        { signal },
+      );
+      if (!Array.isArray(maps)) {
+        throw new Error('The highlights have no maps list.');
+      }
+
+      return maps;
     },
 
     async prefetchFirstPage() {

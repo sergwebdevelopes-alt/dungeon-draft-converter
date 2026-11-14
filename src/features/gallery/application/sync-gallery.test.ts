@@ -84,6 +84,7 @@ function fakeMapStore() {
   const store: MapRepository = {
     listMaps: () => Promise.resolve(stored),
     listMapsPage: () => Promise.reject(new Error('Not used.')),
+    listNewestPerCollection: () => Promise.reject(new Error('Not used.')),
     listTags: () => Promise.reject(new Error('Not used.')),
     findMap: () => Promise.reject(new Error('Not used.')),
     lastSyncedAt: () => Promise.reject(new Error('Not used.')),

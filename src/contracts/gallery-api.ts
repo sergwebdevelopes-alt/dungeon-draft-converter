@@ -36,11 +36,16 @@ interface MapsResponse {
   tags: string[];
 }
 
+interface HighlightsResponse {
+  maps: MapEntry[];
+}
+
 interface MapResponse {
   map: MapEntry;
 }
 
 export type {
+  HighlightsResponse,
   MapEntry,
   MapImageUrls,
   MapPicture,

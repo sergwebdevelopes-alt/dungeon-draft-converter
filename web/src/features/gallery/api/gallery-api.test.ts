@@ -31,6 +31,26 @@ function signal(): AbortSignal {
 }
 
 describe('createGalleryApi', () => {
+  it('asks for the highlights and gives their maps', async () => {
+    const http = fakeHttp({ maps: [{ slug: 'cave' }, { slug: 'inn' }] });
+    const stop = signal();
+
+    await expect(
+      createGalleryApi(http.client).fetchHighlights(stop),
+    ).resolves.toEqual([{ slug: 'cave' }, { slug: 'inn' }]);
+    expect(http.getJson).toHaveBeenCalledExactlyOnceWith('/api/highlights', {
+      signal: stop,
+    });
+  });
+
+  it('refuses highlights without a maps list', async () => {
+    const http = fakeHttp({ ok: true });
+
+    await expect(
+      createGalleryApi(http.client).fetchHighlights(signal()),
+    ).rejects.toThrow('The highlights have no maps list.');
+  });
+
   it('asks for one page of one collection', async () => {
     const http = fakeHttp(PAGE);
     const stop = signal();

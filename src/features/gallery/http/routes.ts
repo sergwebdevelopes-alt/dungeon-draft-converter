@@ -1,10 +1,15 @@
 import express, { Router, type Request, type RequestHandler } from 'express';
-import { GALLERY_PAGE_SIZE, MAX_GALLERY_PAGE_SIZE } from '../../../config.ts';
+import {
+  GALLERY_HIGHLIGHTS,
+  GALLERY_PAGE_SIZE,
+  MAX_GALLERY_PAGE_SIZE,
+} from '../../../config.ts';
 import { HttpError } from '../../../infrastructure/http-server/http-errors.ts';
 import type { GallerySync } from '../application/sync-gallery.ts';
 import { isSyncStale, type SyncSchedule } from '../domain/sync-freshness.ts';
 import type { GalleryStores } from '../ports/gallery-stores.ts';
 import type {
+  HighlightsResponse,
   MapResponse,
   MapsResponse,
 } from '../../../contracts/gallery-api.ts';
@@ -28,6 +33,7 @@ interface GalleryRoutesDeps {
   webhookSecret: string | undefined;
   syncSchedule: SyncSchedule;
   pageSizes?: PageSizes;
+  highlights?: number;
   log?: (entry: WebhookLogEntry) => void;
   now?: () => Date;
 }
@@ -105,6 +111,7 @@ function createRoutes({
     pageSize: GALLERY_PAGE_SIZE,
     maxPageSize: MAX_GALLERY_PAGE_SIZE,
   },
+  highlights = GALLERY_HIGHLIGHTS,
   log = logToConsole,
   syncSchedule,
   now = () => new Date(),
@@ -124,6 +131,17 @@ function createRoutes({
 
     res.set('Cache-Control', 'no-cache');
     res.json(found satisfies MapResponse);
+  });
+
+  router.get('/highlights', async (_req, res) => {
+    const newest = stores
+      ? await stores.maps.listNewestPerCollection(highlights)
+      : [];
+
+    res.set('Cache-Control', 'no-cache');
+    res.json({
+      maps: stores ? newest.map((map) => entryWithUrls(stores, map)) : [],
+    } satisfies HighlightsResponse);
   });
 
   router.get('/gallery/health', async (_req, res) => {

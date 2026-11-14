@@ -5,6 +5,7 @@ Web app that converts Dungeondraft `.dd2vtt` exports into VTT- and print-ready i
 ## Rules
 
 - **Every external library goes behind a port.** Define our own contract (interface or function type) and put the library in one adapter file that implements it. The rest of the code uses only the contract, so switching libraries means writing a new adapter, not changing callers. Examples: `src/features/converter/ports/zip-writer.ts` (port) with `src/features/converter/adapters/fflate-zip-writer.ts` (the only file that imports fflate), and `src/features/converter/ports/multipart-parser.ts` (port) with `src/features/converter/adapters/multer-multipart-parser.ts` (the only file that imports multer).
+- **Change only what the task needs.** Don't refactor, rename, move or tidy existing code while doing something else. Add the new code next to the old and touch old files only where the task requires it. Suggest a refactor separately and wait for a yes.
 - **Every change is covered by tests.** New behaviour gets new tests; changed behaviour gets updated tests. Tests live next to the code as `*.test.ts` (for example `src/features/converter/http/parse-convert-request.test.ts`) and run with `npm test`. Check that a new test fails without the change it covers.
 
 ## Architecture

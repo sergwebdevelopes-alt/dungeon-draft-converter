@@ -134,6 +134,25 @@ const TAGS_IN_ORDER_SEEN = `SELECT tag FROM (
   GROUP BY tag
   ORDER BY min(seen)`;
 
+const NEWEST_PER_COLLECTION = `WITH placed AS (
+    SELECT m.post_id, row_number() OVER (
+      PARTITION BY t.tag ORDER BY m.published_at DESC, m.post_id
+    ) AS place
+    FROM maps m, unnest(m.tags) AS t(tag)
+  ),
+  chosen AS (
+    SELECT m.*
+    FROM maps m
+    ORDER BY
+      EXISTS (
+        SELECT 1 FROM placed p WHERE p.post_id = m.post_id AND p.place = 1
+      ) DESC,
+      m.published_at DESC,
+      m.post_id
+    LIMIT $1
+  )
+  SELECT * FROM chosen ORDER BY published_at DESC, post_id`;
+
 async function countMaps(db: Database, tag: string | null): Promise<number> {
   const [{ total }] = await db.query<{ total: number }>(
     `SELECT count(*)::int AS total FROM maps WHERE ${WITH_TAG}`,
@@ -173,6 +192,12 @@ function createPostgresMapRepository(db: Database): MapRepository {
       ]);
 
       return { maps, total };
+    },
+
+    async listNewestPerCollection(count) {
+      const rows = await db.query<MapRow>(NEWEST_PER_COLLECTION, [count]);
+
+      return rows.map(toStoredMap);
     },
 
     async listTags() {

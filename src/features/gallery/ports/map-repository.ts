@@ -24,6 +24,7 @@ interface MapsPage {
 interface MapRepository {
   listMaps(): Promise<StoredMap[]>;
   listMapsPage(query: MapsPageQuery): Promise<MapsPage>;
+  listNewestPerCollection(count: number): Promise<StoredMap[]>;
   listTags(): Promise<string[]>;
   findMap(slug: string): Promise<StoredMap | null>;
   lastSyncedAt(): Promise<string | null>;

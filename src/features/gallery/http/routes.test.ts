@@ -39,6 +39,10 @@ function gallery(maps: StoredMap[]): GalleryStores {
         total: matching.length,
       });
     },
+    listNewestPerCollection: (count) =>
+      Promise.resolve(
+        maps.filter((map) => map.tags.length > 0).slice(0, count),
+      ),
     listTags: () =>
       Promise.resolve([...new Set(maps.flatMap((map) => map.tags))]),
     findMap: (slug) =>
@@ -276,6 +280,58 @@ describe('GET /api/maps/:slug', () => {
         error: 'There is no map at this address.',
       });
     }
+  });
+});
+
+describe('GET /api/highlights', () => {
+  const servers: http.Server[] = [];
+
+  after(() => {
+    for (const server of servers) {
+      server.closeAllConnections();
+      server.close();
+    }
+  });
+
+  async function highlightsOf(stores: GalleryStores | undefined) {
+    const served = await serve(stores);
+    servers.push(served.server);
+    const res = await fetch(served.url.replace(/maps$/, 'highlights'));
+
+    return {
+      res,
+      body: (await res.json()) as {
+        maps: { slug: string; images: { card: string } }[];
+      },
+    };
+  }
+
+  it('gives the four maps the gallery picks, with their image URLs', async () => {
+    const { res, body } = await highlightsOf(
+      gallery([
+        stored('7', 'news'),
+        stored('6', 'castle', ['Strahd']),
+        stored('5', 'hospital', ['Original']),
+        stored('4', 'train', ['Hand Drawn']),
+        stored('3', 'hideout', ['Waterdeep']),
+        stored('2', 'cellar', ['Underdark']),
+      ]),
+    );
+
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get('cache-control'), 'no-cache');
+    assert.deepEqual(
+      body.maps.map((map) => map.slug),
+      ['castle', 'hospital', 'train', 'hideout'],
+    );
+    assert.equal(body.maps[0].images.card, '/maps/6/m/card.webp');
+  });
+
+  it('gives no maps without a database', async () => {
+    const { res, body } = await highlightsOf(undefined);
+
+    assert.equal(res.status, 200);
+    assert.deepEqual(body, { maps: [] });
   });
 });
 

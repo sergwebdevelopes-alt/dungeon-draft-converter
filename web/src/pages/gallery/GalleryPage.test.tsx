@@ -22,6 +22,7 @@ const api: GalleryApi = {
   fetchPage: () =>
     Promise.resolve({ maps: [CAVE], total: 1, tags: ['Underground'] }),
   fetchMap: () => Promise.resolve(null),
+  fetchHighlights: () => Promise.resolve([]),
   prefetchFirstPage: () => Promise.resolve(),
 };
 
