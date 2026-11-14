@@ -5,7 +5,7 @@ import {
   useState,
   type CSSProperties,
 } from 'react';
-import { useInView } from '@/shared/lib/useInView.ts';
+import { useInView } from '@/shared/hooks/useInView.ts';
 import level1 from './level-stack/level-01.webp';
 import level2 from './level-stack/level-02.webp';
 import level3 from './level-stack/level-03.webp';

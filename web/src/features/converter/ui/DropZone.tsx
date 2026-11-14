@@ -1,4 +1,4 @@
-import { useFileDrop } from '@/shared/lib/useFileDrop.ts';
+import { useFileDrop } from '@/shared/hooks/useFileDrop.ts';
 
 interface DropZoneProps {
   disabled: boolean;

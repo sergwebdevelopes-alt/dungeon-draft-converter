@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from 'react';
-import { useFileDrop } from '@/shared/lib/useFileDrop.ts';
-import { useObjectUrl } from '@/shared/lib/useObjectUrl.ts';
+import { useFileDrop } from '@/shared/hooks/useFileDrop.ts';
+import { useObjectUrl } from '@/shared/hooks/useObjectUrl.ts';
 import { GridOverlay } from '@/shared/ui/GridOverlay.tsx';
 import type { GridChoice } from '../model/grid-choice.ts';
 import type { LogoPlacement } from '../model/types.ts';

@@ -1,5 +1,5 @@
 import { useEffect, type FormEvent } from 'react';
-import { usePreventPageDrop } from '@/shared/lib/useFileDrop.ts';
+import { usePreventPageDrop } from '@/shared/hooks/useFileDrop.ts';
 import { Alert } from '@/shared/ui/Alert.tsx';
 import {
   canSubmit,

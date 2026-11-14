@@ -1,6 +1,6 @@
 import { useState, type FocusEvent } from 'react';
-import { useRotation } from '@/shared/lib/useRotation.ts';
-import { Backdrop } from '@/shared/ui/Backdrop.tsx';
+import { useRotation } from '@/shared/hooks/useRotation.ts';
+import { Backdrop } from './Backdrop.tsx';
 import { ButtonLink } from '@/shared/ui/Button.tsx';
 import { Container } from '@/shared/ui/Container.tsx';
 import { Reveal } from '@/shared/ui/motion/index.ts';

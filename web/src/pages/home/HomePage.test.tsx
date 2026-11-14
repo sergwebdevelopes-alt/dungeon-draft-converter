@@ -94,6 +94,14 @@ async function renderHome(fake = api(), site = SITE_WITH_PLANS) {
 }
 
 describe('HomePage', () => {
+  it('names the tab after the site and its tagline', async () => {
+    await renderHome();
+
+    expect(document.title).toBe(
+      'Lair of Artificer · Battle maps for epic adventures',
+    );
+  });
+
   it('shows the hero with links to the maps and to membership', async () => {
     await renderHome();
 

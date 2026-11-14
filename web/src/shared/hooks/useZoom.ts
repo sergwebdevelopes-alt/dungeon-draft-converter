@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { UNZOOMED, toggleZoom, zoomStep, type ZoomView } from './zoom.ts';
+import {
+  UNZOOMED,
+  toggleZoom,
+  zoomStep,
+  type ZoomView,
+} from '@/shared/lib/zoom.ts';
 
 interface Zoom {
   view: ZoomView;

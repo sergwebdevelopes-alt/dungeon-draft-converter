@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { useNearViewport } from '@/shared/lib/useNearViewport.ts';
+import { useNearViewport } from '@/shared/hooks/useNearViewport.ts';
 import { Button } from '@/shared/ui/Button.tsx';
 import { Alert } from '@/shared/ui/Alert.tsx';
 import { Reveal } from '@/shared/ui/motion/index.ts';
-import { PageTitle } from '@/shared/ui/PageTitle.tsx';
+import { usePageTitle } from '@/shared/hooks/usePageTitle.ts';
 import type { GalleryApi } from '../api/gallery-api.ts';
 import { findMap } from '../model/catalog.ts';
 import { hasMore, type PagesState } from '../model/map-pages.ts';
@@ -101,10 +101,10 @@ function Gallery({ state, api, onLoadMore }: GalleryProps) {
   const listed = findMap(maps, slug);
   const openMap = useLinkedMap(slug, listed, api);
   const registerCard = useCardFocus(openMap?.slug ?? null);
+  usePageTitle(openMap?.title ?? 'Maps');
 
   return (
     <>
-      <PageTitle title={openMap?.title ?? 'Maps'} />
       <ul className={GRID}>
         {maps.map((map, i) => (
           <li
@@ -145,11 +145,10 @@ interface MapGalleryProps {
 function MapGallery({ api }: MapGalleryProps) {
   const { state, chooseTag, loadMore } = useMapPages(api);
   const loaded = state.status !== 'loading' && state.status !== 'error';
+  usePageTitle('Maps', { enabled: !loaded });
 
   return (
     <>
-      {!loaded && <PageTitle title="Maps" />}
-
       {state.tags.length > 0 && (
         <TagFilter tags={state.tags} active={state.tag} onChange={chooseTag} />
       )}

@@ -1,5 +1,5 @@
 import { formatDuration } from '@/shared/lib/format.ts';
-import { useElapsed } from '@/shared/lib/useElapsed.ts';
+import { useElapsed } from '@/shared/hooks/useElapsed.ts';
 import { Alert } from '@/shared/ui/Alert.tsx';
 import { Button } from '@/shared/ui/Button.tsx';
 import {

@@ -1,5 +1,5 @@
 import { SITE, type SiteConfig } from '@/shared/config/site.ts';
-import { PageTitle } from '@/shared/ui/PageTitle.tsx';
+import { usePageTitle } from '@/shared/hooks/usePageTitle.ts';
 import {
   useHighlights,
   useLatestMaps,
@@ -25,6 +25,7 @@ interface HomePageProps {
 }
 
 function HomePage({ api, site = SITE }: HomePageProps) {
+  usePageTitle();
   const latest = useLatestMaps(api);
   const highlights = useHighlights(api);
   const maps = latest.status === 'ready' ? latest.maps : [];
@@ -32,7 +33,6 @@ function HomePage({ api, site = SITE }: HomePageProps) {
 
   return (
     <>
-      <PageTitle />
       <Hero maps={maps.slice(0, BACKDROP_MAPS)} joinUrl={joinUrl(site)} />
       <LatestMaps maps={highlights} total={total} />
       <ConverterTeaser />

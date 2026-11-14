@@ -107,7 +107,7 @@ Four layers, each importing only from the ones below it: `app → pages → feat
 web/src/
 ├── app/           entry, App, routes (pages load lazily), layout (header, footer, page shell)
 ├── pages/         one folder per page; a page puts features together and adds its own heading
-│   ├── home/        HomePage and its own parts: Hero, LatestMaps, ConverterTeaser, LevelStack (levels of one map merging; its images in level-stack/ come from scripts/render-level-stack.ts)
+│   ├── home/        HomePage and its own parts: Hero with its Backdrop, LatestMaps, ConverterTeaser, LevelStack (levels of one map merging; its images in level-stack/ come from scripts/render-level-stack.ts)
 │   ├── gallery/     GalleryPage (heading + MapGallery + MembershipSection)
 │   ├── converter/   ConverterPage (heading + ConverterForm)
 │   └── not-found/   NotFoundPage
@@ -121,7 +121,8 @@ web/src/
 └── shared/
     ├── http/      HttpClient port + fetch adapter (only file using fetch); index.ts exports the `http` instance
     ├── storage/   KeyValueStore port + localStorage adapter; index.ts exports `storage`
-    ├── lib/       small helpers and hooks: format, save-file, abortable, useObjectUrl, useFileDrop, useElapsed, useRotation, useNearViewport, useInView, zoom (scale and pan limits) with useZoom, useLoadedImages, useScrollLock
+    ├── lib/       small helpers without React: format, save-file, abortable, zoom (scale and pan limits), zoom-gestures (wheel, drag and pinch on an element), page-title
+    ├── hooks/     shared hooks, one per file: useObjectUrl, useFileDrop, useElapsed, useRotation, useNearViewport, useInView, useLoadedImages, useScrollLock, useModalDialog, useArrowKeys, useZoom, usePageTitle
     ├── analytics/ cloudflare-analytics: adds the Cloudflare Web Analytics beacon only on the site's domain (token and domain in config/site.ts; the server's CSP allows its two origins)
     ├── theme/     light/dark choice (storage port) + toggle; web/public/theme.js applies a saved choice before React starts
     ├── ui/        shared presentational components (Button/ButtonLink, Alert, Segmented, GridOverlay, ZoomPan, …)
@@ -138,6 +139,8 @@ web/src/
 - **Imports:** inside one feature or page, relative (`../model/catalog.ts`). To another layer, `@/` from `web/src` (`@/shared/ui/Alert.tsx`, `@/features/gallery/index.ts`). Server contracts, `@contracts/` (`@contracts/gallery-api.ts`). The aliases are set in `tsconfig.json` (`paths`) and `vite.config.ts` (`resolve.alias`).
 - **Adding a page:** a folder in `pages/` with `<Name>Page.tsx`, loaded lazily in `app/routes.tsx`. Parts only that page uses live next to it.
 - **Adding a feature:** a folder in `features/` with `index.ts` and the folders it needs, and its name in the "One feature never imports another" pattern in `.oxlintrc.json`.
+- In `shared/`, a hook (`useX`) goes in `hooks/` and a helper without React goes in `lib/`; the two are never mixed in one folder.
+- `shared/ui/` holds only presentational components any page may use. Logic a component needs goes in `lib/` or `hooks/`, and a part only one page uses lives next to that page.
 - Components never fetch or touch storage; logic goes in `model/` with its own tests.
 - A feature reaches the network only through its `api/`, and storage only through `shared/storage`.
 - No DI container: modules export ready instances (`http`, `storage`, `converterApi`); hooks take them as default parameters so tests can pass fakes.

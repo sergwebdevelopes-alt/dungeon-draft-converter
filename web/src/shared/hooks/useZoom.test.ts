@@ -1,7 +1,7 @@
 import { act, fireEvent, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useZoom } from './useZoom.ts';
-import { UNZOOMED } from './zoom.ts';
+import { UNZOOMED } from '@/shared/lib/zoom.ts';
 
 function renderZoom(subject = 0) {
   return renderHook((shown: number) => useZoom(shown), {

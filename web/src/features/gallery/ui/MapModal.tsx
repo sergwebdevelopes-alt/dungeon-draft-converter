@@ -5,11 +5,11 @@ import {
   type MouseEvent,
   type SyntheticEvent,
 } from 'react';
-import { useArrowKeys } from '@/shared/lib/useArrowKeys.ts';
-import { useLoadedImages } from '@/shared/lib/useLoadedImages.ts';
-import { useModalDialog } from '@/shared/lib/useModalDialog.ts';
-import { useScrollLock } from '@/shared/lib/useScrollLock.ts';
-import { useZoom } from '@/shared/lib/useZoom.ts';
+import { useArrowKeys } from '@/shared/hooks/useArrowKeys.ts';
+import { useLoadedImages } from '@/shared/hooks/useLoadedImages.ts';
+import { useModalDialog } from '@/shared/hooks/useModalDialog.ts';
+import { useScrollLock } from '@/shared/hooks/useScrollLock.ts';
+import { useZoom } from '@/shared/hooks/useZoom.ts';
 import { isZoomed } from '@/shared/lib/zoom.ts';
 import { Reveal, SwipeCarousel } from '@/shared/ui/motion/index.ts';
 import { usePictureBrowser } from '../hooks/usePictureBrowser.ts';
