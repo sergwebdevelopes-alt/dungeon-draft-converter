@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { imageCount, presetLabel, zipName } from './summary.ts';
-import { file } from './test-config.ts';
+import { file } from '../testing/test-config.ts';
 
 describe('summary', () => {
   it('labels a preset', () => {

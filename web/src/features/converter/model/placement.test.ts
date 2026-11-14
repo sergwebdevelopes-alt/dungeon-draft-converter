@@ -4,7 +4,7 @@ import {
   defaultPlacement,
   isDefaultPlacement,
 } from './placement.ts';
-import { TEST_CONFIG } from './test-config.ts';
+import { TEST_CONFIG } from '../testing/test-config.ts';
 
 const LIMITS = TEST_CONFIG.logo;
 

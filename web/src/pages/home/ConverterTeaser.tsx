@@ -1,6 +1,6 @@
 import { ButtonLink } from '@/shared/ui/Button.tsx';
 import { Container } from '@/shared/ui/Container.tsx';
-import { LevelStack } from './LevelStack.tsx';
+import { LevelStack } from './level-stack/LevelStack.tsx';
 
 const BENEFITS = [
   { title: 'Up to 10 levels', detail: 'Merged into one map' },

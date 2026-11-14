@@ -10,7 +10,7 @@ import {
   type ConverterAction,
   type ConverterState,
 } from './converter-reducer.ts';
-import { TEST_CONFIG, file } from './test-config.ts';
+import { TEST_CONFIG, file } from '../testing/test-config.ts';
 
 const SETTINGS = {
   presets: ['JPG_70', 'WEBP_140'],

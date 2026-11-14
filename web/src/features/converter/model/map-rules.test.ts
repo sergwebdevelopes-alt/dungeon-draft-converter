@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addMaps, logoError, moveItem } from './map-rules.ts';
-import { TEST_CONFIG, file } from './test-config.ts';
+import { TEST_CONFIG, file } from '../testing/test-config.ts';
 
 describe('addMaps', () => {
   it('adds .dd2vtt files and skips ones already added', () => {

@@ -18,7 +18,7 @@ import {
 const OUTPUT_DIR = path.join(
   import.meta.dirname,
   '..',
-  'web/src/pages/home/level-stack',
+  'web/src/pages/home/level-stack/images',
 );
 const WIDTH = 1280;
 const LOGO_FLAG = '--logo';

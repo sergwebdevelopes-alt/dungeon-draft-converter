@@ -1,4 +1,4 @@
-import type { Config } from './types.ts';
+import type { Config } from '../model/types.ts';
 
 const TEST_CONFIG: Config = {
   presets: [

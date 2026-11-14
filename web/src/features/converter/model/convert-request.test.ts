@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { toConvertRequest } from './convert-request.ts';
 import { initialState } from './converter-reducer.ts';
 import { levelKey } from './map-rules.ts';
-import { TEST_CONFIG, file } from './test-config.ts';
+import { TEST_CONFIG, file } from '../testing/test-config.ts';
 
 describe('toConvertRequest', () => {
   const maps = [file('Cave.dd2vtt')];

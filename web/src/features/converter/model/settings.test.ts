@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { KeyValueStore } from '@/shared/storage/index.ts';
 import { STORAGE_KEY, loadSettings, saveSettings } from './settings.ts';
-import { TEST_CONFIG } from './test-config.ts';
+import { TEST_CONFIG } from '../testing/test-config.ts';
 
 function memoryStore(
   initial?: unknown,

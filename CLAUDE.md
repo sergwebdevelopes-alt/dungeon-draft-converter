@@ -107,7 +107,7 @@ Four layers, each importing only from the ones below it: `app → pages → feat
 web/src/
 ├── app/           entry, App, routes (pages load lazily), layout (header, footer, page shell)
 ├── pages/         one folder per page; a page puts features together and adds its own heading
-│   ├── home/        HomePage and its own parts: Hero with its Backdrop, LatestMaps, ConverterTeaser, LevelStack (levels of one map merging; its images in level-stack/ come from scripts/render-level-stack.ts)
+│   ├── home/        HomePage and its own parts: Hero with its Backdrop, LatestMaps, ConverterTeaser, level-stack/ (levels of one map merging: LevelStack, Floor, scene with the images and timings, useMergeCycle, settle-floors; the pictures in images/ come from scripts/render-level-stack.ts)
 │   ├── gallery/     GalleryPage (heading + MapGallery + MembershipSection)
 │   ├── converter/   ConverterPage (heading + ConverterForm)
 │   └── not-found/   NotFoundPage
@@ -134,7 +134,7 @@ web/src/
   - A feature imports nothing from `pages/` or `app/`, and never another feature. A page puts features together (for example `GalleryPage` adds `MembershipSection` below `MapGallery`).
   - A page uses a feature only through its `index.ts`, and never imports another page or `app/`.
   - `app/` uses a feature through its `index.ts`. The one exception: `routes.tsx` imports `galleryApi` from the feature's `api/` to prefetch the first page of maps without loading the gallery's UI.
-- A feature keeps only `index.ts` at its root; everything else goes in `api/`, `model/`, `hooks/`, `workers/` or `ui/` (only the folders it needs). Unlike the back end, a front-end feature's `index.ts` is its entry, not a barrel to avoid.
+- A feature keeps only `index.ts` at its root; everything else goes in `api/`, `model/`, `hooks/`, `workers/` or `ui/` (only the folders it needs), and values that only tests use go in `testing/` (for example `features/converter/testing/test-config.ts`), never next to the code they stand in for. Unlike the back end, a front-end feature's `index.ts` is its entry, not a barrel to avoid.
 - Feature modules run nothing when imported. `vite.config.ts` tells the bundler so (`moduleSideEffects`), which keeps a page from loading the parts of a feature's `index.ts` it does not use. After changing what an `index.ts` exports or what a page imports, compare the files in `web/dist/assets` before and after `npm run build`.
 - **Imports:** inside one feature or page, relative (`../model/catalog.ts`). To another layer, `@/` from `web/src` (`@/shared/ui/Alert.tsx`, `@/features/gallery/index.ts`). Server contracts, `@contracts/` (`@contracts/gallery-api.ts`). The aliases are set in `tsconfig.json` (`paths`) and `vite.config.ts` (`resolve.alias`).
 - **Adding a page:** a folder in `pages/` with `<Name>Page.tsx`, loaded lazily in `app/routes.tsx`. Parts only that page uses live next to it.
