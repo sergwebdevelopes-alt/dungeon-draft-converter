@@ -10,7 +10,11 @@ import type { PatreonPosts } from '../ports/patreon-posts.ts';
 import type { PatreonPost } from '../domain/patreon-post.ts';
 import type { PatreonPostDetails } from '../ports/patreon-post-details.ts';
 import type { PostDetails } from '../domain/patreon-post.ts';
-import { createGallerySync, type GallerySyncLogEntry } from './sync-gallery.ts';
+import {
+  createGallerySync,
+  type GallerySyncLogEntry,
+  type SyncRetry,
+} from './sync-gallery.ts';
 
 interface FakePatreon {
   posts: PatreonPost[];
@@ -149,7 +153,15 @@ function render(
   });
 }
 
-function setUp(state: FakePatreon, signal?: AbortSignal) {
+const AT_START = '1970-01-01T00:00:00.000Z';
+
+interface Retrying {
+  retry: SyncRetry;
+  waits: number[];
+  afterWait?: () => void;
+}
+
+function setUp(state: FakePatreon, signal?: AbortSignal, retrying?: Retrying) {
   const { patreon, source } = fakePatreon(state);
   const broken = new Set<string>();
   const { fetchImage, downloads } = fakeImageSource(broken);
@@ -166,6 +178,12 @@ function setUp(state: FakePatreon, signal?: AbortSignal) {
     log: (entry) => logs.push(entry),
     signal,
     now: () => 0,
+    retry: retrying?.retry,
+    wait: (ms) => {
+      retrying?.waits.push(ms);
+      retrying?.afterWait?.();
+      return Promise.resolve();
+    },
   });
 
   return { sync, broken, downloads, maps, files, logs };
@@ -199,6 +217,7 @@ describe('createGallerySync', () => {
     assert.deepEqual(logs, [
       {
         event: 'gallery-sync',
+        at: AT_START,
         result: 'ok',
         posts: 3,
         maps: 2,
@@ -322,6 +341,7 @@ describe('createGallerySync', () => {
     assert.deepEqual(folders(files), ['1/m1']);
     assert.deepEqual(logs[1], {
       event: 'gallery-sync',
+      at: AT_START,
       result: 'failed',
       error: 'Blocked.',
       tookMs: 0,
@@ -342,7 +362,12 @@ describe('createGallerySync', () => {
 
     assert.deepEqual(maps.stored(), []);
     assert.deepEqual(logs, [
-      { event: 'gallery-sync', result: 'cancelled', tookMs: 0 },
+      {
+        event: 'gallery-sync',
+        at: AT_START,
+        result: 'cancelled',
+        tookMs: 0,
+      },
     ]);
   });
 
@@ -360,11 +385,146 @@ describe('createGallerySync', () => {
     assert.deepEqual(logs, [
       {
         event: 'gallery-sync',
+        at: AT_START,
         result: 'failed',
         error: 'Too slow.',
         tookMs: 0,
       },
     ]);
+  });
+
+  it('tries a failed sync again after a pause and stops once it works', async () => {
+    const state: FakePatreon = {
+      posts: [post('1')],
+      details: [details('1')],
+      error: new Error('GET https://patreon.test/posts failed: ENOTFOUND.'),
+    };
+    const retrying: Retrying = {
+      retry: { times: 3, afterMs: 300_000 },
+      waits: [],
+      afterWait: () => {
+        if (retrying.waits.length === 2) {
+          state.error = undefined;
+        }
+      },
+    };
+    const { sync, maps, logs } = setUp(state, undefined, retrying);
+
+    await sync.run();
+
+    assert.deepEqual(retrying.waits, [300_000, 300_000]);
+    assert.deepEqual(
+      logs.map((entry) => [entry.result, entry.retryInMs]),
+      [
+        ['failed', 300_000],
+        ['failed', 300_000],
+        ['ok', undefined],
+      ],
+    );
+    assert.equal(maps.stored().length, 1);
+  });
+
+  it('gives up after the allowed tries, and says so in the last log line', async () => {
+    const state: FakePatreon = {
+      posts: [],
+      details: [],
+      error: new Error('Blocked.'),
+    };
+    const retrying: Retrying = {
+      retry: { times: 2, afterMs: 1_000 },
+      waits: [],
+    };
+    const { sync, logs } = setUp(state, undefined, retrying);
+
+    await sync.run();
+
+    assert.deepEqual(retrying.waits, [1_000, 1_000]);
+    assert.deepEqual(
+      logs.map((entry) => [entry.result, entry.retryInMs]),
+      [
+        ['failed', 1_000],
+        ['failed', 1_000],
+        ['failed', undefined],
+      ],
+    );
+    assert.equal('retryInMs' in logs[2], false);
+  });
+
+  it('does not try again unless it is asked to', async () => {
+    const state: FakePatreon = {
+      posts: [],
+      details: [],
+      error: new Error('Blocked.'),
+    };
+    const { sync, logs } = setUp(state);
+
+    await sync.run();
+
+    assert.equal(logs.length, 1);
+    assert.equal('retryInMs' in logs[0], false);
+  });
+
+  it('does not try a cancelled sync again', async () => {
+    const state: FakePatreon = {
+      posts: [],
+      details: [],
+      error: new DOMException('Stopped.', 'AbortError'),
+    };
+    const controller = new AbortController();
+    controller.abort();
+    const retrying: Retrying = {
+      retry: { times: 3, afterMs: 1_000 },
+      waits: [],
+    };
+    const { sync, logs } = setUp(state, controller.signal, retrying);
+
+    await sync.run();
+
+    assert.deepEqual(retrying.waits, []);
+    assert.deepEqual(
+      logs.map((entry) => entry.result),
+      ['cancelled'],
+    );
+    assert.equal('retryInMs' in logs[0], false);
+  });
+
+  it('stops trying when the server is stopped during the pause', async () => {
+    const state: FakePatreon = {
+      posts: [],
+      details: [],
+      error: new Error('Blocked.'),
+    };
+    const controller = new AbortController();
+    const retrying: Retrying = {
+      retry: { times: 3, afterMs: 1_000 },
+      waits: [],
+      afterWait: () => controller.abort(),
+    };
+    const { sync, logs } = setUp(state, controller.signal, retrying);
+
+    await sync.run();
+
+    assert.deepEqual(retrying.waits, [1_000]);
+    assert.equal(logs.length, 1);
+  });
+
+  it('stamps every log line with the date and time', async () => {
+    const { patreon, source } = fakePatreon({ posts: [], details: [] });
+    const logs: GallerySyncLogEntry[] = [];
+    const sync = createGallerySync({
+      patreon,
+      details: source,
+      fetchImage: () => Promise.reject(new Error('unused')),
+      maps: fakeMapStore().store,
+      images: fakeImageStore().images,
+      render,
+      log: (entry) => logs.push(entry),
+      now: () => Date.UTC(2026, 10, 14, 15, 47, 5, 96),
+    });
+
+    await sync.run();
+
+    assert.equal(logs[0].at, '2026-11-14T15:47:05.096Z');
   });
 
   it('gives maps with the same title their own slugs', async () => {

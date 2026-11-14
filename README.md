@@ -132,6 +132,8 @@ Environment variables, all optional. Leave a variable out or empty to use its de
 | `MAX_TOTAL_UPLOAD_MB`              | `400`                         | Largest upload for all files of one conversion together                                                                 |
 | `HTTP_CLIENT_TIMEOUT_SECONDS`      | `30`                          | Stop a request to Patreon that takes longer                                                                             |
 | `GALLERY_REQUEST_INTERVAL_SECONDS` | `1`                           | Pause between requests to Patreon during a gallery sync                                                                 |
+| `GALLERY_SYNC_RETRIES`             | `3`                           | How many times the server tries a failed gallery sync again before waiting for the next scheduled one                   |
+| `GALLERY_SYNC_RETRY_MINUTES`       | `5`                           | Pause before each of those tries                                                                                        |
 | `PATREON_WEBSITE_USER_AGENT`       | a desktop Chrome              | User-Agent for reading post descriptions from the Patreon website; change it if Patreon starts refusing them            |
 | `PATREON_WEBSITE_API_URL`          | `https://www.patreon.com/api` | Where post details are read from; point it at the relay in `deploy/patreon-relay/` when Patreon refuses the server's IP |
 | `PATREON_RELAY_KEY`                | —                             | Key the server sends to that relay (`X-Relay-Key`); the same value is the relay's `RELAY_KEY` secret                    |

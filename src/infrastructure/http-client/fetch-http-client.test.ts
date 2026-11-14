@@ -147,6 +147,33 @@ describe('createFetchHttpClient', () => {
     );
   });
 
+  it('says which address could not be reached and why, without its query', async () => {
+    const closed = http.createServer();
+    await new Promise<void>((resolve) => closed.listen(0, resolve));
+    const { port } = closed.address() as { port: number };
+    await new Promise((resolve) => closed.close(resolve));
+
+    await assert.rejects(
+      createFetchHttpClient().get(`http://127.0.0.1:${port}/api/posts?key=1`),
+      (error) => {
+        assert.ok(error instanceof Error);
+        assert.equal(
+          error.message,
+          `GET http://127.0.0.1:${port}/api/posts failed: ECONNREFUSED.`,
+        );
+        assert.ok(error.cause instanceof TypeError);
+        return true;
+      },
+    );
+  });
+
+  it('names the method of a request that could not be sent', async () => {
+    await assert.rejects(
+      createFetchHttpClient().post('http://127.0.0.1:1/token', { a: 1 }),
+      /^Error: POST http:\/\/127\.0\.0\.1:1\/token failed: /,
+    );
+  });
+
   it('stops a request that takes longer than the timeout', async () => {
     await assert.rejects(
       createFetchHttpClient(20).get(`${base}/slow`),

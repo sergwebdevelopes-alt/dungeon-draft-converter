@@ -2,6 +2,8 @@ import {
   GALLERY_DIR,
   GALLERY_IMAGES_URL,
   GALLERY_REQUEST_INTERVAL_MS,
+  GALLERY_SYNC_RETRIES,
+  GALLERY_SYNC_RETRY_MS,
   SETTINGS,
 } from './config.ts';
 import { renderMapImagesWithSharp } from './features/gallery/adapters/sharp-map-image-renderer.ts';
@@ -28,7 +30,7 @@ interface ManagedGallerySync extends GallerySync {
   stop(): void;
 }
 
-type SyncOptions = Pick<GallerySyncDeps, 'log' | 'signal'>;
+type SyncOptions = Pick<GallerySyncDeps, 'log' | 'signal' | 'retry'>;
 
 function createGalleryStores(database: Database): GalleryStores {
   return {
@@ -82,6 +84,7 @@ function createGallerySyncIfConfigured(
   const stopping = new AbortController();
   const sync = createGallerySyncFromSettings(stores, patreon, {
     signal: stopping.signal,
+    retry: { times: GALLERY_SYNC_RETRIES, afterMs: GALLERY_SYNC_RETRY_MS },
   });
 
   return {

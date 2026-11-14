@@ -54,7 +54,7 @@ src/
 │   │   └── jobs/              upload-cleanup-job
 │   └── gallery/         Patreon posts → the public map gallery
 │       ├── domain/            map-record, post-to-map-record, parse-post-title, choose-map-image, collection-chips, map-slugs, map-image-keys, gallery-sync-plan, sync-freshness, map-summary, map-page-description, choose-patreon-tokens, patreon-post, patreon-tokens, tidy-text
-│       ├── application/       sync-gallery (Patreon posts → maps, saved in one transaction, one run at a time), prepare-map-images (renders the missing files of every image of a map; a failed cover keeps the previous version, a failed extra image is left out)
+│       ├── application/       sync-gallery (Patreon posts → maps, saved in one transaction, one run at a time; on the server a failed run is tried again after a pause), prepare-map-images (renders the missing files of every image of a map; a failed cover keeps the previous version, a failed extra image is left out)
 │       ├── ports/             map-repository, image-storage, map-image-renderer, map-image-source, patreon-posts, patreon-post-details, patreon-token-repository, html-sanitizer, gallery-stores
 │       ├── adapters/          postgres-map-repository, postgres-patreon-token-repository, local-image-storage, sharp-map-image-renderer, http-map-image-source, patreon-api-posts, patreon-website-post-details, patreon-token-refresher, sanitize-html-sanitizer
 │       ├── http/              routes (/maps, /maps/:slug, /patreon/webhook), parse-maps-query, map-entry (the /api/maps shape), patreon-webhook-signature, serve-map-images (/maps/*)

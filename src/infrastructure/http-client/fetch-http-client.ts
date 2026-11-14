@@ -37,6 +37,39 @@ function withTimeout(
   return signal ? AbortSignal.any([signal, timeout]) : timeout;
 }
 
+const STOPPED = ['AbortError', 'TimeoutError'];
+
+function failureReason(error: unknown): string {
+  const cause = error instanceof Error ? error.cause : undefined;
+  if (cause instanceof Error) {
+    return 'code' in cause && typeof cause.code === 'string'
+      ? cause.code
+      : cause.message;
+  }
+
+  return error instanceof Error ? error.message : String(error);
+}
+
+function toNetworkError(error: unknown, url: string, method: string): unknown {
+  if (error instanceof Error && STOPPED.includes(error.name)) {
+    return error;
+  }
+  const { origin, pathname } = new URL(url);
+
+  return new Error(
+    `${method} ${origin}${pathname} failed: ${failureReason(error)}.`,
+    { cause: error },
+  );
+}
+
+async function send(url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch (error) {
+    throw toNetworkError(error, url, init.method ?? 'GET');
+  }
+}
+
 function createFetchHttpClient(timeoutMs = HTTP_CLIENT_TIMEOUT_MS): HttpClient {
   async function request(
     url: string,
@@ -44,7 +77,7 @@ function createFetchHttpClient(timeoutMs = HTTP_CLIENT_TIMEOUT_MS): HttpClient {
     { method, body }: Send = { method: 'GET' },
   ): Promise<Response> {
     const hasBody = body !== undefined;
-    const res = await fetch(url, {
+    const res = await send(url, {
       method,
       headers: hasBody
         ? { ...headers, 'Content-Type': 'application/json' }

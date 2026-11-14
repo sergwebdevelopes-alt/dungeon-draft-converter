@@ -21,13 +21,22 @@ import type { PatreonPostDetails } from '../ports/patreon-post-details.ts';
 
 interface GallerySyncLogEntry extends Partial<SyncCounts> {
   event: 'gallery-sync';
+  at: string;
   result: 'ok' | 'cancelled' | 'failed';
   posts?: number;
   maps?: number;
   failed?: number;
   error?: string;
+  retryInMs?: number;
   tookMs: number;
 }
+
+interface SyncRetry {
+  times: number;
+  afterMs: number;
+}
+
+type Wait = (ms: number, signal?: AbortSignal) => Promise<void>;
 
 interface GallerySyncDeps {
   patreon: PatreonPosts;
@@ -37,6 +46,8 @@ interface GallerySyncDeps {
   images: ImageStorage;
   render: RenderMapImages;
   log?: (entry: GallerySyncLogEntry) => void;
+  retry?: SyncRetry;
+  wait?: Wait;
   signal?: AbortSignal;
   now?: () => number;
 }
@@ -54,6 +65,22 @@ interface SyncResult extends SyncCounts {
 interface ReadyMaps {
   ready: MapRecord[];
   failed: number;
+}
+
+const NO_RETRY: SyncRetry = { times: 0, afterMs: 0 };
+
+function waitUnlessStopped(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true },
+    );
+  });
 }
 
 function logToConsole(entry: GallerySyncLogEntry): void {
@@ -90,6 +117,8 @@ function createGallerySync({
   images,
   render,
   log = logToConsole,
+  retry = NO_RETRY,
+  wait = waitUnlessStopped,
   signal,
   now = Date.now,
 }: GallerySyncDeps): GallerySync {
@@ -123,33 +152,62 @@ function createGallerySync({
     };
   }
 
-  async function syncAndLog(): Promise<void> {
+  function timeNow(): string {
+    return new Date(now()).toISOString();
+  }
+
+  async function syncAndLog(
+    retryInMs?: number,
+  ): Promise<GallerySyncLogEntry['result']> {
     const startedAt = now();
 
     try {
       const result = await syncOnce();
       log({
         event: 'gallery-sync',
+        at: timeNow(),
         result: 'ok',
         ...result,
         tookMs: now() - startedAt,
       });
+
+      return 'ok';
     } catch (error) {
       const cancelled = signal?.aborted === true;
 
       log(
         withoutUndefined({
           event: 'gallery-sync',
+          at: timeNow(),
           result: cancelled ? 'cancelled' : 'failed',
           error: cancelled ? undefined : errorMessage(error),
+          retryInMs: cancelled ? undefined : retryInMs,
           tookMs: now() - startedAt,
         }),
       );
+
+      return cancelled ? 'cancelled' : 'failed';
     }
   }
 
-  return { run: singleFlight(syncAndLog, signal) };
+  async function syncWithRetries(): Promise<void> {
+    for (let retriesLeft = retry.times; ; retriesLeft -= 1) {
+      const result = await syncAndLog(
+        retriesLeft > 0 ? retry.afterMs : undefined,
+      );
+      if (result !== 'failed' || retriesLeft === 0) {
+        return;
+      }
+
+      await wait(retry.afterMs, signal);
+      if (signal?.aborted) {
+        return;
+      }
+    }
+  }
+
+  return { run: singleFlight(syncWithRetries, signal) };
 }
 
 export { createGallerySync, logToConsole };
-export type { GallerySync, GallerySyncDeps, GallerySyncLogEntry };
+export type { GallerySync, GallerySyncDeps, GallerySyncLogEntry, SyncRetry };
