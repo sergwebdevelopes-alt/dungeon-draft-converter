@@ -398,6 +398,7 @@ export {
   InvalidLogoError,
   checkLogoImage,
   checkLogoPercent,
+  renderLogo,
   FORMAT_PRESETS,
   VARIANTS,
   readMapImageSize,
