@@ -5,7 +5,12 @@ import { useZoom } from '@/shared/hooks/useZoom.ts';
 import { isZoomed } from '@/shared/lib/zoom.ts';
 import { Reveal, SwipeCarousel } from '@/shared/ui/motion/index.ts';
 import { usePictureBrowser } from '../hooks/usePictureBrowser.ts';
-import { gridFits, type MapEntry } from '../model/catalog.ts';
+import {
+  gridFits,
+  pictureAlt,
+  wrapIndex,
+  type MapEntry,
+} from '../model/catalog.ts';
 import { MapDetails } from './MapDetails.tsx';
 import { MapViewer } from './MapViewer.tsx';
 import { PictureStrip } from './PictureStrip.tsx';
@@ -72,7 +77,6 @@ function MapView({
   const { showPrevious, showNext, showPicture } = browser;
 
   const canGrid = map.squares !== undefined && gridFits(picture, map.squares);
-  const alt = [map.title, map.subtitle].filter(Boolean).join(', ');
   const morphs = morph && !browser.moved;
 
   const zoom = useZoom(position);
@@ -88,7 +92,7 @@ function MapView({
       content: (
         <MapViewer
           picture={pictureAt(at)}
-          alt={alt}
+          alt={pictureAlt(map, wrapIndex(at, pictures.length))}
           grid={
             at === position && showGrid && canGrid ? map.squares : undefined
           }

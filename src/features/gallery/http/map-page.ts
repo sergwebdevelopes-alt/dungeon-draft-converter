@@ -7,6 +7,7 @@ import {
 import { slugify } from '../domain/map-slugs.ts';
 import { mapPageDescription } from '../domain/map-page-description.ts';
 import type { GalleryStores } from '../ports/gallery-stores.ts';
+import type { StoredMap } from '../ports/map-repository.ts';
 import { toMapEntry } from './map-entry.ts';
 
 const SUMMARY_LENGTH = 155;
@@ -25,6 +26,7 @@ interface MapPage extends PageText {
 interface MapLink {
   path: string;
   publishedAt: string;
+  images?: string[];
 }
 
 interface MapLinkSource extends AddressedMap {
@@ -108,6 +110,12 @@ function collectionLinks(maps: MapLinkSource[]): MapLink[] {
   }));
 }
 
+function pictureUrls(map: StoredMap, { images }: GalleryStores): string[] {
+  const entry = toMapEntry(map, (key) => images.urlFor(key));
+
+  return entry.pictures?.map((picture) => picture.view) ?? [entry.images.view];
+}
+
 function createListMapLinks(stores: GalleryStores | undefined): ListMapLinks {
   return async () => {
     const maps = stores ? await stores.maps.listMaps() : [];
@@ -117,6 +125,7 @@ function createListMapLinks(stores: GalleryStores | undefined): ListMapLinks {
       ...maps.map((map) => ({
         path: mapPagePath(map),
         publishedAt: map.publishedAt,
+        images: stores ? pictureUrls(map, stores) : [],
       })),
     ];
   };

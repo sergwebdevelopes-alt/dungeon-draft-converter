@@ -106,7 +106,7 @@ describe('MapPage', () => {
     expect(asked.maps).toEqual(['castle']);
     expect(screen.getByText('About Castle Ravenloft.')).toBeInTheDocument();
     expect(
-      screen.getByRole('img', { name: 'Castle Ravenloft, Curse of Strahd' }),
+      screen.getByRole('img', { name: 'Castle Ravenloft Battle Map' }),
     ).toHaveAttribute('src', '/maps/1/castle/view.webp');
     expect(
       screen.getByRole('link', { name: 'Get it on Patreon' }),

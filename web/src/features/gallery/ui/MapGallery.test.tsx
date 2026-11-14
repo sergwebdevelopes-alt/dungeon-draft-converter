@@ -620,6 +620,29 @@ describe('MapGallery', () => {
     ).toBe(false);
   });
 
+  it('describes every picture of a map as a battle map, with its level where there are several', async () => {
+    await renderCastle();
+    const pictures = () =>
+      [
+        ...within(dialog()!).getByTestId('swipe-track').querySelectorAll('img'),
+      ].map((img) => img.getAttribute('alt'));
+
+    expect(pictures()).toEqual([
+      'Castle, Ground floor Battle Map, level 3 of 3',
+      'Castle, Ground floor Battle Map, level 1 of 3',
+      'Castle, Ground floor Battle Map, level 2 of 3',
+    ]);
+  });
+
+  it('describes the picture on a card, so image search can find the map', async () => {
+    await renderGallery();
+
+    expect(cardImage('Ice Cave')).toHaveAttribute(
+      'alt',
+      'Ice Cave, Ground floor Battle Map',
+    );
+  });
+
   it('makes every card a link to the page of its map', async () => {
     await renderGallery('/maps', fakeApi([CASTLE, ...MAPS]));
 
@@ -794,7 +817,7 @@ describe('MapGallery', () => {
     ).toBeNull();
     expect(within(modal).queryByText(/squares/)).toBeNull();
     expect(
-      within(modal).getByRole('img', { name: 'Old Crypt' }),
+      within(modal).getByRole('img', { name: 'Old Crypt Battle Map' }),
     ).toHaveAttribute('src', '/maps/1/crypt/view.webp');
   });
 

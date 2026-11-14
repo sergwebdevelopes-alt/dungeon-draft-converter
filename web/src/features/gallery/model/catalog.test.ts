@@ -4,6 +4,7 @@ import {
   findMap,
   gridFits,
   mapPictures,
+  pictureAlt,
   picturesLabel,
   wrapIndex,
   type MapEntry,
@@ -119,5 +120,24 @@ describe('mapCaption', () => {
       'Curse of Strahd',
     );
     expect(mapCaption(map)).toBe('');
+  });
+});
+
+describe('pictureAlt', () => {
+  it('calls the picture of a map a battle map', () => {
+    expect(pictureAlt(entry('cave'), 0)).toBe('cave Battle Map');
+  });
+
+  it('says which level it is when a map has several', () => {
+    const levels = {
+      ...entry('castle'),
+      pictures: [
+        { view: '/1', thumb: '/t1', width: 4, height: 3 },
+        { view: '/2', thumb: '/t2', width: 4, height: 3 },
+      ],
+    };
+
+    expect(pictureAlt(levels, 0)).toBe('castle Battle Map, level 1 of 2');
+    expect(pictureAlt(levels, 1)).toBe('castle Battle Map, level 2 of 2');
   });
 });

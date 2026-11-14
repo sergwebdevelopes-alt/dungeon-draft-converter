@@ -11,7 +11,12 @@ const listMapLinks: ListMapLinks = () =>
   failing
     ? Promise.reject(new Error('database down'))
     : Promise.resolve([
-        { path: '/maps?map=ice-cave', publishedAt: '2026-10-12T07:08:36.000Z' },
+        {
+          path: '/maps/caves/ice-cave',
+          publishedAt: '2026-10-12T07:08:36.000Z',
+          images: ['/maps/1/2/view.webp'],
+        },
+        { path: '/maps/caves', publishedAt: '2026-10-12T07:08:36.000Z' },
       ]);
 
 describe('createSitemapRoute', () => {
@@ -61,7 +66,8 @@ describe('createSitemapRoute', () => {
         '<loc>https://lair.test/</loc>',
         '<loc>https://lair.test/maps</loc>',
         '<loc>https://lair.test/converter</loc>',
-        '<loc>https://lair.test/maps?map=ice-cave</loc><lastmod>2026-10-12T07:08:36.000Z</lastmod>',
+        '<loc>https://lair.test/maps/caves/ice-cave</loc><lastmod>2026-10-12T07:08:36.000Z</lastmod><image:image><image:loc>https://lair.test/maps/1/2/view.webp</image:loc></image:image>',
+        '<loc>https://lair.test/maps/caves</loc><lastmod>2026-10-12T07:08:36.000Z</lastmod>',
       ],
     );
   });

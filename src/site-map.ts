@@ -20,6 +20,7 @@ function createSitemapRoute(
       ...maps.map((map) => ({
         url: absolute(map.path),
         lastModified: map.publishedAt,
+        images: map.images?.map(absolute),
       })),
     ];
 

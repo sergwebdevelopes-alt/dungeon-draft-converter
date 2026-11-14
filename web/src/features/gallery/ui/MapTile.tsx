@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
+import { mapPageName } from '@contracts/site-pages.ts';
 import { useOpenMap } from '../hooks/useOpenMap.ts';
 import { mapCaption, picturesLabel, type MapEntry } from '../model/catalog.ts';
 
@@ -13,7 +14,7 @@ function TileImage({ map }: { map: MapEntry }) {
   return (
     <img
       src={map.images.card}
-      alt=""
+      alt={mapPageName(map)}
       width={640}
       height={800}
       loading="lazy"

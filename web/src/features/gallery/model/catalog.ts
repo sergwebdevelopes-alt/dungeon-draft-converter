@@ -3,6 +3,7 @@ import type {
   MapEntry,
   Squares,
 } from '@contracts/gallery-api.ts';
+import { mapPageName } from '@contracts/site-pages.ts';
 
 interface Picture {
   view: string;
@@ -37,6 +38,13 @@ function collectionAt(
   );
 }
 
+function pictureAlt(map: MapEntry, index: number): string {
+  const count = map.pictures?.length ?? 1;
+  const name = mapPageName(map);
+
+  return count > 1 ? `${name}, level ${index + 1} of ${count}` : name;
+}
+
 function mapPictures(map: MapEntry): Picture[] {
   return (
     map.pictures ?? [
@@ -67,6 +75,7 @@ export {
   mapCaption,
   findMap,
   gridFits,
+  pictureAlt,
   picturesLabel,
   squaresLabel,
   mapPictures,

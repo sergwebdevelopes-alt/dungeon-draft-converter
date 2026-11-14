@@ -166,8 +166,31 @@ describe('createListMapLinks', () => {
       {
         path: '/maps/other/tser-falls',
         publishedAt: '2025-07-01T10:00:00.000Z',
+        images: ['/maps/166553789/717019350/view.webp'],
       },
-      { path: '/maps/other/a%26b', publishedAt: '2024-09-05T16:14:17.000Z' },
+      {
+        path: '/maps/other/a%26b',
+        publishedAt: '2024-09-05T16:14:17.000Z',
+        images: ['/maps/166553789/717019350/view.webp'],
+      },
+    ]);
+  });
+
+  it('gives every picture of a map with several, the cover first', async () => {
+    const list = createListMapLinks(
+      stores([
+        storedMap({
+          images: [
+            { url: 'u1', width: 8, height: 6, mediaId: 'cover' },
+            { url: 'u2', width: 8, height: 6, mediaId: 'roof' },
+          ],
+        }),
+      ]),
+    );
+
+    assert.deepEqual((await list()).at(-1)?.images, [
+      '/maps/166553789/cover/view.webp',
+      '/maps/166553789/roof/view.webp',
     ]);
   });
 
