@@ -21,13 +21,19 @@ const CONTENT_SECURITY_POLICY = [
   "frame-ancestors 'none'",
 ].join('; ');
 
-const securityHeaders: RequestHandler = (_req, res, next) => {
+const PICTURE_PATH = /\.(webp|png|jpe?g|ico)$/i;
+
+function resourcePolicy(path: string): string {
+  return PICTURE_PATH.test(path) ? 'cross-origin' : 'same-origin';
+}
+
+const securityHeaders: RequestHandler = (req, res, next) => {
   res.set({
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'no-referrer',
     'Cross-Origin-Opener-Policy': 'same-origin',
-    'Cross-Origin-Resource-Policy': 'same-origin',
+    'Cross-Origin-Resource-Policy': resourcePolicy(req.path),
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
   });
   if (IS_PRODUCTION) {

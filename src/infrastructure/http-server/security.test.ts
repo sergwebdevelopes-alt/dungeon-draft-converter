@@ -63,6 +63,43 @@ describe('securityHeaders outside production', () => {
     }
   });
 
+  it('lets other sites show the pictures, as link previews do', async () => {
+    for (const path of [
+      '/og-image.jpg',
+      '/maps/1/2/view.webp',
+      '/icon-192.png',
+      '/photo.JPEG',
+      '/favicon.ico',
+    ]) {
+      const res = await fetch(`${base}${path}`);
+
+      assert.equal(
+        res.headers.get('cross-origin-resource-policy'),
+        'cross-origin',
+        path,
+      );
+    }
+  });
+
+  it('keeps everything else to this site', async () => {
+    for (const path of [
+      '/',
+      '/maps/curse-of-strahd/castle',
+      '/api/maps',
+      '/assets/index.js',
+      '/webp',
+      '/view.webp/details',
+    ]) {
+      const res = await fetch(`${base}${path}`);
+
+      assert.equal(
+        res.headers.get('cross-origin-resource-policy'),
+        'same-origin',
+        path,
+      );
+    }
+  });
+
   it('sets the base headers on error responses too', async () => {
     const res = await fetch(`${base}/missing`);
 
