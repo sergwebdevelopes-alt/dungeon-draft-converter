@@ -14,7 +14,9 @@ import type {
   MapsResponse,
 } from '../../../contracts/gallery-api.ts';
 import type { MapsPageQuery, StoredMap } from '../ports/map-repository.ts';
+import { slugify } from '../domain/map-slugs.ts';
 import { toMapEntry } from './map-entry.ts';
+import { collectionPagePath, mapPagePath } from './map-page.ts';
 import { parseMapsQuery, type PageSizes } from './parse-maps-query.ts';
 import { isValidSignature } from './patreon-webhook-signature.ts';
 
@@ -38,29 +40,45 @@ interface GalleryRoutesDeps {
   now?: () => Date;
 }
 
-const EMPTY_PAGE: MapsResponse = { maps: [], total: 0, tags: [] };
+const EMPTY_PAGE: MapsResponse = {
+  maps: [],
+  total: 0,
+  tags: [],
+  collections: [],
+};
 
 function logToConsole(entry: WebhookLogEntry): void {
   console.log(JSON.stringify(entry));
 }
 
 function entryWithUrls({ images }: GalleryStores, map: StoredMap) {
-  return toMapEntry(map, (key) => images.urlFor(key));
+  return {
+    ...toMapEntry(map, (key) => images.urlFor(key)),
+    path: mapPagePath(map),
+  };
+}
+
+function withTagName(query: MapsPageQuery, tags: string[]): MapsPageQuery {
+  const named = tags.find((tag) => slugify(tag) === query.tag);
+
+  return named ? { ...query, tag: named } : query;
 }
 
 async function listPage(
   stores: GalleryStores,
   query: MapsPageQuery,
 ): Promise<MapsResponse> {
-  const [page, tags] = await Promise.all([
-    stores.maps.listMapsPage(query),
-    stores.maps.listTags(),
-  ]);
+  const tags = await stores.maps.listTags();
+  const page = await stores.maps.listMapsPage(withTagName(query, tags));
 
   return {
     maps: page.maps.map((map) => entryWithUrls(stores, map)),
     total: page.total,
     tags,
+    collections: tags.map((name) => ({
+      name,
+      path: collectionPagePath(name),
+    })),
   };
 }
 

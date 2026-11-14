@@ -36,6 +36,7 @@ describe('mapData', () => {
       {
         title: 'Ice Cave Battle Map · Lair of Artificer',
         name: 'Ice Cave',
+        path: '/maps/other/ice-cave',
         description: 'A frozen cave.',
         imageUrl: '/maps/1/2/view.webp',
         imageAlt: 'Ice Cave Battle Map',

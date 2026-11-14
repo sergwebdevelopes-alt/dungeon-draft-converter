@@ -42,7 +42,7 @@ src/
 ├── config.ts            every process.env read and every limit
 ├── cli/                 migrate-database.ts (npm run db:migrate), sync-gallery-once.ts (npm run gallery:sync)
 ├── settings/            read-settings.ts (Zod, the only file importing zod), stop-on-bad-settings.ts
-├── contracts/           what the server and the web app exchange; imports nothing: converter-api (presets, variants, logo limits, ConfigResponse, QueuePosition), gallery-api (MapEntry, MapsResponse, Squares), grid-stroke, site-pages (the title and description of every page and the title rule for a map page, used by the server head and the browser tab)
+├── contracts/           what the server and the web app exchange; imports nothing: converter-api (presets, variants, logo limits, ConfigResponse, QueuePosition), gallery-api (MapEntry with the `path` of its page, MapsResponse with `collections`, Squares), grid-stroke, site-pages (the title and description of every page and the title rule for a map page, used by the server head and the browser tab)
 ├── features/
 │   ├── converter/       .dd2vtt → VTT and print images
 │   │   ├── domain/            dd2vtt-metadata, loaded-map
@@ -57,7 +57,7 @@ src/
 │       ├── application/       sync-gallery (Patreon posts → maps, saved in one transaction, one run at a time; on the server a failed run is tried again after a pause), prepare-map-images (renders the missing files of every image of a map; a failed cover keeps the previous version, a failed extra image is left out)
 │       ├── ports/             map-repository, image-storage, map-image-renderer, map-image-source, patreon-posts, patreon-post-details, patreon-token-repository, html-sanitizer, gallery-stores
 │       ├── adapters/          postgres-map-repository, postgres-patreon-token-repository, local-image-storage, sharp-map-image-renderer, http-map-image-source, patreon-api-posts, patreon-website-post-details, patreon-token-refresher, sanitize-html-sanitizer
-│       ├── http/              routes (/maps, /maps/:slug, /patreon/webhook), parse-maps-query, map-entry (the /api/maps shape), patreon-webhook-signature, serve-map-images (/maps/*)
+│       ├── http/              routes (/maps, /maps/:slug, /patreon/webhook), parse-maps-query, map-entry (the /api/maps shape), map-page (the addresses /maps/<collection> and /maps/<collection>/<map>, and the title and description of those pages), patreon-webhook-signature, serve-map-images (/maps/*)
 │       └── jobs/              gallery-sync-job
 ├── infrastructure/      technology used by several features
 │   ├── database/        Database port + pg adapter (the only file importing pg), open-database, run-migrations, migrations/*.sql, advisory-locks, test-database

@@ -7,7 +7,12 @@ import {
 import { createGalleryApi } from './gallery-api.ts';
 import { firstPage } from '../model/map-pages.ts';
 
-const PAGE = { maps: [{ slug: 'cave' }], total: 30, tags: ['Waterdeep'] };
+const PAGE = {
+  maps: [{ slug: 'cave' }],
+  total: 30,
+  tags: ['Waterdeep'],
+  collections: [{ name: 'Waterdeep', path: '/maps/waterdeep' }],
+};
 
 function fakeHttp(...bodies: Array<unknown>) {
   const getJson =
@@ -135,6 +140,18 @@ describe('createGalleryApi', () => {
     await expect(api.fetchPage(firstPage(null), signal())).resolves.toEqual(
       PAGE,
     );
+  });
+
+  it('gives no collections when an older server does not list them', async () => {
+    const { client } = fakeHttp({ maps: [], total: 0, tags: ['Waterdeep'] });
+    const api = createGalleryApi(client);
+
+    const page = await api.fetchPage(
+      { tag: 'Waterdeep', offset: 0, limit: 24 },
+      signal(),
+    );
+
+    expect(page.collections).toEqual([]);
   });
 
   it('rejects a page without a maps list', async () => {

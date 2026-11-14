@@ -1,8 +1,8 @@
 import type { Request } from 'express';
 import { NOT_FOUND_PAGE, SITE_PAGES } from './contracts/site-pages.ts';
-import {
-  mapPagePath,
-  type FindMapPage,
+import type {
+  FindCollectionPage,
+  FindMapPage,
 } from './features/gallery/http/map-page.ts';
 import type { PageImage } from './infrastructure/http-server/page-head.ts';
 import { mapData, siteData } from './structured-data.ts';
@@ -24,9 +24,16 @@ function isSitePage(path: string): path is keyof typeof SITE_PAGES {
   return Object.hasOwn(SITE_PAGES, path);
 }
 
+const MAP_PATH = /^\/maps\/[^/]+\/([^/]+)$/;
+const COLLECTION_PATH = /^\/maps\/([^/]+)$/;
+
 function requestedMapSlug(req: Request): string | null {
-  const slug = req.query.map;
-  return req.path === '/maps' && typeof slug === 'string' && slug ? slug : null;
+  const slug = MAP_PATH.exec(req.path)?.[1];
+  return slug ? decodeURIComponent(slug) : null;
+}
+
+function requestedCollectionSlug(req: Request): string | null {
+  return COLLECTION_PATH.exec(req.path)?.[1] ?? null;
 }
 
 type LogError = (message: string, error: unknown) => void;
@@ -43,6 +50,7 @@ interface SiteLinks {
 function createPageFor(
   site: SiteLinks,
   findMapPage: FindMapPage,
+  findCollectionPage: FindCollectionPage,
   logError: LogError = logToConsole,
 ): PageFor {
   const absolute = (path: string) => new URL(path, site.url).href;
@@ -72,7 +80,7 @@ function createPageFor(
       return sitePage('/maps', false);
     }
 
-    const url = absolute(mapPagePath(slug));
+    const url = absolute(map.path);
     return {
       status: 200,
       head: {
@@ -81,6 +89,39 @@ function createPageFor(
         url,
         image: { url: absolute(map.imageUrl), alt: map.imageAlt },
         structuredData: mapData(absolute, map, url),
+      },
+    };
+  }
+
+  async function findCollection(slug: string) {
+    try {
+      return await findCollectionPage(slug);
+    } catch (error) {
+      logError(
+        `Could not find the collection ${slug} for its page head:`,
+        error,
+      );
+      return LOOKUP_FAILED;
+    }
+  }
+
+  async function collectionPage(slug: string): Promise<Page | null> {
+    const collection = await findCollection(slug);
+    if (collection === LOOKUP_FAILED) {
+      return null;
+    }
+    if (!collection) {
+      return sitePage('/maps', false);
+    }
+
+    return {
+      status: 200,
+      head: {
+        title: collection.title,
+        description: collection.description,
+        url: absolute(collection.path),
+        image: siteImage,
+        noindex: false,
       },
     };
   }
@@ -106,7 +147,19 @@ function createPageFor(
   return async (req) => {
     const slug = requestedMapSlug(req);
     const map = slug ? await mapPage(slug) : null;
-    return map ?? sitePage(req.path);
+    if (map) {
+      return map;
+    }
+
+    const collectionSlug = requestedCollectionSlug(req);
+    const collection = collectionSlug
+      ? await collectionPage(collectionSlug)
+      : null;
+    if (collection) {
+      return collection;
+    }
+
+    return sitePage(slug || collectionSlug ? '/maps' : req.path);
   };
 }
 

@@ -6,6 +6,7 @@ import { GalleryPage } from './GalleryPage.tsx';
 
 const CAVE: MapEntry = {
   slug: 'cave',
+  path: '/maps/underground/cave',
   title: 'Ice Cave',
   tags: ['Underground'],
   width: 2000,
@@ -20,7 +21,12 @@ const CAVE: MapEntry = {
 
 const api: GalleryApi = {
   fetchPage: () =>
-    Promise.resolve({ maps: [CAVE], total: 1, tags: ['Underground'] }),
+    Promise.resolve({
+      maps: [CAVE],
+      total: 1,
+      tags: ['Underground'],
+      collections: [{ name: 'Underground', path: '/maps/underground' }],
+    }),
   fetchMap: () => Promise.resolve(null),
   fetchHighlights: () => Promise.resolve([]),
   prefetchFirstPage: () => Promise.resolve(),

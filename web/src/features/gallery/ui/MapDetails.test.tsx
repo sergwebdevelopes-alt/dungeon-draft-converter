@@ -6,6 +6,7 @@ import { MapDetails } from './MapDetails.tsx';
 
 const MAP: MapEntry = {
   slug: 'inn',
+  path: '/maps/curse-of-strahd/inn',
   title: 'Blue Water Inn',
   subtitle: 'Curse of Strahd',
   description: '<p>A <strong>safe haven</strong>.</p>',

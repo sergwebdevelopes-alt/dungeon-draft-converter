@@ -97,9 +97,10 @@ const MAPS = [
 ];
 
 interface PageBody {
-  maps: { slug: string }[];
+  maps: { slug: string; path: string }[];
   total: number;
   tags: string[];
+  collections: { name: string; path: string }[];
 }
 
 async function pageAt(url: string): Promise<PageBody> {
@@ -167,7 +168,12 @@ describe('GET /api/maps', () => {
 
     const res = await fetch(served.url);
 
-    assert.deepEqual(await res.json(), { maps: [], total: 0, tags: [] });
+    assert.deepEqual(await res.json(), {
+      maps: [],
+      total: 0,
+      tags: [],
+      collections: [],
+    });
   });
 
   it('gives one page with the total and every collection', async () => {
@@ -179,6 +185,41 @@ describe('GET /api/maps', () => {
     assert.deepEqual(pageSlugs(page), ['new']);
     assert.equal(page.total, 3);
     assert.deepEqual(page.tags, ['Waterdeep', 'Barovia']);
+    assert.deepEqual(page.collections, [
+      { name: 'Waterdeep', path: '/maps/waterdeep' },
+      { name: 'Barovia', path: '/maps/barovia' },
+    ]);
+  });
+
+  it('gives every map the address of its own page', async () => {
+    const served = await serve(gallery(MAPS));
+    servers.push(served.server);
+
+    const page = await pageAt(served.url);
+
+    assert.deepEqual(
+      page.maps.map((map) => map.path),
+      ['/maps/waterdeep/newest', '/maps/barovia/new', '/maps/barovia/old'],
+    );
+  });
+
+  it('finds a collection by the last part of its address too', async () => {
+    const served = await serve(gallery(MAPS));
+    servers.push(served.server);
+
+    const page = await pageAt(`${served.url}?tag=barovia`);
+
+    assert.deepEqual(pageSlugs(page), ['new', 'old']);
+    assert.equal(page.total, 2);
+  });
+
+  it('finds no maps for a collection that does not exist', async () => {
+    const served = await serve(gallery(MAPS));
+    servers.push(served.server);
+
+    const page = await pageAt(`${served.url}?tag=nowhere`);
+
+    assert.deepEqual(pageSlugs(page), []);
   });
 
   it('gives a page of one collection with its own total', async () => {
@@ -222,12 +263,13 @@ describe('GET /api/maps/:slug', () => {
 
     const res = await fetch(`${served.url}/new`);
     const body = (await res.json()) as {
-      map: { slug: string; images: { view: string } };
+      map: { slug: string; path: string; images: { view: string } };
     };
 
     assert.equal(res.status, 200);
     assert.equal(res.headers.get('cache-control'), 'no-cache');
     assert.equal(body.map.slug, 'new');
+    assert.equal(body.map.path, '/maps/barovia/new');
     assert.equal(body.map.images.view, '/maps/2/m/view.webp');
   });
 

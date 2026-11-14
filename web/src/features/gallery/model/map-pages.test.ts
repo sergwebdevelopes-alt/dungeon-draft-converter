@@ -14,6 +14,7 @@ import {
 function entry(slug: string): MapEntry {
   return {
     slug,
+    path: `/maps/interior/${slug}`,
     title: slug,
     tags: [],
     width: 1000,
@@ -36,7 +37,12 @@ function loaded(
   return pagesReducer(state, {
     type: 'pageLoaded',
     request,
-    page: { maps: entries(...slugs), total, tags: ['Waterdeep', 'Barovia'] },
+    page: {
+      maps: entries(...slugs),
+      total,
+      tags: ['Waterdeep', 'Barovia'],
+      collections: [],
+    },
   });
 }
 

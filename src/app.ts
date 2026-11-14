@@ -26,6 +26,7 @@ import type { GalleryStores } from './features/gallery/ports/gallery-stores.ts';
 import type { GallerySync } from './features/gallery/application/sync-gallery.ts';
 import * as gallery from './features/gallery/http/routes.ts';
 import {
+  createFindCollectionPage,
   createFindMapPage,
   createListMapLinks,
 } from './features/gallery/http/map-page.ts';
@@ -93,6 +94,7 @@ async function createApp(
         createPageFor(
           { url: SITE_URL, patreonUrl: SITE_PATREON_URL },
           findMapPage,
+          createFindCollectionPage(galleryStores),
         ),
       ),
     );

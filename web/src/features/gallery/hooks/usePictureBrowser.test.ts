@@ -14,6 +14,7 @@ function picture(name: string) {
 
 const SINGLE: MapEntry = {
   slug: 'cave',
+  path: '/maps/caves/cave',
   title: 'Cave',
   tags: [],
   width: 2000,

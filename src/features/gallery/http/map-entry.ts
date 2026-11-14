@@ -27,7 +27,7 @@ function pictures(map: MapRecord, urlFor: UrlFor): MapPicture[] {
   }));
 }
 
-function toMapEntry(map: MapRecord, urlFor: UrlFor): MapEntry {
+function toMapEntry(map: MapRecord, urlFor: UrlFor): Omit<MapEntry, 'path'> {
   return {
     slug: map.slug,
     title: map.title,

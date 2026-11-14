@@ -12,6 +12,7 @@ import {
 function entry(slug: string, tags: MapEntry['tags'] = ['Interior']): MapEntry {
   return {
     slug,
+    path: `/maps/interior/${slug}`,
     title: slug,
     tags,
     width: 1000,

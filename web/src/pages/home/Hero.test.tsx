@@ -7,6 +7,7 @@ import { Hero } from './Hero.tsx';
 function entry(slug: string, title: string): MapEntry {
   return {
     slug,
+    path: `/maps/interior/${slug}`,
     title,
     subtitle: 'Ground floor',
     squares: { x: 30, y: 20 },

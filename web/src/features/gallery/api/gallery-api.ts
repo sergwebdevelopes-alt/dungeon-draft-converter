@@ -50,7 +50,12 @@ async function loadPage(
     throw new Error('The map catalog has no maps list.');
   }
 
-  return { maps: page.maps, total: page.total ?? 0, tags: page.tags };
+  return {
+    maps: page.maps,
+    total: page.total ?? 0,
+    tags: page.tags,
+    collections: page.collections ?? [],
+  };
 }
 
 async function loadMap(

@@ -9,6 +9,7 @@ import { HomePage } from './HomePage.tsx';
 function entry(slug: string, title: string, x = 30, y = 20): MapEntry {
   return {
     slug,
+    path: `/maps/interior/${slug}`,
     title,
     subtitle: 'Battlemap',
     squares: { x, y },
@@ -71,7 +72,7 @@ function api(
   return {
     fetchPage: () =>
       maps
-        ? Promise.resolve({ maps, total, tags: [] })
+        ? Promise.resolve({ maps, total, tags: [], collections: [] })
         : new Promise(() => undefined),
     fetchMap: () => Promise.resolve(null),
     fetchHighlights: () =>

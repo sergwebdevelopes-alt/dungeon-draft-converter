@@ -25,6 +25,7 @@ import { MapGallery } from './MapGallery.tsx';
 function entry(slug: string, title: string, tags: MapEntry['tags']): MapEntry {
   return {
     slug,
+    path: `/maps/interior/${slug}`,
     title,
     subtitle: 'Ground floor',
     squares: { x: 20, y: 30 },
@@ -105,6 +106,7 @@ function pageFrom(maps: MapEntry[], { tag, offset, limit }: PageRequest) {
     maps: matching.slice(offset, offset + limit),
     total: matching.length,
     tags: [...new Set(maps.flatMap((map) => map.tags))],
+    collections: [],
   };
 }
 

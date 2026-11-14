@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   NOT_FOUND_PAGE,
   SITE_PAGES,
+  collectionPageText,
   mapCollection,
   mapPageName,
   mapPageTitle,
@@ -22,6 +23,23 @@ describe('SITE_PAGES', () => {
     assert.match(SITE_PAGES['/'].title, /D&D Battle Maps/);
     assert.match(SITE_PAGES['/maps'].title, /Battle Map Gallery/);
     assert.match(SITE_PAGES['/converter'].title, /dd2vtt Converter/);
+  });
+});
+
+describe('collectionPageText', () => {
+  it('names the collection as battle maps and describes it within a search result', () => {
+    const text = collectionPageText('Curse of Strahd');
+
+    assert.equal(text.title, 'Curse of Strahd Battle Maps · Lair of Artificer');
+    assert.match(text.description, /from the Curse of Strahd collection/);
+    assert.ok(text.description.length <= 155, text.description);
+  });
+
+  it('leaves a name that already says maps as it is', () => {
+    assert.equal(
+      collectionPageText('Hand Drawn Maps').title,
+      'Hand Drawn Maps · Lair of Artificer',
+    );
   });
 });
 

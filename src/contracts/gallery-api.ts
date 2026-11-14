@@ -18,6 +18,7 @@ interface MapPicture {
 
 interface MapEntry {
   slug: string;
+  path: string;
   title: string;
   subtitle?: string;
   description?: string;
@@ -30,10 +31,16 @@ interface MapEntry {
   pictures?: MapPicture[];
 }
 
+interface CollectionLink {
+  name: string;
+  path: string;
+}
+
 interface MapsResponse {
   maps: MapEntry[];
   total: number;
   tags: string[];
+  collections: CollectionLink[];
 }
 
 interface HighlightsResponse {
@@ -45,6 +52,7 @@ interface MapResponse {
 }
 
 export type {
+  CollectionLink,
   HighlightsResponse,
   MapEntry,
   MapImageUrls,

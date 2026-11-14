@@ -36,6 +36,17 @@ function mapPageTitle(map: NamedMap): string {
   );
 }
 
+function collectionPageText(collection: string): PageText {
+  const name = /\bmaps?\b/i.test(collection)
+    ? collection
+    : `${collection} Battle Maps`;
+
+  return {
+    title: pageTitle(name),
+    description: `Hand-drawn D&D battle maps from the ${collection} collection. View every level with or without the grid and get the VTT files on Patreon.`,
+  };
+}
+
 const SITE_PAGES = {
   '/': {
     title: pageTitle('D&D Battle Maps for Foundry VTT & Roll20'),
@@ -64,6 +75,7 @@ export {
   SITE_NAME,
   SITE_PAGES,
   SITE_TAGLINE,
+  collectionPageText,
   mapCollection,
   mapPageName,
   mapPageTitle,
