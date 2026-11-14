@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
+import { lazy } from 'react';
 import { describe, expect, it } from 'vitest';
 import type { SiteConfig } from '@/shared/config/site.ts';
 import { PageShell } from './PageShell.tsx';
@@ -90,5 +91,26 @@ describe('PageShell', () => {
         name: /Switch to (light|dark) theme/,
       }),
     ).toBeInTheDocument();
+  });
+
+  it('says a page is loading, but shows the mark only when loading takes a while', () => {
+    const Slow = lazy(() => new Promise<never>(() => undefined));
+    render(
+      <MemoryRouter>
+        <Routes>
+          <Route element={<PageShell site={SITE} />}>
+            <Route index element={<Slow />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const loading = within(screen.getByRole('main')).getByRole('status', {
+      name: 'Loading page',
+    });
+    expect(loading).toHaveClass(
+      'motion-safe:opacity-0',
+      'motion-safe:[animation-delay:600ms]',
+    );
   });
 });

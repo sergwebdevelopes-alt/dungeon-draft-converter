@@ -12,7 +12,7 @@ function PageLoading() {
     <div
       role="status"
       aria-label="Loading page"
-      className="mx-auto mt-10 h-1 w-24 rounded-full bg-line motion-safe:animate-pulse"
+      className="mx-auto mt-10 h-1 w-24 rounded-full bg-line motion-safe:animate-pulse motion-safe:opacity-0 motion-safe:[animation-delay:600ms]"
     />
   );
 }
