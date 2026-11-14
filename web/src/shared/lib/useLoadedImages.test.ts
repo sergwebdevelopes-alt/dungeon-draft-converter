@@ -61,4 +61,52 @@ describe('useLoadedImages', () => {
 
     expect(started).toEqual([]);
   });
+
+  it('counts a picture as arrived only once the browser has decoded it', async () => {
+    let finishDecoding = () => undefined as void;
+    const image: LoadingImage & { finish: () => void } = {
+      src: '',
+      finish: () => undefined,
+      addEventListener(_type, listener) {
+        image.finish = listener;
+      },
+      decode: () =>
+        new Promise<void>((resolve) => {
+          finishDecoding = resolve;
+        }),
+    };
+    const { result } = renderHook(() =>
+      useLoadedImages(['/a.webp'], () => image),
+    );
+
+    act(() => image.finish());
+    expect([...result.current]).toEqual([]);
+
+    await act(async () => {
+      finishDecoding();
+      await Promise.resolve();
+    });
+    expect([...result.current]).toEqual(['/a.webp']);
+  });
+
+  it('leaves out a picture the browser could not decode', async () => {
+    const image: LoadingImage & { finish: () => void } = {
+      src: '',
+      finish: () => undefined,
+      addEventListener(_type, listener) {
+        image.finish = listener;
+      },
+      decode: () => Promise.reject(new Error('broken image')),
+    };
+    const { result } = renderHook(() =>
+      useLoadedImages(['/a.webp'], () => image),
+    );
+
+    await act(async () => {
+      image.finish();
+      await Promise.resolve();
+    });
+
+    expect([...result.current]).toEqual([]);
+  });
 });
