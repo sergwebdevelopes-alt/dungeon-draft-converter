@@ -23,15 +23,11 @@ function useOpenMap() {
     return mapWindowState(location, map, morph);
   }
 
-  function open(map: MapEntry) {
-    void navigate(map.path, { state: windowState(map, true) });
-  }
-
   function close() {
     void navigate(-1);
   }
 
-  return { slug, open, close, windowState };
+  return { slug, close, windowState };
 }
 
 export { OpenMapSlug, useOpenMap, useOpenedMapWindow };

@@ -262,7 +262,7 @@ function dialog() {
 }
 
 function card(title: string) {
-  return screen.getByRole('button', { name: new RegExp(title) });
+  return screen.getByRole('link', { name: new RegExp(title) });
 }
 
 describe('MapGallery', () => {
@@ -618,6 +618,23 @@ describe('MapGallery', () => {
         deltaY: -300,
       }),
     ).toBe(false);
+  });
+
+  it('makes every card a link to the page of its map', async () => {
+    await renderGallery('/maps', fakeApi([CASTLE, ...MAPS]));
+
+    expect(card('Castle')).toHaveAttribute('href', '/maps/underground/castle');
+    expect(card('Blue Inn')).toHaveAttribute('href', '/maps/interior/inn');
+  });
+
+  it('leaves a click with Ctrl or Cmd to the browser, so the map opens in a new tab', async () => {
+    await renderGallery('/maps', fakeApi([CASTLE, ...MAPS]));
+
+    fireEvent.click(card('Castle'), { ctrlKey: true });
+    fireEvent.click(card('Castle'), { metaKey: true });
+
+    expect(dialog()).toBeNull();
+    expect(location()).toBe('/maps');
   });
 
   it('hands the picture of the open map over from its card', async () => {

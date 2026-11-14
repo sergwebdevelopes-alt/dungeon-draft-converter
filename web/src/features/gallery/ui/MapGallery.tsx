@@ -18,7 +18,7 @@ const SKELETON_CARDS = 8;
 const GRID = 'grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4';
 
 function useCardFocus(openSlug: string | null) {
-  const cards = useRef(new Map<string, HTMLButtonElement>());
+  const cards = useRef(new Map<string, HTMLAnchorElement>());
   const lastOpened = useRef<string | null>(null);
 
   useEffect(() => {
@@ -33,9 +33,9 @@ function useCardFocus(openSlug: string | null) {
   }, [openSlug]);
 
   function register(slug: string) {
-    return (button: HTMLButtonElement | null) => {
-      if (button) {
-        cards.current.set(slug, button);
+    return (card: HTMLAnchorElement | null) => {
+      if (card) {
+        cards.current.set(slug, card);
       } else {
         cards.current.delete(slug);
       }
@@ -96,7 +96,7 @@ function MoreMaps({ state, onLoadMore }: Omit<GalleryProps, 'title'>) {
 }
 
 function Gallery({ state, title, onLoadMore }: GalleryProps) {
-  const { slug, open } = useOpenMap();
+  const { slug } = useOpenMap();
   const { maps } = state;
 
   const listed = findMap(maps, slug);
@@ -116,8 +116,7 @@ function Gallery({ state, title, onLoadMore }: GalleryProps) {
                 map={map}
                 featured={i === 0}
                 isOpen={map === listed}
-                buttonRef={registerCard(map.slug)}
-                onOpen={() => open(map)}
+                cardRef={registerCard(map.slug)}
               />
             </Reveal>
           </li>

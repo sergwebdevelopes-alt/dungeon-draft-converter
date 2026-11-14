@@ -223,9 +223,10 @@ describe('AppRoutes with maps', () => {
   it('opens a map from the gallery in a window over the gallery', async () => {
     renderSite('/maps');
 
-    const card = await screen.findByRole('button', {
+    const card = await screen.findByRole('link', {
       name: /Castle Ravenloft/,
     });
+    expect(card).toHaveAttribute('href', '/maps/curse-of-strahd/castle');
     expect(card.querySelector('img')).not.toBeNull();
 
     await userEvent.click(card);

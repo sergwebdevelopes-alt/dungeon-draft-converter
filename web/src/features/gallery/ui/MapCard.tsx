@@ -1,5 +1,7 @@
 import type { Ref } from 'react';
+import { Link } from 'react-router';
 import { SharedFrame } from '@/shared/ui/motion/index.ts';
+import { useOpenMap } from '../hooks/useOpenMap.ts';
 import type { MapEntry } from '../model/catalog.ts';
 import { TILE, TileCaption, TileFrame, TileImage } from './MapTile.tsx';
 
@@ -7,22 +9,17 @@ interface MapCardProps {
   map: MapEntry;
   isOpen: boolean;
   featured?: boolean;
-  buttonRef: Ref<HTMLButtonElement>;
-  onOpen: () => void;
+  cardRef: Ref<HTMLAnchorElement>;
 }
 
-function MapCard({
-  map,
-  isOpen,
-  featured = false,
-  buttonRef,
-  onOpen,
-}: MapCardProps) {
+function MapCard({ map, isOpen, featured = false, cardRef }: MapCardProps) {
+  const { windowState } = useOpenMap();
+
   return (
-    <button
-      ref={buttonRef}
-      type="button"
-      onClick={onOpen}
+    <Link
+      ref={cardRef}
+      to={map.path}
+      state={windowState(map, true)}
       className={`${TILE} ${featured ? 'h-full min-h-80' : 'aspect-[4/5]'}`}
     >
       <TileFrame>
@@ -33,7 +30,7 @@ function MapCard({
         )}
       </TileFrame>
       <TileCaption map={map} featured={featured} />
-    </button>
+    </Link>
   );
 }
 

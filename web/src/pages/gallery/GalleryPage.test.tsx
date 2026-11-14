@@ -38,7 +38,7 @@ async function renderPage() {
       <GalleryPage api={api} />
     </MemoryRouter>,
   );
-  await screen.findByRole('button', { name: /Ice Cave/ });
+  await screen.findByRole('link', { name: /Ice Cave/ });
 }
 
 describe('GalleryPage', () => {
@@ -49,7 +49,7 @@ describe('GalleryPage', () => {
       level: 1,
       name: 'Maps from the Lair',
     });
-    const card = screen.getByRole('button', { name: /Ice Cave/ });
+    const card = screen.getByRole('link', { name: /Ice Cave/ });
     expect(
       title.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
@@ -62,7 +62,7 @@ describe('GalleryPage', () => {
     const membership = screen.getByRole('region', {
       name: 'Join the Lair of Artificer',
     });
-    const card = screen.getByRole('button', { name: /Ice Cave/ });
+    const card = screen.getByRole('link', { name: /Ice Cave/ });
     expect(
       card.compareDocumentPosition(membership) &
         Node.DOCUMENT_POSITION_FOLLOWING,
