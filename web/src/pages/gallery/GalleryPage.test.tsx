@@ -47,7 +47,7 @@ describe('GalleryPage', () => {
     expect(
       title.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    expect(document.title).toBe('Maps · Lair of Artificer');
+    expect(document.title).toBe('D&D Battle Map Gallery · Lair of Artificer');
   });
 
   it('invites visitors to become members below the maps', async () => {

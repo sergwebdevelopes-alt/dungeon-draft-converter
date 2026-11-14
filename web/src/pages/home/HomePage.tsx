@@ -1,5 +1,6 @@
 import { SITE, type SiteConfig } from '@/shared/config/site.ts';
 import { usePageTitle } from '@/shared/hooks/usePageTitle.ts';
+import { SITE_PAGES } from '@contracts/site-pages.ts';
 import {
   useHighlights,
   useLatestMaps,
@@ -25,7 +26,7 @@ interface HomePageProps {
 }
 
 function HomePage({ api, site = SITE }: HomePageProps) {
-  usePageTitle();
+  usePageTitle(SITE_PAGES['/'].title);
   const latest = useLatestMaps(api);
   const highlights = useHighlights(api);
   const maps = latest.status === 'ready' ? latest.maps : [];

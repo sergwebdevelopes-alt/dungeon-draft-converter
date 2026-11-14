@@ -92,7 +92,7 @@ describe('AppRoutes', () => {
     expect(
       await screen.findByRole('heading', { name: 'Maps from the Lair' }),
     ).toBeInTheDocument();
-    expect(document.title).toBe('Maps · Lair of Artificer');
+    expect(document.title).toBe('D&D Battle Map Gallery · Lair of Artificer');
   });
 
   it('shows a not-found page for unknown paths', async () => {
@@ -112,6 +112,8 @@ describe('AppRoutes', () => {
     renderAt('/converter');
 
     await screen.findByRole('heading', { name: 'Dungeondraft Converter' });
-    expect(document.title).toBe('Converter · Lair of Artificer');
+    expect(document.title).toBe(
+      'Free dd2vtt Converter for Dungeondraft · Lair of Artificer',
+    );
   });
 });

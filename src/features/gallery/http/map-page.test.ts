@@ -8,8 +8,6 @@ import {
   mapPagePath,
 } from './map-page.ts';
 
-const FALLBACK = 'Browse every map.';
-
 function storedMap(overrides: Partial<StoredMap> = {}): StoredMap {
   return {
     postId: '166553789',
@@ -44,37 +42,44 @@ function stores(maps: StoredMap[]): GalleryStores {
 
 describe('createFindMapPage', () => {
   it('gives a map its title, a plain summary and its view image', async () => {
-    const find = createFindMapPage(stores([storedMap()]), FALLBACK);
+    const find = createFindMapPage(stores([storedMap()]));
 
     assert.deepEqual(await find('tser-falls'), {
-      title: 'Tser Falls',
-      description: 'A roaring waterfall.',
+      title: 'Tser Falls Battle Map · Lair of Artificer',
+      name: 'Tser Falls',
+      description: 'Tser Falls, a D&D battle map. A roaring waterfall.',
       imageUrl: '/maps/166553789/717019350/view.webp',
-      imageAlt: 'Tser Falls',
+      imageAlt: 'Tser Falls Battle Map',
       patreonUrl: 'https://www.patreon.com/posts/tser-166553789',
       publishedAt: '2025-07-01T10:00:00.000Z',
     });
   });
 
-  it('uses the fallback for a map without a description', async () => {
+  it('names the collection and the size in squares where the map has them', async () => {
     const find = createFindMapPage(
       stores([
-        storedMap({ description: undefined }),
-        storedMap({ slug: 'empty', description: '<p> </p>' }),
+        storedMap({
+          subtitle: 'Curse of Strahd',
+          tags: ['Curse of Strahd'],
+          squares: { x: 60, y: 40 },
+        }),
       ]),
-      FALLBACK,
     );
+    const page = await find('tser-falls');
 
-    assert.equal((await find('tser-falls'))?.description, FALLBACK);
-    assert.equal((await find('empty'))?.description, FALLBACK);
+    assert.equal(
+      page?.title,
+      'Tser Falls Battle Map · Curse of Strahd · Lair of Artificer',
+    );
+    assert.equal(
+      page?.description,
+      'Tser Falls, a 60 × 40 D&D battle map for Curse of Strahd. A roaring waterfall.',
+    );
   });
 
   it('finds nothing for an unknown map or without a gallery', async () => {
-    assert.equal(await createFindMapPage(stores([]), FALLBACK)('nope'), null);
-    assert.equal(
-      await createFindMapPage(undefined, FALLBACK)('tser-falls'),
-      null,
-    );
+    assert.equal(await createFindMapPage(stores([]))('nope'), null);
+    assert.equal(await createFindMapPage(undefined)('tser-falls'), null);
   });
 });
 

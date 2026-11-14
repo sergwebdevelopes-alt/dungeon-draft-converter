@@ -31,7 +31,6 @@ import {
 } from './features/gallery/http/map-page.ts';
 import { createSitemapRoute } from './site-map.ts';
 import { createPageFor } from './page-heads.ts';
-import { SITE_PAGES } from './contracts/site-pages.ts';
 import {
   blockCrossSiteRequests,
   securityHeaders,
@@ -87,10 +86,7 @@ async function createApp(
   );
 
   if (IS_PRODUCTION) {
-    const findMapPage = createFindMapPage(
-      galleryStores,
-      SITE_PAGES['/maps'].description,
-    );
+    const findMapPage = createFindMapPage(galleryStores);
     app.use(
       serveWebApp(
         WEB_DIST_DIR,

@@ -45,8 +45,8 @@ describe('search engines and link previews', () => {
   it('gives the page a title and a description short enough for results', () => {
     const description = tags.get('description') ?? '';
 
-    expect(html).toContain(
-      '<title>Lair of Artificer · Battle maps for epic adventures</title>',
+    expect(html.match(/<title>\s*(.*?)\s*<\/title>/s)?.[1]).toBe(
+      'D&amp;D Battle Maps for Foundry VTT &amp; Roll20 · Lair of Artificer',
     );
     expect(description.length).toBeGreaterThan(50);
     expect(description.length).toBeLessThanOrEqual(160);

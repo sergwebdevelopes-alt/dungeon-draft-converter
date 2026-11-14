@@ -98,7 +98,7 @@ describe('HomePage', () => {
     await renderHome();
 
     expect(document.title).toBe(
-      'Lair of Artificer · Battle maps for epic adventures',
+      'D&D Battle Maps for Foundry VTT & Roll20 · Lair of Artificer',
     );
   });
 

@@ -277,16 +277,18 @@ describe('MapGallery', () => {
 
   it('names the tab after the open map', async () => {
     await renderGallery();
-    expect(document.title).toBe('Maps · Lair of Artificer');
+    expect(document.title).toBe('D&D Battle Map Gallery · Lair of Artificer');
 
     await userEvent.click(card('Blue Inn'));
     await waitFor(() =>
-      expect(document.title).toBe('Blue Inn · Lair of Artificer'),
+      expect(document.title).toBe(
+        'Blue Inn, Ground floor Battle Map · Interior · Lair of Artificer',
+      ),
     );
 
     fireEvent(dialog()!, new Event('cancel', { cancelable: true }));
     await waitFor(() =>
-      expect(document.title).toBe('Maps · Lair of Artificer'),
+      expect(document.title).toBe('D&D Battle Map Gallery · Lair of Artificer'),
     );
   });
 
@@ -294,7 +296,9 @@ describe('MapGallery', () => {
     await renderGallery('/maps?map=inn');
 
     await waitFor(() =>
-      expect(document.title).toBe('Blue Inn · Lair of Artificer'),
+      expect(document.title).toBe(
+        'Blue Inn, Ground floor Battle Map · Interior · Lair of Artificer',
+      ),
     );
   });
 
@@ -732,7 +736,7 @@ describe('MapGallery', () => {
     expect(
       screen.getByRole('list', { name: 'Loading maps' }),
     ).toBeInTheDocument();
-    expect(document.title).toBe('Maps · Lair of Artificer');
+    expect(document.title).toBe('D&D Battle Map Gallery · Lair of Artificer');
     cleanup();
 
     await renderGalleryError();

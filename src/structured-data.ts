@@ -36,7 +36,7 @@ function mapData(absolute: Absolute, map: MapPage, pageUrl: string): object[] {
     {
       '@context': SCHEMA,
       '@type': 'ImageObject',
-      name: map.title,
+      name: map.name,
       description: map.description,
       url: pageUrl,
       contentUrl: absolute(map.imageUrl),

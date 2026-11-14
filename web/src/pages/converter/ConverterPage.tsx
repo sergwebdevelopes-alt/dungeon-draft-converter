@@ -1,9 +1,10 @@
 import { ConverterForm } from '@/features/converter/index.ts';
 import { Container } from '@/shared/ui/Container.tsx';
 import { usePageTitle } from '@/shared/hooks/usePageTitle.ts';
+import { SITE_PAGES } from '@contracts/site-pages.ts';
 
 function ConverterPage() {
-  usePageTitle('Converter');
+  usePageTitle(SITE_PAGES['/converter'].title);
 
   return (
     <Container className="grid gap-5 pt-6 pb-40 sm:pt-8 lg:pb-12">

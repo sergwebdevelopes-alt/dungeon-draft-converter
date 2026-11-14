@@ -1,11 +1,16 @@
-import type { PageText } from '../../../contracts/site-pages.ts';
-import { mapSummary } from '../domain/map-summary.ts';
+import {
+  mapPageName,
+  mapPageTitle,
+  type PageText,
+} from '../../../contracts/site-pages.ts';
+import { mapPageDescription } from '../domain/map-page-description.ts';
 import type { GalleryStores } from '../ports/gallery-stores.ts';
 import { toMapEntry } from './map-entry.ts';
 
 const SUMMARY_LENGTH = 155;
 
 interface MapPage extends PageText {
+  name: string;
   imageUrl: string;
   imageAlt: string;
   patreonUrl: string;
@@ -24,15 +29,7 @@ function mapPagePath(slug: string): string {
   return `/maps?map=${encodeURIComponent(slug)}`;
 }
 
-function describe(description: string | undefined, fallback: string): string {
-  const summary = description ? mapSummary(description, SUMMARY_LENGTH) : '';
-  return summary || fallback;
-}
-
-function createFindMapPage(
-  stores: GalleryStores | undefined,
-  fallbackDescription: string,
-): FindMapPage {
+function createFindMapPage(stores: GalleryStores | undefined): FindMapPage {
   return async (slug) => {
     const map = stores ? await stores.maps.findMap(slug) : null;
     if (!stores || !map) {
@@ -41,10 +38,11 @@ function createFindMapPage(
 
     const entry = toMapEntry(map, (key) => stores.images.urlFor(key));
     return {
-      title: entry.title,
-      description: describe(entry.description, fallbackDescription),
+      title: mapPageTitle(entry),
+      name: entry.title,
+      description: mapPageDescription(entry, SUMMARY_LENGTH),
       imageUrl: entry.images.view,
-      imageAlt: entry.title,
+      imageAlt: mapPageName(entry),
       patreonUrl: map.patreonUrl,
       publishedAt: map.publishedAt,
     };

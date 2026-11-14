@@ -1,9 +1,10 @@
 import { Link } from 'react-router';
 import { Container } from '@/shared/ui/Container.tsx';
 import { usePageTitle } from '@/shared/hooks/usePageTitle.ts';
+import { NOT_FOUND_PAGE } from '@contracts/site-pages.ts';
 
 function NotFoundPage() {
-  usePageTitle('Page not found');
+  usePageTitle(NOT_FOUND_PAGE.title);
 
   return (
     <Container className="grid max-w-xl gap-4 py-16">

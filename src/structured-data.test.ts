@@ -34,10 +34,11 @@ describe('mapData', () => {
     const data = mapData(
       absolute,
       {
-        title: 'Ice Cave',
+        title: 'Ice Cave Battle Map · Lair of Artificer',
+        name: 'Ice Cave',
         description: 'A frozen cave.',
         imageUrl: '/maps/1/2/view.webp',
-        imageAlt: 'Ice Cave',
+        imageAlt: 'Ice Cave Battle Map',
         patreonUrl: 'https://www.patreon.com/posts/ice-cave-1',
         publishedAt: '2026-10-12T07:08:36.000Z',
       },

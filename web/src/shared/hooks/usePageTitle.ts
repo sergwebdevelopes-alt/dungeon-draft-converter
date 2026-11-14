@@ -1,17 +1,16 @@
 import { useEffect } from 'react';
-import { pageTitle } from '@/shared/lib/page-title.ts';
 
 interface PageTitleOptions {
   enabled?: boolean;
 }
 
 function usePageTitle(
-  title?: string,
+  title: string,
   { enabled = true }: PageTitleOptions = {},
 ): void {
   useEffect(() => {
     if (enabled) {
-      document.title = pageTitle(title);
+      document.title = title;
     }
   }, [title, enabled]);
 }

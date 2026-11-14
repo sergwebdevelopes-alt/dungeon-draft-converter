@@ -4,6 +4,7 @@ import { Button } from '@/shared/ui/Button.tsx';
 import { Alert } from '@/shared/ui/Alert.tsx';
 import { Reveal } from '@/shared/ui/motion/index.ts';
 import { usePageTitle } from '@/shared/hooks/usePageTitle.ts';
+import { SITE_PAGES, mapPageTitle } from '@contracts/site-pages.ts';
 import type { GalleryApi } from '../api/gallery-api.ts';
 import { findMap } from '../model/catalog.ts';
 import { hasMore, type PagesState } from '../model/map-pages.ts';
@@ -60,6 +61,8 @@ function CardSkeletons() {
   ));
 }
 
+const GALLERY_TITLE = SITE_PAGES['/maps'].title;
+
 interface GalleryProps {
   state: PagesState;
   api?: GalleryApi;
@@ -101,7 +104,7 @@ function Gallery({ state, api, onLoadMore }: GalleryProps) {
   const listed = findMap(maps, slug);
   const openMap = useLinkedMap(slug, listed, api);
   const registerCard = useCardFocus(openMap?.slug ?? null);
-  usePageTitle(openMap?.title ?? 'Maps');
+  usePageTitle(openMap ? mapPageTitle(openMap) : GALLERY_TITLE);
 
   return (
     <>
@@ -145,7 +148,7 @@ interface MapGalleryProps {
 function MapGallery({ api }: MapGalleryProps) {
   const { state, chooseTag, loadMore } = useMapPages(api);
   const loaded = state.status !== 'loading' && state.status !== 'error';
-  usePageTitle('Maps', { enabled: !loaded });
+  usePageTitle(GALLERY_TITLE, { enabled: !loaded });
 
   return (
     <>

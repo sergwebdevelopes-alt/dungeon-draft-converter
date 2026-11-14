@@ -1,30 +1,56 @@
 const SITE_NAME = 'Lair of Artificer';
 const SITE_TAGLINE = 'Battle maps for epic adventures';
+const PLAIN_COLLECTIONS = ['Original Content'];
 
 interface PageText {
   title: string;
   description: string;
 }
 
-function pageTitle(name?: string): string {
-  return name ? `${name} · ${SITE_NAME}` : `${SITE_NAME} · ${SITE_TAGLINE}`;
+interface NamedMap {
+  title: string;
+  subtitle?: string;
+  tags: string[];
+}
+
+function pageTitle(name: string): string {
+  return `${name} · ${SITE_NAME}`;
+}
+
+function mapCollection({ tags }: NamedMap): string | null {
+  return tags.find((tag) => !PLAIN_COLLECTIONS.includes(tag)) ?? null;
+}
+
+function mapPageName({ title, subtitle, tags }: NamedMap): string {
+  const part = subtitle && !tags.includes(subtitle) ? subtitle : null;
+  const name = [title, part].filter(Boolean).join(', ');
+
+  return /\bmaps?\b/i.test(name) ? name : `${name} Battle Map`;
+}
+
+function mapPageTitle(map: NamedMap): string {
+  const collection = mapCollection(map);
+
+  return pageTitle(
+    collection ? `${mapPageName(map)} · ${collection}` : mapPageName(map),
+  );
 }
 
 const SITE_PAGES = {
   '/': {
-    title: pageTitle(),
+    title: pageTitle('D&D Battle Maps for Foundry VTT & Roll20'),
     description:
-      'Hand-drawn Dungeondraft battle maps with VTT-ready files, four to eight new maps every month, and a free converter for .dd2vtt exports.',
+      'Hand-drawn D&D battle maps for Curse of Strahd, Waterdeep and original adventures. Gridded and gridless images plus VTT files, new maps every month.',
   },
   '/maps': {
-    title: pageTitle('Maps'),
+    title: pageTitle('D&D Battle Map Gallery'),
     description:
-      'Browse every Lair of Artificer battle map, see each one up close with or without the grid, and get the files on Patreon.',
+      'Browse D&D battle maps for Curse of Strahd, Waterdeep and more. View every level with or without the grid and get the VTT files on Patreon.',
   },
   '/converter': {
-    title: pageTitle('Converter'),
+    title: pageTitle('Free dd2vtt Converter for Dungeondraft'),
     description:
-      'Free Dungeondraft converter: turn .dd2vtt exports into JPG and WebP images for your virtual tabletop or for print, with or without the grid.',
+      'Free online Dungeondraft converter: turn .dd2vtt exports into JPG or WebP battle maps for Foundry VTT, Roll20 or print, and merge up to 10 levels.',
   },
 } as const satisfies Record<string, PageText>;
 
@@ -33,5 +59,14 @@ const NOT_FOUND_PAGE: PageText = {
   description: 'This page does not exist.',
 };
 
-export { NOT_FOUND_PAGE, SITE_NAME, SITE_PAGES, SITE_TAGLINE, pageTitle };
-export type { PageText };
+export {
+  NOT_FOUND_PAGE,
+  SITE_NAME,
+  SITE_PAGES,
+  SITE_TAGLINE,
+  mapCollection,
+  mapPageName,
+  mapPageTitle,
+  pageTitle,
+};
+export type { NamedMap, PageText };

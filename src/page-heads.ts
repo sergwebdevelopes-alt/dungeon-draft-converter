@@ -1,9 +1,5 @@
 import type { Request } from 'express';
-import {
-  NOT_FOUND_PAGE,
-  SITE_PAGES,
-  pageTitle,
-} from './contracts/site-pages.ts';
+import { NOT_FOUND_PAGE, SITE_PAGES } from './contracts/site-pages.ts';
 import {
   mapPagePath,
   type FindMapPage,
@@ -14,6 +10,8 @@ import type {
   Page,
   PageFor,
 } from './infrastructure/http-server/serve-web-app.ts';
+
+const LOOKUP_FAILED = 'lookup failed';
 
 const SITE_IMAGE = {
   path: '/og-image.jpg',
@@ -61,21 +59,24 @@ function createPageFor(
       return await findMapPage(slug);
     } catch (error) {
       logError(`Could not find the map ${slug} for its page head:`, error);
-      return null;
+      return LOOKUP_FAILED;
     }
   }
 
   async function mapPage(slug: string): Promise<Page | null> {
     const map = await findMap(slug);
-    if (!map) {
+    if (map === LOOKUP_FAILED) {
       return null;
+    }
+    if (!map) {
+      return sitePage('/maps', false);
     }
 
     const url = absolute(mapPagePath(slug));
     return {
       status: 200,
       head: {
-        title: pageTitle(map.title),
+        title: map.title,
         description: map.description,
         url,
         image: { url: absolute(map.imageUrl), alt: map.imageAlt },
@@ -84,8 +85,8 @@ function createPageFor(
     };
   }
 
-  function sitePage(path: string): Page {
-    const known = isSitePage(path);
+  function sitePage(path: string, exists = true): Page {
+    const known = exists && isSitePage(path);
     const text = known ? SITE_PAGES[path] : NOT_FOUND_PAGE;
 
     return {

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Request } from 'express';
 import { NOT_FOUND_PAGE, SITE_PAGES } from './contracts/site-pages.ts';
-import type { FindMapPage } from './features/gallery/http/map-page.ts';
+import type { FindMapPage, MapPage } from './features/gallery/http/map-page.ts';
 import { createPageFor } from './page-heads.ts';
 import { mapData, siteData } from './structured-data.ts';
 
@@ -18,20 +18,19 @@ const SITE_IMAGE = {
 
 const looked: unknown[] = [];
 
+const ICE_CAVE: MapPage = {
+  title: 'Ice Cave Battle Map · Lair of Artificer',
+  name: 'Ice Cave',
+  description: 'Ice Cave, a D&D battle map. A frozen cave.',
+  imageUrl: '/maps/1/2/view.webp',
+  imageAlt: 'Ice Cave Battle Map',
+  patreonUrl: 'https://www.patreon.com/posts/ice-cave-1',
+  publishedAt: '2026-10-12T07:08:36.000Z',
+};
+
 const findIceCave: FindMapPage = (slug) => {
   looked.push(slug);
-  return Promise.resolve(
-    slug === 'ice&cave'
-      ? {
-          title: 'Ice Cave',
-          description: 'A frozen cave.',
-          imageUrl: '/maps/1/2/view.webp',
-          imageAlt: 'Ice Cave',
-          patreonUrl: 'https://www.patreon.com/posts/ice-cave-1',
-          publishedAt: '2026-10-12T07:08:36.000Z',
-        }
-      : null,
-  );
+  return Promise.resolve(slug === 'ice&cave' ? ICE_CAVE : null);
 };
 
 function request(path: string, query: Record<string, unknown> = {}): Request {
@@ -75,35 +74,43 @@ describe('createPageFor', () => {
     assert.deepEqual(await pageFor(request('/maps', { map: 'ice&cave' })), {
       status: 200,
       head: {
-        title: 'Ice Cave · Lair of Artificer',
-        description: 'A frozen cave.',
+        title: 'Ice Cave Battle Map · Lair of Artificer',
+        description: 'Ice Cave, a D&D battle map. A frozen cave.',
         url: `${SITE}/maps?map=ice%26cave`,
-        image: { url: `${SITE}/maps/1/2/view.webp`, alt: 'Ice Cave' },
+        image: {
+          url: `${SITE}/maps/1/2/view.webp`,
+          alt: 'Ice Cave Battle Map',
+        },
         structuredData: mapData(
           (path) => new URL(path, SITE).href,
-          {
-            title: 'Ice Cave',
-            description: 'A frozen cave.',
-            imageUrl: '/maps/1/2/view.webp',
-            imageAlt: 'Ice Cave',
-            patreonUrl: 'https://www.patreon.com/posts/ice-cave-1',
-            publishedAt: '2026-10-12T07:08:36.000Z',
-          },
+          ICE_CAVE,
           `${SITE}/maps?map=ice%26cave`,
         ),
       },
     });
   });
 
-  it('shows the gallery for an unknown map or an odd map query', async () => {
+  it('shows the gallery for an odd map query, without looking for a map', async () => {
     const gallery = await pageFor(request('/maps'));
 
     looked.length = 0;
 
-    for (const map of ['nope', '', ['ice&cave', 'x']]) {
+    for (const map of ['', ['ice&cave', 'x']]) {
       assert.deepEqual(await pageFor(request('/maps', { map })), gallery);
     }
-    assert.deepEqual(looked, ['nope']);
+    assert.deepEqual(looked, []);
+  });
+
+  it('answers 404 for a map that does not exist, and keeps it out of search results', async () => {
+    assert.deepEqual(await pageFor(request('/maps', { map: 'nope' })), {
+      status: 404,
+      head: {
+        ...NOT_FOUND_PAGE,
+        url: `${SITE}/`,
+        image: SITE_IMAGE,
+        noindex: true,
+      },
+    });
   });
 
   it('looks for maps only on the gallery page', async () => {

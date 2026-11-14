@@ -44,6 +44,8 @@ describe('ConverterPage', () => {
       title.compareDocumentPosition(format) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(format.closest('form')).not.toBeNull();
-    expect(document.title).toBe('Converter · Lair of Artificer');
+    expect(document.title).toBe(
+      'Free dd2vtt Converter for Dungeondraft · Lair of Artificer',
+    );
   });
 });

@@ -7,16 +7,8 @@ describe('usePageTitle', () => {
     document.title = '';
   });
 
-  it('names the home page after the site and its tagline', () => {
-    renderHook(() => usePageTitle());
-
-    expect(document.title).toBe(
-      'Lair of Artificer · Battle maps for epic adventures',
-    );
-  });
-
-  it('puts the page name before the site name', () => {
-    renderHook(() => usePageTitle('Maps'));
+  it('names the tab as asked', () => {
+    renderHook(() => usePageTitle('Maps · Lair of Artificer'));
 
     expect(document.title).toBe('Maps · Lair of Artificer');
   });
@@ -28,21 +20,21 @@ describe('usePageTitle', () => {
 
     rerender('Converter');
 
-    expect(document.title).toBe('Converter · Lair of Artificer');
+    expect(document.title).toBe('Converter');
     expect(document.querySelectorAll('title')).toHaveLength(1);
   });
 
   it('leaves the title alone while it is turned off, and sets it once turned on', () => {
-    document.title = 'Ice Cave · Lair of Artificer';
+    document.title = 'Ice Cave';
     const { rerender } = renderHook(
       (enabled: boolean) => usePageTitle('Maps', { enabled }),
       { initialProps: false },
     );
 
-    expect(document.title).toBe('Ice Cave · Lair of Artificer');
+    expect(document.title).toBe('Ice Cave');
 
     rerender(true);
 
-    expect(document.title).toBe('Maps · Lair of Artificer');
+    expect(document.title).toBe('Maps');
   });
 });
