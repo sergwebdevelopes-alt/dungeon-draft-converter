@@ -25,7 +25,7 @@ interface MapModalProps {
 }
 
 const ROUND_BUTTON =
-  'grid size-11 place-items-center rounded-full bg-black/55 text-xl text-white ring-1 ring-white/15 backdrop-blur transition hover:bg-black/75';
+  'grid size-11 place-items-center rounded-full bg-black/55 text-xl text-white ring-1 ring-white/15 backdrop-blur transition hover:scale-110 hover:bg-black/75 hover:ring-white/45 active:scale-95';
 
 function ZoomIcon({ zoomed }: { zoomed: boolean }) {
   return (
