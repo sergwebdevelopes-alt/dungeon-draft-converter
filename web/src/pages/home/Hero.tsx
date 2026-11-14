@@ -1,7 +1,7 @@
 import { useState, type FocusEvent } from 'react';
 import { useRotation } from '@/shared/lib/useRotation.ts';
 import { Backdrop } from '@/shared/ui/Backdrop.tsx';
-import { ButtonLink, buttonClass } from '@/shared/ui/Button.tsx';
+import { ButtonLink } from '@/shared/ui/Button.tsx';
 import { Container } from '@/shared/ui/Container.tsx';
 import { Reveal } from '@/shared/ui/motion/index.ts';
 import type { MapEntry } from '@/features/gallery/index.ts';
@@ -56,7 +56,12 @@ function useHeld() {
   };
 }
 
-function Hero({ maps }: { maps: MapEntry[] }) {
+interface HeroProps {
+  maps: MapEntry[];
+  joinUrl: string;
+}
+
+function Hero({ maps, joinUrl }: HeroProps) {
   const { held, handlers } = useHeld();
   const { index, select } = useRotation(maps.length, ROTATE_MS, held);
 
@@ -88,10 +93,10 @@ function Hero({ maps }: { maps: MapEntry[] }) {
           </p>
         </Reveal>
         <Reveal index={3} className="flex flex-wrap gap-3">
-          <ButtonLink to="/maps">Browse the maps</ButtonLink>
-          <a href="#membership" className={buttonClass({ variant: 'glass' })}>
-            Become a member
-          </a>
+          <ButtonLink href={joinUrl}>Become a member</ButtonLink>
+          <ButtonLink to="/maps" variant="glass">
+            Browse the maps
+          </ButtonLink>
         </Reveal>
         {maps.length > 0 && (
           <BackdropPicker maps={maps} index={index} onSelect={select} />

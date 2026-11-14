@@ -12,6 +12,13 @@ import { LatestMaps } from './LatestMaps.tsx';
 
 const BACKDROP_MAPS = 5;
 
+function joinUrl({ membership, links }: SiteConfig): string {
+  const { plans } = membership;
+  const plan = plans.find((candidate) => candidate.featured) ?? plans.at(0);
+
+  return plan?.joinUrl ?? links.patreon;
+}
+
 interface HomePageProps {
   api?: GalleryApi;
   site?: SiteConfig;
@@ -26,7 +33,7 @@ function HomePage({ api, site = SITE }: HomePageProps) {
   return (
     <>
       <PageTitle />
-      <Hero maps={maps.slice(0, BACKDROP_MAPS)} />
+      <Hero maps={maps.slice(0, BACKDROP_MAPS)} joinUrl={joinUrl(site)} />
       <LatestMaps maps={highlights} total={total} />
       <ConverterTeaser />
       <MembershipSection

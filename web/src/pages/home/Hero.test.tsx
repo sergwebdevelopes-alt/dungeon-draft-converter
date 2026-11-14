@@ -27,7 +27,7 @@ const MAPS = [entry('cave', 'Ice Cave'), entry('inn', 'Blue Inn')];
 function renderHero() {
   render(
     <MemoryRouter>
-      <Hero maps={MAPS} />
+      <Hero maps={MAPS} joinUrl="https://example.com/join" />
     </MemoryRouter>,
   );
 }

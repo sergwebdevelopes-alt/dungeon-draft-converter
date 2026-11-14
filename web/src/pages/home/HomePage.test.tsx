@@ -80,15 +80,17 @@ function api(
   };
 }
 
-async function renderHome(fake = api()) {
-  render(
+async function renderHome(fake = api(), site = SITE_WITH_PLANS) {
+  const view = render(
     <MemoryRouter>
-      <HomePage api={fake} site={SITE_WITH_PLANS} />
+      <HomePage api={fake} site={site} />
     </MemoryRouter>,
   );
   await screen.findByRole('heading', {
     name: 'Battle maps for epic adventures',
   });
+
+  return view;
 }
 
 describe('HomePage', () => {
@@ -100,7 +102,52 @@ describe('HomePage', () => {
     ).toHaveAttribute('href', '/maps');
     expect(
       screen.getByRole('link', { name: 'Become a member' }),
-    ).toHaveAttribute('href', '#membership');
+    ).toHaveAttribute('href', SITE.membership.plans[0].joinUrl);
+  });
+
+  it('sends new members to the featured plan, or to the first one', async () => {
+    const [coffee, hero] = SITE_WITH_PLANS.membership.plans;
+    const { unmount } = await renderHome(api(), {
+      ...SITE,
+      membership: {
+        plans: [
+          { ...coffee, featured: false },
+          { ...hero, featured: true },
+        ],
+      },
+    });
+    expect(
+      screen.getByRole('link', { name: 'Become a member' }),
+    ).toHaveAttribute('href', hero.joinUrl);
+    unmount();
+
+    await renderHome(api(), {
+      ...SITE,
+      membership: { plans: [hero, { ...coffee, featured: false }] },
+    });
+    expect(
+      screen.getByRole('link', { name: 'Become a member' }),
+    ).toHaveAttribute('href', hero.joinUrl);
+  });
+
+  it('sends new members to the Patreon page when there are no plans', async () => {
+    await renderHome(api(), { ...SITE, membership: { plans: [] } });
+
+    expect(
+      screen.getByRole('link', { name: 'Become a member' }),
+    ).toHaveAttribute('href', SITE.links.patreon);
+  });
+
+  it('puts membership first in the hero, as the main button', async () => {
+    await renderHome();
+
+    const member = screen.getByRole('link', { name: 'Become a member' });
+    const browse = screen.getByRole('link', { name: 'Browse the maps' });
+    expect(
+      member.compareDocumentPosition(browse) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(member).toHaveClass('bg-gold');
+    expect(browse).not.toHaveClass('bg-gold');
   });
 
   it('lets the visitor pick a backdrop map', async () => {
