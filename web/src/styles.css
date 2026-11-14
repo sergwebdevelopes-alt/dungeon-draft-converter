@@ -69,8 +69,40 @@
   --color-success-soft: var(--success-soft);
 
   --animate-progress: progress 1.4s ease-in-out infinite;
-  --animate-wipe: wipe 7s ease-in-out infinite alternate;
   --animate-sweep: sweep 1.6s linear infinite;
+  --animate-level-float: level-float 3.6s ease-in-out infinite alternate;
+  --animate-merge-flash: merge-flash 0.8s ease-out both;
+  --animate-light-pulse: light-pulse 2.4s ease-in-out infinite alternate;
+
+  @keyframes light-pulse {
+    from {
+      opacity: 0.35;
+    }
+    to {
+      opacity: 0.95;
+    }
+  }
+
+  @keyframes level-float {
+    from {
+      transform: translateZ(0);
+    }
+    to {
+      transform: translateZ(10px);
+    }
+  }
+
+  @keyframes merge-flash {
+    0% {
+      opacity: 0;
+    }
+    12% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
 
   @keyframes sweep {
     from {
@@ -78,25 +110,6 @@
     }
     to {
       background-position: -120% 0;
-    }
-  }
-  --animate-wipe-back: wipe-back 7s ease-in-out infinite alternate;
-
-  @keyframes wipe {
-    from {
-      transform: translateX(88%);
-    }
-    to {
-      transform: translateX(12%);
-    }
-  }
-
-  @keyframes wipe-back {
-    from {
-      transform: translateX(-88%);
-    }
-    to {
-      transform: translateX(-12%);
     }
   }
 

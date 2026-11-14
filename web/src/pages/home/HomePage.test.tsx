@@ -149,65 +149,20 @@ describe('HomePage', () => {
     ).toHaveAttribute('href', '/maps');
   });
 
-  it('shows the converter with a landscape map that has a known size', async () => {
+  it('shows the converter block with a link to the converter', async () => {
     await renderHome();
 
     const teaser = within(
-      screen.getByRole('region', {
-        name: 'Your Dungeondraft maps, ready for any table',
-      }),
+      screen.getByRole('region', { name: /Up to 10 levels/ }),
     );
     expect(
       teaser.getByRole('img', {
-        name: 'Frozen Cavern, shown without and with a grid',
+        name: 'Castle Ravenloft, 8 levels merged into one map',
       }),
     ).toBeInTheDocument();
     expect(
       teaser.getByRole('link', { name: 'Open the converter' }),
     ).toHaveAttribute('href', '/converter');
-  });
-
-  it('frames a wide map at 4:3 and lays its image and grid over the whole map', async () => {
-    await renderHome(api([entry('inn', 'Blue Water Inn', 62, 28), ...MAPS]));
-
-    const image = screen.getByRole('img', {
-      name: 'Blue Water Inn, shown without and with a grid',
-    });
-    const cover = image.parentElement;
-    const frame = cover?.parentElement;
-    const gridCover = frame?.querySelector('svg')?.parentElement;
-    expect(frame?.style.aspectRatio).toBe(`${4 / 3} / 1`);
-    expect(cover?.style.aspectRatio).toBe('6200 / 2800');
-    expect(gridCover?.getAttribute('style')).toBe(cover?.getAttribute('style'));
-  });
-
-  it('moves the grid and the line with transforms only, so a big grid is not redrawn', async () => {
-    await renderHome();
-    const teaser = screen.getByRole('region', {
-      name: 'Your Dungeondraft maps, ready for any table',
-    });
-    const reveal = within(teaser).getByTestId('grid-reveal');
-    const grid = reveal.querySelector('svg');
-    const counter = grid?.parentElement?.parentElement;
-    const line = reveal.nextElementSibling;
-
-    expect(reveal).toHaveClass('animate-wipe', 'overflow-hidden');
-    expect(counter?.parentElement).toBe(reveal);
-    expect(counter).toHaveClass('animate-wipe-back');
-    expect(line).toHaveAttribute('aria-hidden', 'true');
-    expect(line).toHaveClass('animate-wipe');
-    expect(teaser.innerHTML).not.toMatch(/clip-path|animate-wipe-line/);
-  });
-
-  it('names the image formats the converter makes', async () => {
-    await renderHome();
-
-    const teaser = screen.getByRole('region', {
-      name: 'Your Dungeondraft maps, ready for any table',
-    });
-    const formats = within(teaser).getByText('Formats');
-    expect(formats.nextElementSibling).toHaveTextContent('JPG · WebP');
-    expect(teaser).not.toHaveTextContent('1 inch');
   });
 
   it('lists every membership plan from the site config', async () => {

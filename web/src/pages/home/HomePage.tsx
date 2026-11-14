@@ -1,12 +1,9 @@
 import { SITE, type SiteConfig } from '@/shared/config/site.ts';
 import { PageTitle } from '@/shared/ui/PageTitle.tsx';
 import {
-  hasSquares,
   useHighlights,
   useLatestMaps,
   type GalleryApi,
-  type GriddedMap,
-  type MapEntry,
 } from '@/features/gallery/index.ts';
 import { MembershipSection } from '@/features/membership/index.ts';
 import { ConverterTeaser } from './ConverterTeaser.tsx';
@@ -14,12 +11,6 @@ import { Hero } from './Hero.tsx';
 import { LatestMaps } from './LatestMaps.tsx';
 
 const BACKDROP_MAPS = 5;
-
-function teaserMap(maps: MapEntry[]): GriddedMap | null {
-  const gridded = maps.filter(hasSquares);
-
-  return gridded.find((map) => map.width > map.height) ?? gridded[0] ?? null;
-}
 
 interface HomePageProps {
   api?: GalleryApi;
@@ -37,7 +28,7 @@ function HomePage({ api, site = SITE }: HomePageProps) {
       <PageTitle />
       <Hero maps={maps.slice(0, BACKDROP_MAPS)} />
       <LatestMaps maps={highlights} total={total} />
-      <ConverterTeaser map={teaserMap(maps)} />
+      <ConverterTeaser />
       <MembershipSection
         siteName={site.name}
         plans={site.membership.plans}

@@ -1,7 +1,5 @@
 import type { MapEntry, Squares } from '@contracts/gallery-api.ts';
 
-type GriddedMap = MapEntry & { squares: Squares };
-
 interface Picture {
   view: string;
   thumb?: string;
@@ -10,10 +8,6 @@ interface Picture {
 }
 
 const GRID_RATIO_TOLERANCE = 0.01;
-
-function hasSquares(map: MapEntry): map is GriddedMap {
-  return map.squares !== undefined;
-}
 
 function squaresLabel({ x, y }: Squares): string {
   return `${x} × ${y} squares`;
@@ -58,10 +52,9 @@ export {
   mapCaption,
   findMap,
   gridFits,
-  hasSquares,
   picturesLabel,
   squaresLabel,
   mapPictures,
   wrapIndex,
 };
-export type { GriddedMap, MapEntry, Picture };
+export type { MapEntry, Picture };

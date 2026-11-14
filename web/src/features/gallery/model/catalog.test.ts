@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   mapCaption,
   findMap,
-  hasSquares,
   gridFits,
   mapPictures,
   picturesLabel,
@@ -119,12 +118,5 @@ describe('mapCaption', () => {
       'Curse of Strahd',
     );
     expect(mapCaption(map)).toBe('');
-  });
-});
-
-describe('hasSquares', () => {
-  it('tells maps with a known size apart', () => {
-    expect(hasSquares({ ...entry('a'), squares: { x: 1, y: 1 } })).toBe(true);
-    expect(hasSquares(entry('a'))).toBe(false);
   });
 });

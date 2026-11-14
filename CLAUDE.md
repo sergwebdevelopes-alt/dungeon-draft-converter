@@ -107,7 +107,7 @@ Four layers, each importing only from the ones below it: `app → pages → feat
 web/src/
 ├── app/           entry, App, routes (pages load lazily), layout (header, footer, page shell)
 ├── pages/         one folder per page; a page puts features together and adds its own heading
-│   ├── home/        HomePage and its own parts: Hero, LatestMaps, ConverterTeaser, teaser-frame
+│   ├── home/        HomePage and its own parts: Hero, LatestMaps, ConverterTeaser, LevelStack (levels of one map merging; its images in level-stack/ come from scripts/render-level-stack.ts)
 │   ├── gallery/     GalleryPage (heading + MapGallery + MembershipSection)
 │   ├── converter/   ConverterPage (heading + ConverterForm)
 │   └── not-found/   NotFoundPage
@@ -121,7 +121,7 @@ web/src/
 └── shared/
     ├── http/      HttpClient port + fetch adapter (only file using fetch); index.ts exports the `http` instance
     ├── storage/   KeyValueStore port + localStorage adapter; index.ts exports `storage`
-    ├── lib/       small helpers and hooks: format, save-file, abortable, useObjectUrl, useFileDrop, useElapsed, useRotation, useNearViewport, useLoadedImages, useScrollLock
+    ├── lib/       small helpers and hooks: format, save-file, abortable, useObjectUrl, useFileDrop, useElapsed, useRotation, useNearViewport, useInView, useLoadedImages, useScrollLock
     ├── analytics/ cloudflare-analytics: adds the Cloudflare Web Analytics beacon only on the site's domain (token and domain in config/site.ts; the server's CSP allows its two origins)
     ├── theme/     light/dark choice (storage port) + toggle; web/public/theme.js applies a saved choice before React starts
     ├── ui/        shared presentational components (Button/ButtonLink, Alert, Segmented, GridOverlay, …)
