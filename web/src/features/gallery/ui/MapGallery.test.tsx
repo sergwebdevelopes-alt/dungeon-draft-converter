@@ -206,6 +206,15 @@ function shownPicture() {
   return shown?.querySelector('img')?.getAttribute('src');
 }
 
+function zoomedPicture(): HTMLElement {
+  const track = within(dialog()!).getByTestId('swipe-track');
+  const shown = [...track.children].find(
+    (slide) => !slide.hasAttribute('aria-hidden'),
+  );
+
+  return shown!.firstElementChild!.firstElementChild as HTMLElement;
+}
+
 function location() {
   return screen.getByTestId('location').textContent;
 }
@@ -413,6 +422,86 @@ describe('MapGallery', () => {
 
     await userEvent.keyboard('{ArrowLeft}');
     expect(shownPicture()).toBe('/maps/1/castle-cellar/view.webp');
+  });
+
+  it('zooms the picture with one button and goes back with the same one', async () => {
+    await renderCastle();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Zoom in' }));
+
+    expect(zoomedPicture().style.transform).toBe(
+      'translate(0px, 0px) scale(2)',
+    );
+    expect(screen.queryByRole('button', { name: 'Zoom in' })).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Zoom out' }));
+
+    expect(zoomedPicture().style.transform).toBe('');
+    expect(screen.getByRole('button', { name: 'Zoom in' })).toBeInTheDocument();
+  });
+
+  it('zooms with the plus, minus and zero keys', async () => {
+    await renderCastle();
+
+    await userEvent.keyboard('+');
+    await userEvent.keyboard('+');
+    expect(zoomedPicture().style.transform).toBe(
+      'translate(0px, 0px) scale(2.25)',
+    );
+
+    await userEvent.keyboard('-');
+    expect(zoomedPicture().style.transform).toBe(
+      'translate(0px, 0px) scale(1.5)',
+    );
+
+    await userEvent.keyboard('0');
+    expect(zoomedPicture().style.transform).toBe('');
+  });
+
+  it('shows the next picture at its own size, at once, and forgets the zoom', async () => {
+    await renderCastle();
+    await userEvent.click(screen.getByRole('button', { name: 'Zoom in' }));
+    const cover = zoomedPicture();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next picture' }));
+
+    expect(shownPicture()).toBe('/maps/1/castle-roof/view.webp');
+    expect(zoomedPicture().style.transform).toBe('');
+    expect(cover.style.transform).toBe('');
+    expect(cover.style.transition).toBe('none');
+    expect(screen.getByRole('button', { name: 'Zoom in' })).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Previous picture' }),
+    );
+
+    expect(zoomedPicture()).toBe(cover);
+    expect(cover.style.transform).toBe('');
+  });
+
+  it('holds the pictures still while one is zoomed', async () => {
+    await renderCastle();
+    const track = within(dialog()!).getByTestId('swipe-track');
+    expect(track).toHaveAttribute('draggable', 'false');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Zoom in' }));
+    expect(track).not.toHaveAttribute('draggable');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Zoom out' }));
+    expect(track).toHaveAttribute('draggable', 'false');
+  });
+
+  it('holds the pictures still while two fingers are on the picture', async () => {
+    await renderCastle();
+    const track = within(dialog()!).getByTestId('swipe-track');
+    const stage = zoomedPicture().parentElement!;
+
+    fireEvent.pointerDown(stage, { pointerId: 1, pointerType: 'touch' });
+    fireEvent.pointerDown(stage, { pointerId: 2, pointerType: 'touch' });
+    expect(track).not.toHaveAttribute('draggable');
+
+    fireEvent.pointerUp(stage, { pointerId: 2, pointerType: 'touch' });
+    expect(track).toHaveAttribute('draggable', 'false');
   });
 
   it('opens the picture picked in the strip and marks its thumbnail', async () => {

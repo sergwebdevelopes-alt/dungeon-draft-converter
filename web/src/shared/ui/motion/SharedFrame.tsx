@@ -5,6 +5,7 @@ const SPRING = { type: 'spring', stiffness: 260, damping: 30 } as const;
 
 interface SharedFrameProps {
   layoutId: string;
+  layoutKey?: string;
   className?: string;
   style?: CSSProperties;
   children: ReactNode;
@@ -12,6 +13,7 @@ interface SharedFrameProps {
 
 function SharedFrame({
   layoutId,
+  layoutKey,
   className,
   style,
   children,
@@ -19,11 +21,12 @@ function SharedFrame({
   return (
     <m.div
       layoutId={layoutId}
+      layoutDependency={layoutKey}
       transition={SPRING}
       className={className}
       style={style}
     >
-      <m.div layout className="size-full">
+      <m.div layout layoutDependency={layoutKey} className="size-full">
         {children}
       </m.div>
     </m.div>

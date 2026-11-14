@@ -6,12 +6,18 @@ function slide(key: string): Slide {
   return { key, content: <img src={`/${key}.webp`} alt={key} /> };
 }
 
-function carousel(previous: Slide | null, current: Slide, next: Slide | null) {
+function carousel(
+  previous: Slide | null,
+  current: Slide,
+  next: Slide | null,
+  locked = false,
+) {
   return (
     <SwipeCarousel
       previous={previous}
       current={current}
       next={next}
+      locked={locked}
       onPrevious={vi.fn()}
       onNext={vi.fn()}
       onDismiss={vi.fn()}
@@ -66,5 +72,16 @@ describe('SwipeCarousel', () => {
     expect(image('c')).toBe(next);
     expect(image('c')?.parentElement?.style.transform).toBe('translateX(0%)');
     expect(screen.getByRole('img', { name: 'c' })).toBeInTheDocument();
+  });
+
+  it('can be dragged, except while it is locked', () => {
+    const { rerender } = render(carousel(slide('a'), slide('b'), slide('c')));
+    const track = screen.getByTestId('swipe-track');
+
+    expect(track).toHaveAttribute('draggable', 'false');
+
+    rerender(carousel(slide('a'), slide('b'), slide('c'), true));
+
+    expect(track).not.toHaveAttribute('draggable');
   });
 });

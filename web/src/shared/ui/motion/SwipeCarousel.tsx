@@ -25,6 +25,7 @@ interface SwipeCarouselProps {
   onPrevious: () => void;
   onNext: () => void;
   onDismiss: () => void;
+  locked?: boolean;
   className?: string;
   style?: CSSProperties;
   children?: ReactNode;
@@ -44,6 +45,7 @@ function SwipeCarousel({
   onPrevious,
   onNext,
   onDismiss,
+  locked = false,
   className = '',
   style,
   children,
@@ -90,7 +92,7 @@ function SwipeCarousel({
         data-testid="swipe-track"
         className="absolute inset-0"
         style={{ x, y, opacity, touchAction: 'none' }}
-        drag
+        drag={!locked}
         dragDirectionLock
         dragMomentum={false}
         dragElastic={0.2}

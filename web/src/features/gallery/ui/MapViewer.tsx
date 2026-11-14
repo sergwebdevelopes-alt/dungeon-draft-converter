@@ -3,6 +3,7 @@ import type { Squares } from '@contracts/gallery-api.ts';
 import { FadeImage } from '@/shared/ui/FadeImage.tsx';
 import { GridOverlay } from '@/shared/ui/GridOverlay.tsx';
 import { SharedFrame } from '@/shared/ui/motion/index.ts';
+import { ZoomPan, type ZoomControls } from '@/shared/ui/ZoomPan.tsx';
 import type { Picture } from '../model/catalog.ts';
 
 interface MapViewerProps {
@@ -11,6 +12,7 @@ interface MapViewerProps {
   grid?: Squares;
   morphId?: string;
   fade?: boolean;
+  zoom?: ZoomControls;
 }
 
 const FRAME = 'relative overflow-hidden bg-surface';
@@ -37,6 +39,7 @@ function Frame({
     return (
       <SharedFrame
         layoutId={morphId}
+        layoutKey={picture.view}
         className={FRAME}
         style={frameStyle(picture)}
       >
@@ -52,9 +55,17 @@ function Frame({
   );
 }
 
-function MapViewer({ picture, alt, grid, morphId, fade }: MapViewerProps) {
+function MapViewer({
+  picture,
+  alt,
+  grid,
+  morphId,
+  fade,
+  zoom,
+}: MapViewerProps) {
   return (
-    <div
+    <ZoomPan
+      zoom={zoom}
       className="grid size-full place-items-center"
       style={{ containerType: 'size' }}
     >
@@ -68,7 +79,7 @@ function MapViewer({ picture, alt, grid, morphId, fade }: MapViewerProps) {
         />
         {grid && <GridOverlay columns={grid.x} rows={grid.y} />}
       </Frame>
-    </div>
+    </ZoomPan>
   );
 }
 

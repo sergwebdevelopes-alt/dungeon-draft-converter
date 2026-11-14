@@ -121,10 +121,10 @@ web/src/
 └── shared/
     ├── http/      HttpClient port + fetch adapter (only file using fetch); index.ts exports the `http` instance
     ├── storage/   KeyValueStore port + localStorage adapter; index.ts exports `storage`
-    ├── lib/       small helpers and hooks: format, save-file, abortable, useObjectUrl, useFileDrop, useElapsed, useRotation, useNearViewport, useInView, useLoadedImages, useScrollLock
+    ├── lib/       small helpers and hooks: format, save-file, abortable, useObjectUrl, useFileDrop, useElapsed, useRotation, useNearViewport, useInView, zoom (scale and pan limits) with useZoom, useLoadedImages, useScrollLock
     ├── analytics/ cloudflare-analytics: adds the Cloudflare Web Analytics beacon only on the site's domain (token and domain in config/site.ts; the server's CSP allows its two origins)
     ├── theme/     light/dark choice (storage port) + toggle; web/public/theme.js applies a saved choice before React starts
-    ├── ui/        shared presentational components (Button/ButtonLink, Alert, Segmented, GridOverlay, …)
+    ├── ui/        shared presentational components (Button/ButtonLink, Alert, Segmented, GridOverlay, ZoomPan, …)
     └── config/    site.ts (site name, nav, links, membership plans)
 ```
 
