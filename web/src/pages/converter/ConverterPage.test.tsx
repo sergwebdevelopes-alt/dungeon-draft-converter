@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { CONVERTER_FAQ } from '@contracts/converter-guide.ts';
 import { ConverterPage } from './ConverterPage.tsx';
 
 const CONFIG = {
@@ -47,5 +48,43 @@ describe('ConverterPage', () => {
     expect(document.title).toBe(
       'Free dd2vtt Converter for Dungeondraft · Lair of Artificer',
     );
+  });
+
+  it('explains below the form how the converter works, in three steps', () => {
+    render(<ConverterPage />);
+
+    const steps = within(
+      screen.getByRole('region', { name: 'How the converter works' }),
+    );
+    expect(
+      steps
+        .getAllByRole('heading', { level: 3 })
+        .map((step) => step.textContent),
+    ).toEqual([
+      'Export from Dungeondraft',
+      'Drop your maps',
+      'Pick formats and download',
+    ]);
+    const form = document.querySelector('form')!;
+    expect(
+      form.compareDocumentPosition(steps.getByText('Step 1')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('answers every question that it gives to search engines', () => {
+    render(<ConverterPage />);
+
+    const questions = within(
+      screen.getByRole('region', {
+        name: 'Questions about converting .dd2vtt maps',
+      }),
+    );
+    expect(
+      questions.getAllByRole('term').map((question) => question.textContent),
+    ).toEqual(CONVERTER_FAQ.map((entry) => entry.question));
+    expect(
+      questions.getAllByRole('definition').map((answer) => answer.textContent),
+    ).toEqual(CONVERTER_FAQ.map((entry) => entry.answer));
   });
 });

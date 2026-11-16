@@ -2,6 +2,7 @@ import { ConverterForm } from '@/features/converter/index.ts';
 import { Container } from '@/shared/ui/Container.tsx';
 import { usePageTitle } from '@/shared/hooks/usePageTitle.ts';
 import { SITE_PAGES } from '@contracts/site-pages.ts';
+import { ConverterGuide } from './ConverterGuide.tsx';
 
 function ConverterPage() {
   usePageTitle(SITE_PAGES['/converter'].title);
@@ -19,6 +20,7 @@ function ConverterPage() {
       </header>
 
       <ConverterForm />
+      <ConverterGuide />
     </Container>
   );
 }

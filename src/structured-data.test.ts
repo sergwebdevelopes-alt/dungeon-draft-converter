@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { mapData, siteData } from './structured-data.ts';
+import { CONVERTER_FAQ } from './contracts/converter-guide.ts';
+import { SITE_PAGES } from './contracts/site-pages.ts';
+import { converterData, mapData, siteData } from './structured-data.ts';
 
 const absolute = (path: string) => new URL(path, 'https://lair.test').href;
 
@@ -61,5 +63,52 @@ describe('mapData', () => {
         acquireLicensePage: 'https://www.patreon.com/posts/ice-cave-1',
       },
     ]);
+  });
+});
+
+describe('converterData', () => {
+  const [app, faq] = converterData(absolute) as [
+    Record<string, unknown>,
+    { mainEntity: Record<string, unknown>[] },
+  ];
+
+  it('describes the converter as a free web app of the site', () => {
+    assert.deepEqual(app, {
+      '@context': 'https://schema.org',
+      '@type': 'WebApplication',
+      name: 'Dungeondraft Converter',
+      url: 'https://lair.test/converter',
+      description: SITE_PAGES['/converter'].description,
+      applicationCategory: 'MultimediaApplication',
+      operatingSystem: 'Any',
+      browserRequirements: 'Requires JavaScript',
+      isAccessibleForFree: true,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      publisher: ORGANIZATION,
+    });
+  });
+
+  it('gives every question of the page with its answer', () => {
+    assert.equal(faq.mainEntity.length, CONVERTER_FAQ.length);
+    assert.deepEqual(faq.mainEntity[0], {
+      '@type': 'Question',
+      name: CONVERTER_FAQ[0].question,
+      acceptedAnswer: { '@type': 'Answer', text: CONVERTER_FAQ[0].answer },
+    });
+    assert.deepEqual(
+      faq.mainEntity.map((entry) => entry.name),
+      CONVERTER_FAQ.map((entry) => entry.question),
+    );
+  });
+
+  it('answers the questions people search for, in plain text', () => {
+    const text = CONVERTER_FAQ.map(
+      ({ question, answer }) => `${question} ${answer}`,
+    ).join(' ');
+
+    for (const words of ['.dd2vtt', 'Foundry VTT', 'Roll20', 'merge', 'JPG']) {
+      assert.ok(text.includes(words), words);
+    }
+    assert.doesNotMatch(text, /<[a-z]/i);
   });
 });

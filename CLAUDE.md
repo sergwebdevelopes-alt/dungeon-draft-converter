@@ -42,7 +42,7 @@ src/
 ├── config.ts            every process.env read and every limit
 ├── cli/                 migrate-database.ts (npm run db:migrate), sync-gallery-once.ts (npm run gallery:sync)
 ├── settings/            read-settings.ts (Zod, the only file importing zod), stop-on-bad-settings.ts
-├── contracts/           what the server and the web app exchange; imports nothing: converter-api (presets, variants, logo limits, ConfigResponse, QueuePosition), gallery-api (MapEntry with the `path` of its page, MapsResponse with `collections`, Squares), grid-stroke, site-pages (the title and description of every page and the title rule for a map page, used by the server head and the browser tab)
+├── contracts/           what the server and the web app exchange; imports nothing: converter-api (presets, variants, logo limits, ConfigResponse, QueuePosition), gallery-api (MapEntry with the `path` of its page, MapsResponse with `collections`, Squares), grid-stroke, converter-guide (the converter's questions and answers), site-pages (the title and description of every page and the title rule for a map page, used by the server head and the browser tab)
 ├── features/
 │   ├── converter/       .dd2vtt → VTT and print images
 │   │   ├── domain/            dd2vtt-metadata, loaded-map
@@ -110,7 +110,7 @@ web/src/
 │   ├── home/        HomePage and its own parts: Hero with its Backdrop, LatestMaps, ConverterTeaser, level-stack/ (levels of one map merging: LevelStack, Floor, scene with the images and timings, useMergeCycle, settle-floors; the pictures in images/ come from scripts/render-level-stack.ts)
 │   ├── gallery/     GalleryPage (heading + MapGallery + MembershipSection), at /maps and, for one collection, /maps/<collection>
 │   ├── map/         MapPage at /maps/<collection>/<map>: breadcrumbs, the map (MapView) and four more maps of its collection
-│   ├── converter/   ConverterPage (heading + ConverterForm)
+│   ├── converter/   ConverterPage (heading + ConverterForm + ConverterGuide: how it works and the questions from `@contracts/converter-guide.ts`, which the server also gives to search engines)
 │   └── not-found/   NotFoundPage
 ├── features/<feature>/   converter, gallery, membership
 │   ├── index.ts   the feature's only entry for pages

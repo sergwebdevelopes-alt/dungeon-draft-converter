@@ -5,7 +5,7 @@ import type {
   FindMapPage,
 } from './features/gallery/http/map-page.ts';
 import type { PageImage } from './infrastructure/http-server/page-head.ts';
-import { mapData, siteData } from './structured-data.ts';
+import { converterData, mapData, siteData } from './structured-data.ts';
 import type {
   Page,
   PageFor,
@@ -139,6 +139,9 @@ function createPageFor(
         noindex: !known,
         ...(path === '/'
           ? { structuredData: siteData(absolute, site.patreonUrl) }
+          : {}),
+        ...(known && path === '/converter'
+          ? { structuredData: converterData(absolute) }
           : {}),
       },
     };

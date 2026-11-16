@@ -1,4 +1,5 @@
-import { SITE_NAME } from './contracts/site-pages.ts';
+import { CONVERTER_FAQ, CONVERTER_NAME } from './contracts/converter-guide.ts';
+import { SITE_NAME, SITE_PAGES } from './contracts/site-pages.ts';
 import type { MapPage } from './features/gallery/http/map-page.ts';
 
 const SCHEMA = 'https://schema.org';
@@ -49,5 +50,32 @@ function mapData(absolute: Absolute, map: MapPage, pageUrl: string): object[] {
   ];
 }
 
-export { mapData, siteData };
+function converterData(absolute: Absolute): object[] {
+  return [
+    {
+      '@context': SCHEMA,
+      '@type': 'WebApplication',
+      name: CONVERTER_NAME,
+      url: absolute('/converter'),
+      description: SITE_PAGES['/converter'].description,
+      applicationCategory: 'MultimediaApplication',
+      operatingSystem: 'Any',
+      browserRequirements: 'Requires JavaScript',
+      isAccessibleForFree: true,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      publisher: siteOrganization(absolute),
+    },
+    {
+      '@context': SCHEMA,
+      '@type': 'FAQPage',
+      mainEntity: CONVERTER_FAQ.map(({ question, answer }) => ({
+        '@type': 'Question',
+        name: question,
+        acceptedAnswer: { '@type': 'Answer', text: answer },
+      })),
+    },
+  ];
+}
+
+export { converterData, mapData, siteData };
 export type { Absolute };

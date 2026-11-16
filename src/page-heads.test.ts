@@ -8,7 +8,7 @@ import type {
   MapPage,
 } from './features/gallery/http/map-page.ts';
 import { createPageFor } from './page-heads.ts';
-import { mapData, siteData } from './structured-data.ts';
+import { converterData, mapData, siteData } from './structured-data.ts';
 
 const SITE = 'https://lair.test';
 const LINKS = { url: SITE, patreonUrl: 'https://www.patreon.com/cw/Lair' };
@@ -55,17 +55,28 @@ describe('createPageFor', () => {
   const pageFor = createPageFor(LINKS, findIceCave, findCaves);
 
   it('gives each site page its own text and canonical address', async () => {
-    for (const path of ['/maps', '/converter'] as const) {
-      assert.deepEqual(await pageFor(request(path)), {
-        status: 200,
-        head: {
-          ...SITE_PAGES[path],
-          url: `${SITE}${path}`,
-          image: SITE_IMAGE,
-          noindex: false,
-        },
-      });
-    }
+    assert.deepEqual(await pageFor(request('/maps')), {
+      status: 200,
+      head: {
+        ...SITE_PAGES['/maps'],
+        url: `${SITE}/maps`,
+        image: SITE_IMAGE,
+        noindex: false,
+      },
+    });
+  });
+
+  it('describes the converter as a free app and answers its questions for search engines', async () => {
+    assert.deepEqual(await pageFor(request('/converter')), {
+      status: 200,
+      head: {
+        ...SITE_PAGES['/converter'],
+        url: `${SITE}/converter`,
+        image: SITE_IMAGE,
+        noindex: false,
+        structuredData: converterData((path) => new URL(path, SITE).href),
+      },
+    });
   });
 
   it('describes the site on the home page for search engines', async () => {
