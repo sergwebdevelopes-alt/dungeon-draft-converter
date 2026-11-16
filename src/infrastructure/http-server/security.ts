@@ -2,6 +2,7 @@ import type { RequestHandler } from 'express';
 import {
   ANALYTICS_REPORT_ORIGIN,
   ANALYTICS_SCRIPT_ORIGIN,
+  BROWSER_ERRORS_ORIGIN,
   IS_PRODUCTION,
 } from '../../config.ts';
 import { HttpError } from './http-errors.ts';
@@ -14,7 +15,7 @@ const CONTENT_SECURITY_POLICY = [
   `script-src 'self' ${ANALYTICS_SCRIPT_ORIGIN}`,
   "style-src 'self'",
   "img-src 'self' blob:",
-  `connect-src 'self' ${ANALYTICS_REPORT_ORIGIN}`,
+  `connect-src 'self' ${ANALYTICS_REPORT_ORIGIN} ${BROWSER_ERRORS_ORIGIN}`,
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'self'",

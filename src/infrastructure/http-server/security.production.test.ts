@@ -50,7 +50,7 @@ describe('securityHeaders in production', () => {
     assert.ok(!policy.includes('unsafe-inline'), policy);
   });
 
-  it('allows Cloudflare Web Analytics and no other outside source', async () => {
+  it('allows Cloudflare Web Analytics, error reports to Sentry and no other outside source', async () => {
     const res = await fetch(base);
     const policy = res.headers.get('content-security-policy') ?? '';
     const directives = policy.split('; ');
@@ -62,14 +62,17 @@ describe('securityHeaders in production', () => {
       policy,
     );
     assert.ok(
-      directives.includes("connect-src 'self' https://cloudflareinsights.com"),
+      directives.includes(
+        "connect-src 'self' https://cloudflareinsights.com https://*.sentry.io",
+      ),
       policy,
     );
     assert.deepEqual([...new Set(policy.match(/https:\/\/[^\s;]+/g))].sort(), [
+      'https://*.sentry.io',
       'https://cloudflareinsights.com',
       'https://static.cloudflareinsights.com',
     ]);
-    assert.ok(!policy.includes('*'), policy);
+    assert.equal(policy.match(/\*/g)?.length, 1, policy);
   });
 
   it('sets Strict-Transport-Security', async () => {

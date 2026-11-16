@@ -71,6 +71,7 @@ const SITE_PATREON_URL =
 
 const ANALYTICS_SCRIPT_ORIGIN = 'https://static.cloudflareinsights.com';
 const ANALYTICS_REPORT_ORIGIN = 'https://cloudflareinsights.com';
+const BROWSER_ERRORS_ORIGIN = 'https://*.sentry.io';
 
 const { settings: SETTINGS, problems: SETTINGS_PROBLEMS } = readSettings(
   process.env,
@@ -80,6 +81,7 @@ export {
   APP_RELEASE,
   ANALYTICS_REPORT_ORIGIN,
   ANALYTICS_SCRIPT_ORIGIN,
+  BROWSER_ERRORS_ORIGIN,
   CONVERSION_TIMEOUT_MS,
   GALLERY_DIR,
   GALLERY_HIGHLIGHTS,

@@ -1,4 +1,5 @@
 import type { AnalyticsConfig } from '../analytics/cloudflare-analytics.ts';
+import type { ErrorReportingConfig } from '../error-reporting/start-error-reporting.ts';
 
 interface NavItem {
   label: string;
@@ -33,14 +34,21 @@ interface SiteConfig {
     plans: MembershipPlan[];
   };
   analytics?: AnalyticsConfig;
+  errorReporting?: ErrorReportingConfig;
 }
+
+const LIVE_HOSTNAME = 'lairofartificer.com';
 
 const SITE: SiteConfig = {
   name: 'Lair of Artificer',
   tagline: 'Battle maps for epic adventures',
   analytics: {
     cloudflareToken: '2d1529b91276411cae89483e0a1a975d',
-    hostname: 'lairofartificer.com',
+    hostname: LIVE_HOSTNAME,
+  },
+  errorReporting: {
+    dsn: 'https://aa5ff3f66ae4ae2e2e25a8d40fae01db@o4512441503776768.ingest.us.sentry.io/4512441524486144',
+    hostname: LIVE_HOSTNAME,
   },
   nav: [
     { label: 'Home', href: '/' },

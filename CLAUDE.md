@@ -127,6 +127,7 @@ web/src/
     ├── storage/   KeyValueStore port + localStorage adapter; index.ts exports `storage`
     ├── lib/       small helpers without React: format, save-file, abortable, zoom (scale and pan limits), zoom-gestures (wheel, drag and pinch on an element)
     ├── hooks/     shared hooks, one per file: useObjectUrl, useFileDrop, useElapsed, useRotation, useNearViewport, useInView, useLoadedImages, useScrollLock, useModalDialog, useArrowKeys, useZoom, usePageTitle
+    ├── error-reporting/ ErrorReporter port + Sentry adapter (the only web file importing @sentry/browser, loaded as its own chunk) + start-error-reporting: on the site's domain only it listens for errors and unhandled rejections from the first line of main.tsx, keeps them while the Sentry chunk loads, and sends at most ten per open page (DSN in config/site.ts; the server's CSP allows `https://*.sentry.io`)
     ├── analytics/ cloudflare-analytics: adds the Cloudflare Web Analytics beacon only on the site's domain (token and domain in config/site.ts; the server's CSP allows its two origins)
     ├── theme/     light/dark choice (storage port) + toggle; web/public/theme.js applies a saved choice before React starts
     ├── ui/        shared presentational components (Button/ButtonLink, Alert, Segmented, GridOverlay, ZoomPan, …)
