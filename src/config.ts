@@ -64,6 +64,8 @@ const PATREON_WEBSITE_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0 Safari/537.36';
 
 const SITE_URL = process.env.SITE_URL || 'https://lairofartificer.com';
+const SENTRY_DSN = process.env.SENTRY_DSN || undefined;
+const APP_RELEASE = process.env.APP_TAG || undefined;
 const SITE_PATREON_URL =
   process.env.SITE_PATREON_URL || 'https://www.patreon.com/cw/LairofArtificer';
 
@@ -75,6 +77,7 @@ const { settings: SETTINGS, problems: SETTINGS_PROBLEMS } = readSettings(
 );
 
 export {
+  APP_RELEASE,
   ANALYTICS_REPORT_ORIGIN,
   ANALYTICS_SCRIPT_ORIGIN,
   CONVERSION_TIMEOUT_MS,
@@ -107,6 +110,7 @@ export {
   PATREON_WEBSITE_USER_AGENT,
   PORT,
   ROOT_DIR,
+  SENTRY_DSN,
   SETTINGS,
   SETTINGS_PROBLEMS,
   SHARP_CONCURRENCY,

@@ -38,6 +38,7 @@ src/
 ├── server.ts            start: settings check, database, the one gallery sync, jobs, HTTP server, SIGTERM
 ├── app.ts               the Express app: shared middleware, then health + converter.createRoutes + gallery.createRoutes under /api
 ├── create-gallery.ts    gallery stores and the stoppable sync from settings (none without database or Patreon settings)
+├── create-error-reporter.ts  where unexpected errors are reported: Sentry in production with `SENTRY_DSN`, nowhere otherwise
 ├── start-jobs.ts        starts every scheduled job
 ├── config.ts            every process.env read and every limit
 ├── cli/                 migrate-database.ts (npm run db:migrate), sync-gallery-once.ts (npm run gallery:sync)
@@ -61,8 +62,9 @@ src/
 │       └── jobs/              gallery-sync-job
 ├── infrastructure/      technology used by several features
 │   ├── database/        Database port + pg adapter (the only file importing pg), open-database, run-migrations, migrations/*.sql, advisory-locks, test-database
+│   ├── error-reporting/ ErrorReporter port (report(error, context)) + Sentry adapter (the only server file importing @sentry/node)
 │   ├── http-client/     HttpClient port (get, getBytes, post, timeout, abort) + fetch adapter (the only server file using fetch) + rate-limited client
-│   ├── http-server/     Express middleware: http-errors, security, refuse-work-during-shutdown, cache-control, serve-precompressed, serve-web-app, http-methods, health-route
+│   ├── http-server/     Express middleware: http-errors, report-unexpected-errors, security, refuse-work-during-shutdown, cache-control, serve-precompressed, serve-web-app, http-methods, health-route
 │   └── scheduler/       schedule() (timer, optional run at start, stop)
 └── shared/              helpers any layer may use, without I/O or libraries: errors.ts, utils/ (format, time, object, error-message, single-flight)
 ```
@@ -79,6 +81,7 @@ src/
   - Facts about formats and output stay next to the code that produces them (file extensions, zip folder names, image encoding constants), and so do details that are part of an API's contract (field lists, query parameter names).
 - **Outgoing HTTP** goes through `infrastructure/http-client/` (`HttpClient`, `HttpClientError`). Adapters receive the client as an argument, never `fetch` itself.
 - **Adapters only translate:** they fetch and translate into our types, with no business rules.
+- **Error reports:** unexpected errors go to Sentry through `ErrorReporter`: a request that would answer 500 (`report-unexpected-errors.ts`, placed just before `errorHandler`), a gallery sync that failed with no tries left, a failed cleanup of old uploads, and a crash of the process. Refusals the visitor is told about (4xx, busy, timeouts) and requests whose visitor has gone are not reported. Creating the Sentry reporter also makes Sentry report crashes of the whole process; the process still stops as before. Only errors are sent: no tracing and no request data, because Sentry's default integrations are off (`sentry-error-reporter.ts`). The release is the deployed commit (`APP_TAG`).
 - **Errors:** they extend `InvalidInputError` (→ 400) or `UnprocessableError` (→ 422) from `shared/errors.ts`, and `infrastructure/http-server/http-errors.ts` maps them by kind. HTTP-only errors use `HttpError`.
 - **Dependencies are passed in**, not kept in module-level globals. For example, `createApp` creates the `ConversionQueue` and hands it to `converter.createRoutes`.
 - **Imports stay relative** in the back end. Node runs the `.ts` files directly and ignores tsconfig `paths`, so the `@/` and `@contracts/` aliases are for the web app only.

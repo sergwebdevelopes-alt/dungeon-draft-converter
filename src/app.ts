@@ -20,7 +20,12 @@ import {
 import { serveGalleryImages } from './features/gallery/http/serve-map-images.ts';
 import type { LogConversion } from './features/converter/http/conversion-log.ts';
 import * as converter from './features/converter/http/routes.ts';
+import {
+  NO_ERROR_REPORTER,
+  type ErrorReporter,
+} from './infrastructure/error-reporting/error-reporter.ts';
 import { healthRouter } from './infrastructure/http-server/health-route.ts';
+import { reportUnexpectedErrors } from './infrastructure/http-server/report-unexpected-errors.ts';
 import { noIndex } from './infrastructure/http-server/no-index.ts';
 import type { GalleryStores } from './features/gallery/ports/gallery-stores.ts';
 import type { GallerySync } from './features/gallery/application/sync-gallery.ts';
@@ -46,11 +51,18 @@ interface AppOptions {
   logConversion?: LogConversion;
   galleryStores?: GalleryStores;
   gallerySync?: GallerySync;
+  errorReporter?: ErrorReporter;
 }
 
 async function createApp(
   server: http.Server,
-  { isShuttingDown, logConversion, galleryStores, gallerySync }: AppOptions,
+  {
+    isShuttingDown,
+    logConversion,
+    galleryStores,
+    gallerySync,
+    errorReporter = NO_ERROR_REPORTER,
+  }: AppOptions,
 ): Promise<express.Express> {
   const queue = new ConversionQueue({ maxParallel: MAX_PARALLEL_CONVERSIONS });
   const pendingLimit = new PendingLimit(MAX_PENDING_CONVERSIONS);
@@ -108,6 +120,7 @@ async function createApp(
     app.use(vite.middlewares);
   }
 
+  app.use(reportUnexpectedErrors(errorReporter));
   app.use(errorHandler);
   return app;
 }

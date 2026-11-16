@@ -3,7 +3,12 @@ import type http from 'node:http';
 import { after, afterEach, before, beforeEach, describe, it } from 'node:test';
 import express, { type ErrorRequestHandler } from 'express';
 import { InvalidInputError, UnprocessableError } from '../../shared/errors.ts';
-import { HttpError, errorHandler, notFound } from './http-errors.ts';
+import {
+  HttpError,
+  errorHandler,
+  isUnexpected,
+  notFound,
+} from './http-errors.ts';
 
 class BadLevelError extends InvalidInputError {}
 
@@ -173,5 +178,19 @@ describe('notFound', () => {
 
     assert.equal(res.status, 404);
     assert.deepEqual(await res.json(), { error: 'Not found.' });
+  });
+});
+
+describe('isUnexpected', () => {
+  it('tells the errors the visitor is told about from the ones nobody planned for', () => {
+    assert.equal(isUnexpected(new HttpError(503, 'Busy.')), false);
+    assert.equal(isUnexpected(new InvalidInputError('Broken.')), false);
+    assert.equal(isUnexpected(new BadLevelError('Broken.')), false);
+    assert.equal(isUnexpected(new UnprocessableError('Too large.')), false);
+
+    assert.equal(isUnexpected(new Error('The database is gone.')), true);
+    assert.equal(isUnexpected(new TypeError('x is not a function')), true);
+    assert.equal(isUnexpected('boom'), true);
+    assert.equal(isUnexpected(undefined), true);
   });
 });

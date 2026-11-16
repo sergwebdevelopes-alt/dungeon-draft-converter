@@ -9,6 +9,7 @@ import {
   SHARP_CONCURRENCY,
   SHUTDOWN_TIMEOUT_MS,
 } from './config.ts';
+import { createErrorReporter } from './create-error-reporter.ts';
 import { openDatabase } from './infrastructure/database/open-database.ts';
 import {
   createGalleryStores,
@@ -19,12 +20,14 @@ import { stopOnBadSettings } from './settings/stop-on-bad-settings.ts';
 
 stopOnBadSettings(SETTINGS_PROBLEMS);
 
+const errorReporter = createErrorReporter();
+
 const database = SETTINGS.database
   ? await openDatabase(SETTINGS.database)
   : null;
 const galleryStores = database ? createGalleryStores(database) : undefined;
-const gallerySync = createGallerySyncIfConfigured(galleryStores);
-const jobs = startJobs({ gallerySync });
+const gallerySync = createGallerySyncIfConfigured(galleryStores, errorReporter);
+const jobs = startJobs({ gallerySync, errorReporter });
 
 if (SHARP_CONCURRENCY > 0) {
   sharp.concurrency(SHARP_CONCURRENCY);
@@ -39,6 +42,7 @@ server.on(
     isShuttingDown: () => shuttingDown,
     galleryStores,
     gallerySync,
+    errorReporter,
   }),
 );
 

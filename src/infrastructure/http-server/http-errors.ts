@@ -10,16 +10,29 @@ class HttpError extends Error {
   }
 }
 
+const STATUS_BY_KIND = [
+  { kind: InvalidInputError, status: 400 },
+  { kind: UnprocessableError, status: 422 },
+];
+
+function expectedStatus(error: unknown): number | undefined {
+  return STATUS_BY_KIND.find(({ kind }) => error instanceof kind)?.status;
+}
+
+function isUnexpected(error: unknown): boolean {
+  return !(error instanceof HttpError) && expectedStatus(error) === undefined;
+}
+
 function toHttpError(error: unknown): HttpError {
   if (error instanceof HttpError) {
     return error;
   }
-  if (error instanceof InvalidInputError) {
-    return new HttpError(400, error.message);
+
+  const status = expectedStatus(error);
+  if (status !== undefined && error instanceof Error) {
+    return new HttpError(status, error.message);
   }
-  if (error instanceof UnprocessableError) {
-    return new HttpError(422, error.message);
-  }
+
   console.error(error);
   return new HttpError(500, 'Conversion failed.');
 }
@@ -40,4 +53,4 @@ const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
   res.status(httpError.status).json({ error: httpError.message });
 };
 
-export { HttpError, errorHandler, notFound };
+export { HttpError, errorHandler, isUnexpected, notFound };

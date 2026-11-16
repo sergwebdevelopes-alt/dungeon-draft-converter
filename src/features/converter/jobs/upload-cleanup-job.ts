@@ -5,22 +5,28 @@ import {
   type Job,
 } from '../../../infrastructure/scheduler/schedule.ts';
 
-async function cleanUpStaleUploads(): Promise<void> {
+type ReportFailure = (error: unknown) => void;
+
+async function cleanUpStaleUploads(
+  reportFailure?: ReportFailure,
+  removeStale: () => Promise<number> = removeStaleUploadDirs,
+): Promise<void> {
   try {
-    const removed = await removeStaleUploadDirs();
+    const removed = await removeStale();
     if (removed > 0) {
       console.log(`Removed ${removed} leftover upload folder(s).`);
     }
   } catch (error) {
     console.error('Upload folder cleanup failed:', error);
+    reportFailure?.(error);
   }
 }
 
-function startUploadCleanupJob(): Job {
-  return schedule(cleanUpStaleUploads, {
+function startUploadCleanupJob(reportFailure?: ReportFailure): Job {
+  return schedule(() => cleanUpStaleUploads(reportFailure), {
     everyMs: STALE_CLEANUP_INTERVAL_MS,
     atStart: true,
   });
 }
 
-export { startUploadCleanupJob };
+export { cleanUpStaleUploads, startUploadCleanupJob };

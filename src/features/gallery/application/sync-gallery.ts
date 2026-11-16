@@ -46,6 +46,7 @@ interface GallerySyncDeps {
   images: ImageStorage;
   render: RenderMapImages;
   log?: (entry: GallerySyncLogEntry) => void;
+  reportFailure?: (error: unknown) => void;
   retry?: SyncRetry;
   wait?: Wait;
   signal?: AbortSignal;
@@ -117,6 +118,7 @@ function createGallerySync({
   images,
   render,
   log = logToConsole,
+  reportFailure,
   retry = NO_RETRY,
   wait = waitUnlessStopped,
   signal,
@@ -185,6 +187,10 @@ function createGallerySync({
           tookMs: now() - startedAt,
         }),
       );
+
+      if (!cancelled && retryInMs === undefined) {
+        reportFailure?.(error);
+      }
 
       return cancelled ? 'cancelled' : 'failed';
     }

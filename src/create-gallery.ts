@@ -8,6 +8,10 @@ import {
 } from './config.ts';
 import { renderMapImagesWithSharp } from './features/gallery/adapters/sharp-map-image-renderer.ts';
 import type { Database } from './infrastructure/database/database.ts';
+import {
+  NO_ERROR_REPORTER,
+  type ErrorReporter,
+} from './infrastructure/error-reporting/error-reporter.ts';
 import { createFetchHttpClient } from './infrastructure/http-client/fetch-http-client.ts';
 import { createHttpMapImageSource } from './features/gallery/adapters/http-map-image-source.ts';
 import { createRateLimitedHttpClient } from './infrastructure/http-client/rate-limited-http-client.ts';
@@ -30,7 +34,10 @@ interface ManagedGallerySync extends GallerySync {
   stop(): void;
 }
 
-type SyncOptions = Pick<GallerySyncDeps, 'log' | 'signal' | 'retry'>;
+type SyncOptions = Pick<
+  GallerySyncDeps,
+  'log' | 'signal' | 'retry' | 'reportFailure'
+>;
 
 function createGalleryStores(database: Database): GalleryStores {
   return {
@@ -74,6 +81,7 @@ function createGallerySyncFromSettings(
 
 function createGallerySyncIfConfigured(
   stores: GalleryStores | undefined,
+  errorReporter: ErrorReporter = NO_ERROR_REPORTER,
 ): ManagedGallerySync | undefined {
   const { patreon } = SETTINGS;
   if (!stores || !patreon) {
@@ -85,6 +93,8 @@ function createGallerySyncIfConfigured(
   const sync = createGallerySyncFromSettings(stores, patreon, {
     signal: stopping.signal,
     retry: { times: GALLERY_SYNC_RETRIES, afterMs: GALLERY_SYNC_RETRY_MS },
+    reportFailure: (error) =>
+      errorReporter.report(error, { where: 'gallery-sync' }),
   });
 
   return {

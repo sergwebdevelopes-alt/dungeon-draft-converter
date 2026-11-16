@@ -159,6 +159,7 @@ interface Retrying {
   retry: SyncRetry;
   waits: number[];
   afterWait?: () => void;
+  reported?: unknown[];
 }
 
 function setUp(state: FakePatreon, signal?: AbortSignal, retrying?: Retrying) {
@@ -179,6 +180,7 @@ function setUp(state: FakePatreon, signal?: AbortSignal, retrying?: Retrying) {
     signal,
     now: () => 0,
     retry: retrying?.retry,
+    reportFailure: (error) => retrying?.reported?.push(error),
     wait: (ms) => {
       retrying?.waits.push(ms);
       retrying?.afterWait?.();
@@ -448,6 +450,58 @@ describe('createGallerySync', () => {
       ],
     );
     assert.equal('retryInMs' in logs[2], false);
+  });
+
+  it('reports the failure once, when there are no tries left', async () => {
+    const failure = new Error('Blocked.');
+    const state: FakePatreon = { posts: [], details: [], error: failure };
+    const retrying: Retrying = {
+      retry: { times: 2, afterMs: 1_000 },
+      waits: [],
+      reported: [],
+    };
+    const { sync } = setUp(state, undefined, retrying);
+
+    await sync.run();
+
+    assert.deepEqual(retrying.reported, [failure]);
+  });
+
+  it('reports nothing when a later try works or the sync is cancelled', async () => {
+    const state: FakePatreon = {
+      posts: [post('1')],
+      details: [details('1')],
+      error: new Error('Blocked.'),
+    };
+    const recovering: Retrying = {
+      retry: { times: 2, afterMs: 1_000 },
+      waits: [],
+      reported: [],
+      afterWait: () => {
+        state.error = undefined;
+      },
+    };
+    await setUp(state, undefined, recovering).sync.run();
+
+    const controller = new AbortController();
+    controller.abort();
+    const cancelled: Retrying = {
+      retry: { times: 0, afterMs: 0 },
+      waits: [],
+      reported: [],
+    };
+    await setUp(
+      {
+        posts: [],
+        details: [],
+        error: new DOMException('Stopped.', 'AbortError'),
+      },
+      controller.signal,
+      cancelled,
+    ).sync.run();
+
+    assert.deepEqual(recovering.reported, []);
+    assert.deepEqual(cancelled.reported, []);
   });
 
   it('does not try again unless it is asked to', async () => {

@@ -131,6 +131,7 @@ Environment variables, all optional. Leave a variable out or empty to use its de
 | `MAX_UPLOAD_MB`                    | `200`                         | Largest map file                                                                                                        |
 | `MAX_TOTAL_UPLOAD_MB`              | `400`                         | Largest upload for all files of one conversion together                                                                 |
 | `HTTP_CLIENT_TIMEOUT_SECONDS`      | `30`                          | Stop a request to Patreon that takes longer                                                                             |
+| `SENTRY_DSN`                       | —                             | Where the server reports unexpected errors (Sentry). Used in production only; without it nothing is sent                |
 | `GALLERY_REQUEST_INTERVAL_SECONDS` | `1`                           | Pause between requests to Patreon during a gallery sync                                                                 |
 | `GALLERY_SYNC_RETRIES`             | `3`                           | How many times the server tries a failed gallery sync again before waiting for the next scheduled one                   |
 | `GALLERY_SYNC_RETRY_MINUTES`       | `5`                           | Pause before each of those tries                                                                                        |

@@ -7,6 +7,9 @@ process.env.NODE_ENV = 'production';
 const { createApp } = await import('./app.ts');
 const { MAX_UPLOAD_BYTES } = await import('./config.ts');
 
+type GalleryStores =
+  import('./features/gallery/ports/gallery-stores.ts').GalleryStores;
+
 describe('createApp', () => {
   let server: http.Server;
   let base: string;
@@ -114,5 +117,41 @@ describe('createApp', () => {
     assert.deepEqual(await res.json(), {
       error: 'Please upload a .dd2vtt map file.',
     });
+  });
+});
+
+describe('createApp error reports', () => {
+  it('reports an unexpected failure of a request and still answers 500', async () => {
+    const reported: unknown[] = [];
+    const failure = new Error('The database is gone.');
+    const server = http.createServer();
+    const app = await createApp(server, {
+      isShuttingDown: () => false,
+      logConversion: () => undefined,
+      galleryStores: {
+        maps: { listTags: () => Promise.reject(failure) },
+      } as unknown as GalleryStores,
+      errorReporter: {
+        report: (error, context) => reported.push([error, context]),
+      },
+    });
+    server.on('request', app);
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const { port } = server.address() as { port: number };
+    const logError = console.error;
+    console.error = () => undefined;
+
+    try {
+      const res = await fetch(`http://localhost:${port}/api/maps?limit=5`);
+
+      assert.equal(res.status, 500);
+      assert.deepEqual(reported, [
+        [failure, { where: 'http', method: 'GET', path: '/api/maps' }],
+      ]);
+    } finally {
+      console.error = logError;
+      server.closeAllConnections();
+      server.close();
+    }
   });
 });
