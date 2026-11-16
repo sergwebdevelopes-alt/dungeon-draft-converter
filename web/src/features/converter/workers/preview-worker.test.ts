@@ -92,4 +92,27 @@ describe('readPreviewInWorker', () => {
     expect(preview.columns).toBe(20);
     expect(workers).toHaveLength(0);
   });
+
+  it('makes the picture smaller on the page too, where it has to read there', async () => {
+    const smaller = new Blob(['smaller']);
+    vi.stubGlobal('Worker', undefined);
+    vi.stubGlobal('createImageBitmap', () =>
+      Promise.resolve({ width: 12_000, height: 8_800, close: () => undefined }),
+    );
+    vi.stubGlobal(
+      'OffscreenCanvas',
+      class {
+        getContext() {
+          return { drawImage: () => undefined };
+        }
+        convertToBlob() {
+          return Promise.resolve(smaller);
+        }
+      },
+    );
+
+    const preview = await readPreviewInWorker(map());
+
+    expect(preview.image).toBe(smaller);
+  });
 });

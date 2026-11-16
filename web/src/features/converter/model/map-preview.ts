@@ -24,7 +24,13 @@ type PreviewState =
 type PreviewReply =
   { ok: true; preview: MapPreview } | { ok: false; message: string };
 
+type ShrinkImage = (image: Blob) => Promise<Blob>;
+
 const UNREADABLE = 'This file could not be read as a Dungeondraft map.';
+
+function keepImage(image: Blob): Promise<Blob> {
+  return Promise.resolve(image);
+}
 
 type Fields = Record<string, unknown>;
 
@@ -89,7 +95,10 @@ function isUnlit(data: Fields): boolean {
   return environment.baked_lighting !== true && pixelsPerGrid > 0;
 }
 
-async function readMapPreview(file: File): Promise<MapPreview> {
+async function readMapPreview(
+  file: File,
+  shrink: ShrinkImage = keepImage,
+): Promise<MapPreview> {
   let data: unknown;
   try {
     data = JSON.parse(await file.text());
@@ -110,7 +119,7 @@ async function readMapPreview(file: File): Promise<MapPreview> {
   }
 
   return {
-    image: new Blob([bytes], { type: imageType(bytes) }),
+    image: await shrink(new Blob([bytes], { type: imageType(bytes) })),
     columns,
     rows,
     unlit: isUnlit(data),
@@ -118,9 +127,12 @@ async function readMapPreview(file: File): Promise<MapPreview> {
   };
 }
 
-async function previewReply(file: File): Promise<PreviewReply> {
+async function previewReply(
+  file: File,
+  shrink: ShrinkImage = keepImage,
+): Promise<PreviewReply> {
   try {
-    return { ok: true, preview: await readMapPreview(file) };
+    return { ok: true, preview: await readMapPreview(file, shrink) };
   } catch (error) {
     return {
       ok: false,
@@ -130,4 +142,4 @@ async function previewReply(file: File): Promise<PreviewReply> {
 }
 
 export { UNREADABLE, previewReply, readMapPreview };
-export type { MapPreview, PreviewReply, PreviewState };
+export type { MapPreview, PreviewReply, PreviewState, ShrinkImage };

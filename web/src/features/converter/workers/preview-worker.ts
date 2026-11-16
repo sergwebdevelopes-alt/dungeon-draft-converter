@@ -4,6 +4,7 @@ import {
   type MapPreview,
   type PreviewReply,
 } from '../model/map-preview.ts';
+import { shrinkForPreview } from './preview-image.ts';
 
 function startWorker(): Worker {
   return new Worker(new URL('./preview.worker.ts', import.meta.url), {
@@ -28,7 +29,7 @@ function askWorker(worker: Worker, file: File): Promise<MapPreview> {
 
 async function readPreviewInWorker(file: File): Promise<MapPreview> {
   if (typeof Worker === 'undefined') {
-    return readMapPreview(file);
+    return readMapPreview(file, shrinkForPreview);
   }
 
   const worker = startWorker();

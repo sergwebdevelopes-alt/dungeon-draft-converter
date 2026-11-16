@@ -97,6 +97,20 @@ describe('readMapPreview', () => {
     expect([preview.columns, preview.rows]).toEqual([20, 25]);
   });
 
+  it('gives the picture to whoever makes it smaller for the preview', async () => {
+    const smaller = new Blob(['smaller'], { type: 'image/webp' });
+    const seen: string[] = [];
+
+    const preview = await readMapPreview(dd2vtt(valid()), (image) => {
+      seen.push(image.type);
+      return Promise.resolve(smaller);
+    });
+
+    expect(seen).toEqual(['image/png']);
+    expect(preview.image).toBe(smaller);
+    expect(preview.columns).toBe(20);
+  });
+
   it('rejects files that are not Dungeondraft maps', async () => {
     const message = 'This file could not be read as a Dungeondraft map.';
 
@@ -117,6 +131,18 @@ describe('readMapPreview', () => {
         dd2vtt(valid({ resolution: { map_size: { x: 0, y: 5 } } })),
       ),
     ).rejects.toThrow(message);
+  });
+});
+
+describe('previewReply with a smaller picture', () => {
+  it('puts the smaller picture in the reply', async () => {
+    const smaller = new Blob(['smaller']);
+
+    const reply = await previewReply(dd2vtt(valid()), () =>
+      Promise.resolve(smaller),
+    );
+
+    expect(reply.ok && reply.preview.image).toBe(smaller);
   });
 });
 
