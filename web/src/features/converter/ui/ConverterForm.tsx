@@ -4,6 +4,7 @@ import { Alert } from '@/shared/ui/Alert.tsx';
 import {
   canSubmit,
   isConverting,
+  levelMismatch,
   selectedPresets,
   tooLargePresets,
   visibleMaps,
@@ -26,9 +27,12 @@ function ConverterForm() {
   const converting = isConverting(state);
   const formats = selectedPresets(state);
   const shown = visibleMaps(state);
-  const preview = useMapPreview(maps, shown);
+  const preview = useMapPreview(maps, shown, undefined, (file, grid) =>
+    dispatch({ type: 'levelRead', file, grid }),
+  );
   const columns = preview.status === 'ready' ? preview.columns : null;
   const rows = preview.status === 'ready' ? preview.rows : null;
+  const mismatch = levelMismatch(state);
   usePreventPageDrop();
 
   useEffect(() => {
@@ -82,6 +86,11 @@ function ConverterForm() {
               onRemove={(index) => dispatch({ type: 'mapRemoved', index })}
               onToggle={(index) => dispatch({ type: 'levelToggled', index })}
             />
+            {mismatch && (
+              <Alert tone="error" className="text-sm">
+                {mismatch}
+              </Alert>
+            )}
           </div>
         )}
       </div>

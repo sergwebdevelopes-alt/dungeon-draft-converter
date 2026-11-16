@@ -33,7 +33,7 @@ Every conversion request writes one JSON line, without file names or IP addresse
 {"event":"conversion","result":"ok","status":200,"levels":2,"uploadMB":2.4,"presets":["JPG_70","WEBP_140"],"variants":["NoGrid","Grid"],"uploadMs":22,"queuedMs":1,"convertMs":1040,"tookMs":1063}
 ```
 
-`result` is `ok`, `invalid` (4xx), `busy` (all places taken), `timeout`, `cancelled` (the visitor left) or `error` (5xx). For example, `docker compose logs app | grep '"event":"conversion"'` lists them.
+`result` is `ok`, `invalid` (4xx), `busy` (all places taken), `timeout`, `cancelled` (the visitor left) or `error` (5xx). A conversion that failed also has `error` (the kind of error, for example `LevelMismatchError`) and, where it helps, `detail` (the sizes or grids that did not match, without file names). For example, `docker compose logs app | grep '"event":"conversion"'` lists them.
 
 ### Gallery sync
 

@@ -247,6 +247,7 @@ describe('makeImages output size', () => {
         makeImages(makeMap('Huge', png, 1), workDir, { presets: [JPG_300] }),
       (error: Error) =>
         error instanceof MapTooLargeError &&
+        error.logDetail === '30000×30000 px in JPG_300' &&
         error.message ===
           '"Huge.dd2vtt" would be 30000×30000 px in JPG_300, which exceeds the limit of 250 megapixels. Try unselecting the larger formats.',
     );

@@ -21,6 +21,8 @@ import {
 const COVERED_ALPHA = 128;
 const FOUNDRY_COMPRESSION_LEVEL = 6;
 const LIT_COMPRESSION_LEVEL = 1;
+const SAME_MAP_HINT =
+  'Levels must be exports of the same map at the same size.';
 
 class LevelMismatchError extends UnprocessableError {
   name = 'LevelMismatchError';
@@ -30,6 +32,12 @@ interface MergedLevels {
   map: LoadedMap;
   dd2vtt: AsyncIterable<Buffer>;
   lights: { main: number; added: number; dropped: number };
+}
+
+function describeGrid({ origin, size, pixelsPerGrid }: Resolution): string {
+  const squares = size ? `${size.x}×${size.y}` : 'unknown';
+
+  return `origin ${origin.x},${origin.y}, ${squares} squares, ${pixelsPerGrid} px per square`;
 }
 
 function sameResolution(a: Resolution, b: Resolution): boolean {
@@ -78,12 +86,15 @@ async function checkLevelsMatch(
     const size = await readMapImageSize(level);
     if (size.width !== mainSize.width || size.height !== mainSize.height) {
       throw new LevelMismatchError(
-        `"${level.fileNameWithExt}" is ${size.width}×${size.height} px, but the main map "${main.fileNameWithExt}" is ${mainSize.width}×${mainSize.height} px.`,
+        `"${level.fileNameWithExt}" is ${size.width}×${size.height} px, but the main map "${main.fileNameWithExt}" is ${mainSize.width}×${mainSize.height} px. ${SAME_MAP_HINT}`,
+        `image ${size.width}×${size.height} px, main ${mainSize.width}×${mainSize.height} px`,
       );
     }
-    if (!sameResolution(readResolution(level), mainResolution)) {
+    const resolution = readResolution(level);
+    if (!sameResolution(resolution, mainResolution)) {
       throw new LevelMismatchError(
-        `"${level.fileNameWithExt}" has a different grid (origin, size or pixels per square) than the main map "${main.fileNameWithExt}".`,
+        `"${level.fileNameWithExt}" has a different grid (origin, size or pixels per square) than the main map "${main.fileNameWithExt}". ${SAME_MAP_HINT}`,
+        `grid ${describeGrid(resolution)}; main ${describeGrid(mainResolution)}`,
       );
     }
   }

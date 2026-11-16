@@ -2,6 +2,10 @@ import {
   tooLargePresets as presetsTooLarge,
   type MapSize,
 } from './format-limits.ts';
+import {
+  levelMismatch as mismatchBetween,
+  type LevelGrid,
+} from './level-match.ts';
 import { addMaps, levelKey, logoError, moveItem } from './map-rules.ts';
 import { defaultPlacement } from './placement.ts';
 import { withProgress, type Progress, type Status } from './progress.ts';
@@ -13,6 +17,7 @@ interface ConverterState {
   configError: string | null;
   maps: File[];
   hidden: string[];
+  grids: Record<string, LevelGrid>;
   logo: File | null;
   placement: LogoPlacement | null;
   presets: string[];
@@ -29,6 +34,7 @@ type ConverterAction =
   | { type: 'mapMoved'; from: number; to: number }
   | { type: 'mapRemoved'; index: number }
   | { type: 'levelToggled'; index: number }
+  | { type: 'levelRead'; file: File; grid: LevelGrid }
   | { type: 'logoSelected'; file: File }
   | { type: 'logoCleared' }
   | { type: 'presetToggled'; name: string }
@@ -49,6 +55,7 @@ const initialState: ConverterState = {
   configError: null,
   maps: [],
   hidden: [],
+  grids: {},
   logo: null,
   placement: null,
   presets: [],
@@ -90,7 +97,22 @@ function withoutMap(state: ConverterState, index: number): ConverterState {
   return edited(state, {
     maps,
     hidden: state.hidden.filter((key) => kept.has(key)),
+    grids: Object.fromEntries(
+      Object.entries(state.grids).filter(([key]) => kept.has(key)),
+    ),
   });
+}
+
+function withGrid(
+  state: ConverterState,
+  file: File,
+  grid: LevelGrid,
+): ConverterState {
+  const key = levelKey(file);
+
+  return state.maps.some((map) => levelKey(map) === key)
+    ? { ...state, grids: { ...state.grids, [key]: grid } }
+    : state;
 }
 
 function toggleLevel(state: ConverterState, index: number): ConverterState {
@@ -140,6 +162,9 @@ function converterReducer(
 
     case 'levelToggled':
       return toggleLevel(state, action.index);
+
+    case 'levelRead':
+      return withGrid(state, action.file, action.grid);
 
     case 'logoSelected':
       return selectLogo(state, action.file);
@@ -197,7 +222,13 @@ function converterReducer(
       return { ...state, status: { kind: 'idle' } };
 
     case 'reset':
-      return { ...state, maps: [], hidden: [], status: { kind: 'idle' } };
+      return {
+        ...state,
+        maps: [],
+        hidden: [],
+        grids: {},
+        status: { kind: 'idle' },
+      };
   }
 }
 
@@ -229,12 +260,29 @@ function presetsToConvert(state: ConverterState): string[] {
   return state.presets.filter((name) => !tooLarge.includes(name));
 }
 
+function levelMismatch(state: ConverterState): string | null {
+  const [main, ...lower] = visibleMaps(state);
+  const mainGrid = main ? state.grids[levelKey(main)] : undefined;
+  if (!main || !mainGrid) {
+    return null;
+  }
+
+  const read = lower.flatMap((map) => {
+    const grid = state.grids[levelKey(map)];
+
+    return grid ? [{ name: map.name, grid }] : [];
+  });
+
+  return mismatchBetween([{ name: main.name, grid: mainGrid }, ...read]);
+}
+
 function canSubmit(state: ConverterState): boolean {
   return (
     !!state.config &&
     visibleMaps(state).length > 0 &&
     presetsToConvert(state).length > 0 &&
     state.variants.length > 0 &&
+    levelMismatch(state) === null &&
     !isConverting(state)
   );
 }
@@ -253,6 +301,7 @@ export {
   initialState,
   isConverting,
   isHidden,
+  levelMismatch,
   presetsToConvert,
   selectedPresets,
   tooLargePresets,

@@ -9,6 +9,13 @@ function preview(name: string): MapPreview {
     columns: 20,
     rows: 25,
     unlit: name.includes('Unlit'),
+    grid: {
+      originX: 0,
+      originY: 0,
+      columns: 20,
+      rows: 25,
+      pixelsPerSquare: name.includes('Dense') ? 140 : 70,
+    },
   };
 }
 
@@ -40,6 +47,55 @@ describe('useMapPreview', () => {
       { initialProps: { files, shown } },
     );
   }
+
+  it('tells once about every level it has read, with its grid', async () => {
+    const onLevelRead = vi.fn();
+    const tower = new File(['1'], 'Tower.dd2vtt');
+    const dense = new File(['2'], 'Dense.dd2vtt');
+    const broken = new File(['3'], 'broken.dd2vtt');
+    const { rerender } = renderHook(
+      ({ files }: { files: File[] }) =>
+        useMapPreview(files, files, read, onLevelRead),
+      { initialProps: { files: [tower, dense, broken] } },
+    );
+
+    await waitFor(() => expect(onLevelRead).toHaveBeenCalledTimes(2));
+    rerender({ files: [tower, dense, broken] });
+
+    expect(onLevelRead).toHaveBeenCalledTimes(2);
+    expect(onLevelRead).toHaveBeenCalledWith(
+      tower,
+      expect.objectContaining({ pixelsPerSquare: 70 }),
+    );
+    expect(onLevelRead).toHaveBeenCalledWith(
+      dense,
+      expect.objectContaining({ pixelsPerSquare: 140 }),
+    );
+  });
+
+  it('says nothing about a level that was removed before it was read', async () => {
+    const onLevelRead = vi.fn();
+    let finish = (_preview: MapPreview) => undefined as void;
+    const slow = vi.fn(
+      () =>
+        new Promise<MapPreview>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const tower = new File(['1'], 'Tower.dd2vtt');
+    const { rerender } = renderHook(
+      ({ files }: { files: File[] }) =>
+        useMapPreview(files, files, slow, onLevelRead),
+      { initialProps: { files: [tower] } },
+    );
+
+    rerender({ files: [] });
+    finish(preview('Tower.dd2vtt'));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(onLevelRead).not.toHaveBeenCalled();
+  });
 
   it('is empty without maps', () => {
     const { result } = renderPreviews([]);

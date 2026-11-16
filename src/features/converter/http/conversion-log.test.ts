@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { toLogEntry } from './conversion-log.ts';
+import type { Request, Response } from 'express';
+import { UnprocessableError } from '../../../shared/errors.ts';
+import {
+  addToConversionLog,
+  logConversions,
+  noteConversionError,
+  toLogEntry,
+  type ConversionLogEntry,
+} from './conversion-log.ts';
 
 const MB = 1024 * 1024;
 
@@ -66,5 +74,95 @@ describe('toLogEntry', () => {
 
       assert.equal(entry.result, result, `${status} ${finished} ${timedOut}`);
     }
+  });
+});
+
+describe('toLogEntry errors', () => {
+  it('says what went wrong, with the detail when there is one', () => {
+    const entry = toLogEntry(
+      {
+        receivedAt: 1_000,
+        error: 'LevelMismatchError',
+        detail: 'image 200×100 px, main 200×200 px',
+      },
+      422,
+      true,
+      1_010,
+    );
+
+    assert.deepEqual(entry, {
+      event: 'conversion',
+      result: 'invalid',
+      status: 422,
+      error: 'LevelMismatchError',
+      detail: 'image 200×100 px, main 200×200 px',
+      tookMs: 10,
+    });
+  });
+});
+
+describe('noteConversionError', () => {
+  function failedRequest(error: unknown): {
+    entry: ConversionLogEntry;
+    passedOn: unknown[];
+  } {
+    const logged: ConversionLogEntry[] = [];
+    const closing: (() => void)[] = [];
+    const res = {
+      statusCode: 422,
+      writableFinished: true,
+      once: (_event: string, listener: () => void) => closing.push(listener),
+    } as unknown as Response;
+    const passedOn: unknown[] = [];
+
+    void logConversions((entry) => logged.push(entry))(
+      {} as Request,
+      res,
+      () => undefined,
+    );
+    noteConversionError(error, {} as Request, res, (passed?: unknown) =>
+      passedOn.push(passed),
+    );
+    for (const close of closing) {
+      close();
+    }
+
+    return { entry: logged[0], passedOn };
+  }
+
+  it('adds the kind of the error and its detail to the log line, and passes the error on', () => {
+    class LevelMismatchError extends UnprocessableError {
+      name = 'LevelMismatchError';
+    }
+    const error = new LevelMismatchError(
+      '"Lower.dd2vtt" does not match "Main.dd2vtt".',
+      'image 200×100 px, main 200×200 px',
+    );
+
+    const { entry, passedOn } = failedRequest(error);
+
+    assert.equal(entry.error, 'LevelMismatchError');
+    assert.equal(entry.detail, 'image 200×100 px, main 200×200 px');
+    assert.equal(JSON.stringify(entry).includes('Lower.dd2vtt'), false);
+    assert.deepEqual(passedOn, [error]);
+  });
+
+  it('leaves the detail out for an error without one', () => {
+    const { entry } = failedRequest(new TypeError('Something broke.'));
+
+    assert.equal(entry.error, 'TypeError');
+    assert.equal('detail' in entry, false);
+  });
+
+  it('still names something that is not an error', () => {
+    const { entry } = failedRequest('boom');
+
+    assert.equal(entry.error, 'Error');
+  });
+
+  it('does nothing for a response it is not logging', () => {
+    assert.doesNotThrow(() =>
+      addToConversionLog({} as Response, { error: 'X' }),
+    );
   });
 });

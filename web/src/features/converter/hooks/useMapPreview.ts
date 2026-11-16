@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { LevelGrid } from '../model/level-match.ts';
 import type { MapPreview, PreviewState } from '../model/map-preview.ts';
 import { readPreviewInWorker } from '../workers/preview-worker.ts';
 
@@ -14,6 +15,7 @@ type LevelPreview =
   | { status: 'error'; message: string };
 
 type ReadPreview = (file: File) => Promise<MapPreview>;
+type OnLevelRead = (file: File, grid: LevelGrid) => void;
 
 function combine(
   files: File[],
@@ -59,9 +61,12 @@ function useMapPreview(
   files: File[],
   shown: File[] = files,
   read: ReadPreview = readPreviewInWorker,
+  onLevelRead?: OnLevelRead,
 ): PreviewState {
   const [levels, setLevels] = useState(() => new Map<File, LevelPreview>());
   const started = useRef(new Set<File>());
+  const report = useRef(onLevelRead);
+  report.current = onLevelRead;
 
   useEffect(() => {
     for (const file of files) {
@@ -82,6 +87,9 @@ function useMapPreview(
             rows: preview.rows,
             unlit: preview.unlit,
           };
+          if (started.current.has(file)) {
+            report.current?.(file, preview.grid);
+          }
         } catch (error) {
           next = {
             status: 'error',

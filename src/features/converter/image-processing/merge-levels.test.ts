@@ -103,8 +103,9 @@ describe('mergeLevels', () => {
         assert.ok(error instanceof UnprocessableError);
         assert.equal(
           error.message,
-          '"Lower.dd2vtt" is 200×100 px, but the main map "Main.dd2vtt" is 200×200 px.',
+          '"Lower.dd2vtt" is 200×100 px, but the main map "Main.dd2vtt" is 200×200 px. Levels must be exports of the same map at the same size.',
         );
+        assert.equal(error.logDetail, 'image 200×100 px, main 200×200 px');
         return true;
       },
     );
@@ -121,7 +122,9 @@ describe('mergeLevels', () => {
     });
     const denser = { ...makeLevel('Lower', image), pixelsPerGrid: 50 };
     const message =
-      '"Lower.dd2vtt" has a different grid (origin, size or pixels per square) than the main map "Main.dd2vtt".';
+      '"Lower.dd2vtt" has a different grid (origin, size or pixels per square) than the main map "Main.dd2vtt". Levels must be exports of the same map at the same size.';
+    const details: (string | undefined)[] = [];
+    const mainGrid = `origin 0,0, 2×2 squares, ${PIXELS_PER_GRID} px per square`;
 
     for (const lower of [shifted, resized, denser]) {
       await assert.rejects(
@@ -129,10 +132,17 @@ describe('mergeLevels', () => {
         (error: unknown) => {
           assert.ok(error instanceof LevelMismatchError);
           assert.equal(error.message, message);
+          details.push(error.logDetail);
           return true;
         },
       );
     }
+
+    assert.deepEqual(details, [
+      `grid origin 1,0, 2×2 squares, ${PIXELS_PER_GRID} px per square; main ${mainGrid}`,
+      `grid origin 0,0, 4×4 squares, ${PIXELS_PER_GRID} px per square; main ${mainGrid}`,
+      `grid origin 0,0, 2×2 squares, 50 px per square; main ${mainGrid}`,
+    ]);
   });
 
   it('needs at least two levels', async () => {

@@ -321,6 +321,7 @@ describe('POST /api/convert', () => {
         { result: 'invalid', status: 400 },
       ],
     );
+    assert.ok(logged.slice(before).every((entry) => entry.error));
   });
 
   it('accepts the next request once the place is free again', async () => {

@@ -3,6 +3,7 @@ import {
   canSubmit,
   converterReducer,
   initialState,
+  levelMismatch,
   presetsToConvert,
   selectedPresets,
   tooLargePresets,
@@ -244,6 +245,83 @@ describe('converterReducer', () => {
     expect(state.maps).toEqual([]);
     expect(state.status).toEqual({ kind: 'idle' });
     expect(state.presets).toEqual(['JPG_70', 'WEBP_140']);
+  });
+});
+
+describe('levels that do not match', () => {
+  const tower = file('Tower.dd2vtt');
+  const inn = file('Inn.dd2vtt', 11);
+  const grid = {
+    originX: 0,
+    originY: 0,
+    columns: 20,
+    rows: 25,
+    pixelsPerSquare: 70,
+  };
+  const added: ConverterAction = { type: 'mapsAdded', files: [inn, tower] };
+  const towerRead: ConverterAction = { type: 'levelRead', file: tower, grid };
+  const innRead: ConverterAction = {
+    type: 'levelRead',
+    file: inn,
+    grid: { ...grid, columns: 10 },
+  };
+
+  it('are named as soon as both levels are read, and stop the conversion', () => {
+    const state = run(loaded, added, towerRead, innRead);
+
+    expect(state.maps).toEqual([tower, inn]);
+    expect(levelMismatch(state)).toBe(
+      '"Inn.dd2vtt" is 10 × 25 squares at 70 px per square, but the main map "Tower.dd2vtt" is 20 × 25 squares at 70 px per square. Levels must be exports of the same map at the same size.',
+    );
+    expect(canSubmit(state)).toBe(false);
+  });
+
+  it('are not a problem while a level is still being read', () => {
+    expect(levelMismatch(run(loaded, added, towerRead))).toBeNull();
+    expect(levelMismatch(run(loaded, added, innRead))).toBeNull();
+    expect(canSubmit(run(loaded, added, innRead))).toBe(true);
+  });
+
+  it('are fine again once the odd level is hidden or removed', () => {
+    const state = run(loaded, added, towerRead, innRead);
+    const hidden = converterReducer(state, { type: 'levelToggled', index: 1 });
+    const removed = converterReducer(state, { type: 'mapRemoved', index: 1 });
+
+    expect(levelMismatch(hidden)).toBeNull();
+    expect(canSubmit(hidden)).toBe(true);
+    expect(levelMismatch(removed)).toBeNull();
+    expect(Object.keys(removed.grids)).toHaveLength(1);
+  });
+
+  it('compare with whichever level is the main one now', () => {
+    const state = converterReducer(run(loaded, added, towerRead, innRead), {
+      type: 'mapMoved',
+      from: 1,
+      to: 0,
+    });
+
+    expect(levelMismatch(state)).toContain(
+      'but the main map "Inn.dd2vtt" is 10 × 25 squares',
+    );
+  });
+
+  it('leave levels that match alone', () => {
+    const state = run(loaded, added, towerRead, {
+      type: 'levelRead',
+      file: inn,
+      grid,
+    });
+
+    expect(levelMismatch(state)).toBeNull();
+    expect(canSubmit(state)).toBe(true);
+  });
+
+  it('forget what was read when the form is cleared or the level is gone', () => {
+    const cleared = run(loaded, added, towerRead, innRead, { type: 'reset' });
+    const late = run(loaded, withMap, towerRead);
+
+    expect(cleared.grids).toEqual({});
+    expect(late.grids).toEqual({});
   });
 });
 

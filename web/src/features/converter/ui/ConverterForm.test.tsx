@@ -250,6 +250,43 @@ describe('ConverterForm', () => {
     ).toHaveAttribute('src', 'blob:zip');
   });
 
+  it('says at once when the levels are not the same map, and does not send them', async () => {
+    const fetchMock = mockServer();
+    await renderForm();
+    const level = (name: string, columns: number) =>
+      new File(
+        [
+          JSON.stringify({
+            resolution: {
+              map_size: { x: columns, y: 25 },
+              pixels_per_grid: 100,
+            },
+            image: 'iVBORw0KGgoAAAANSUhEUg==',
+          }),
+        ],
+        name,
+      );
+
+    await userEvent.upload(mapInput(), [
+      level('Tower.dd2vtt', 20),
+      level('Inn.dd2vtt', 10),
+    ]);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Levels must be exports of the same map at the same size.',
+    );
+    const convert = screen.getByRole('button', { name: /Convert/ });
+    expect(convert).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('button', { name: /Remove Inn/ }));
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(convert).toBeEnabled();
+    expect(
+      fetchMock.mock.calls.filter(([url]) => url.startsWith('/api/convert')),
+    ).toEqual([]);
+  });
+
   it('turns off a format whose image would be too large for the map', async () => {
     const fetchMock = mockServer({ ...CONFIG, maxOutputPixels: 1_000_000 });
     await renderForm();

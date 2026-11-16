@@ -1,4 +1,4 @@
-import type { RequestHandler, Response } from 'express';
+import type { ErrorRequestHandler, RequestHandler, Response } from 'express';
 import { toMegabytes } from '../../../shared/utils/format.ts';
 import { withoutUndefined } from '../../../shared/utils/object.ts';
 import { elapsed } from '../../../shared/utils/time.ts';
@@ -15,12 +15,16 @@ interface ConversionDetails {
   uploadBytes?: number;
   presets?: string[];
   variants?: string[];
+  error?: string;
+  detail?: string;
 }
 
 interface ConversionLogEntry {
   event: 'conversion';
   result: ConversionResult;
   status: number;
+  error?: string;
+  detail?: string;
   levels?: number;
   uploadMB?: number;
   presets?: string[];
@@ -70,6 +74,8 @@ function toLogEntry(
     event: 'conversion',
     result: conversionResult(status, finished, details.timedOut ?? false),
     status,
+    error: details.error,
+    detail: details.detail,
     levels: details.levels,
     uploadMB:
       details.uploadBytes === undefined
@@ -99,6 +105,22 @@ function logConversions(log: LogConversion): RequestHandler {
   };
 }
 
+function logDetail(error: unknown): string | undefined {
+  return error instanceof Error &&
+    'logDetail' in error &&
+    typeof error.logDetail === 'string'
+    ? error.logDetail
+    : undefined;
+}
+
+const noteConversionError: ErrorRequestHandler = (error, _req, res, next) => {
+  addToConversionLog(res, {
+    error: error instanceof Error ? error.name : 'Error',
+    detail: logDetail(error),
+  });
+  next(error);
+};
+
 function addToConversionLog(
   res: Response,
   changes: Partial<ConversionDetails>,
@@ -109,5 +131,11 @@ function addToConversionLog(
   }
 }
 
-export { addToConversionLog, logConversions, logToConsole, toLogEntry };
+export {
+  addToConversionLog,
+  logConversions,
+  logToConsole,
+  noteConversionError,
+  toLogEntry,
+};
 export type { ConversionLogEntry, LogConversion };

@@ -152,6 +152,7 @@ function getOutputSize(
   if (width * height > MAX_OUTPUT_PIXELS) {
     throw new MapTooLargeError(
       `"${map.fileNameWithExt}" would be ${width}×${height} px in ${preset.name}, which exceeds the limit of ${formatMegapixels(MAX_OUTPUT_PIXELS)}. Try unselecting the larger formats.`,
+      `${width}×${height} px in ${preset.name}`,
     );
   }
 

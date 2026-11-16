@@ -1,8 +1,11 @@
+import type { LevelGrid } from './level-match.ts';
+
 interface MapPreview {
   image: Blob;
   columns: number;
   rows: number;
   unlit: boolean;
+  grid: LevelGrid;
 }
 
 type PreviewState =
@@ -64,6 +67,20 @@ function gridSize(resolution: unknown): { columns: number; rows: number } {
   return { columns: Math.round(columns), rows: Math.round(rows) };
 }
 
+function levelGrid(resolution: unknown): LevelGrid {
+  const fields = isObject(resolution) ? resolution : {};
+  const origin = isObject(fields.map_origin) ? fields.map_origin : {};
+  const size = isObject(fields.map_size) ? fields.map_size : {};
+
+  return {
+    originX: Number(origin.x ?? 0),
+    originY: Number(origin.y ?? 0),
+    columns: Number(size.x),
+    rows: Number(size.y),
+    pixelsPerSquare: Number(fields.pixels_per_grid),
+  };
+}
+
 function isUnlit(data: Fields): boolean {
   const environment = isObject(data.environment) ? data.environment : {};
   const resolution = isObject(data.resolution) ? data.resolution : {};
@@ -97,6 +114,7 @@ async function readMapPreview(file: File): Promise<MapPreview> {
     columns,
     rows,
     unlit: isUnlit(data),
+    grid: levelGrid(data.resolution),
   };
 }
 

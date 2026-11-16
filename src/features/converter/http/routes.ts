@@ -21,6 +21,7 @@ import {
 import {
   logConversions,
   logToConsole,
+  noteConversionError,
   type LogConversion,
 } from './conversion-log.ts';
 import { convertHandler } from './convert-handler.ts';
@@ -84,6 +85,7 @@ function createRoutes({
     createUploadDir,
     uploadFiles,
     convertHandler(queue),
+    noteConversionError,
   );
 
   return router;

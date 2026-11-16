@@ -32,6 +32,40 @@ describe('readMapPreview', () => {
     ).toEqual(new Uint8Array([0x89, 0x50, 0x4e, 0x47]));
   });
 
+  it('reads the grid as the file gives it, for comparing levels', async () => {
+    const preview = await readMapPreview(
+      dd2vtt(
+        valid({
+          resolution: {
+            map_origin: { x: 2, y: -1 },
+            map_size: { x: 20.5, y: 25 },
+            pixels_per_grid: 140,
+          },
+        }),
+      ),
+    );
+
+    expect(preview.grid).toEqual({
+      originX: 2,
+      originY: -1,
+      columns: 20.5,
+      rows: 25,
+      pixelsPerSquare: 140,
+    });
+  });
+
+  it('takes a missing origin for the corner of the map', async () => {
+    const preview = await readMapPreview(
+      dd2vtt(
+        valid({
+          resolution: { map_size: { x: 20, y: 25 }, pixels_per_grid: 100 },
+        }),
+      ),
+    );
+
+    expect(preview.grid).toMatchObject({ originX: 0, originY: 0 });
+  });
+
   it('knows when the map was exported without lighting', async () => {
     const unlit = await readMapPreview(
       dd2vtt(valid({ environment: { baked_lighting: false } })),
