@@ -8,7 +8,45 @@ services:
     networks:
       - default
       - web
+    logging: !override
+      driver: syslog
+      options:
+        syslog-address: udp://127.0.0.1:5140
+        syslog-format: rfc5424micro
+        tag: dd-converter
+
+  logs:
+    image: victoriametrics/victoria-logs:v1.53.0
+    container_name: dd-logs
+    command:
+      - -storageDataPath=/victoria-logs-data
+      - -retentionPeriod=${LOGS_RETENTION:-90d}
+      - -retention.maxDiskSpaceUsageBytes=${LOGS_MAX_DISK:-2GiB}
+      - -syslog.listenAddr.udp=:5140
+    ports:
+      - '127.0.0.1:5140:5140/udp'
+      - '127.0.0.1:9428:9428'
+    volumes:
+      - logs:/victoria-logs-data
+    networks:
+      - logs
+    mem_limit: 128m
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
 
 networks:
   web:
     external: true
+  logs:
+
+volumes:
+  logs:

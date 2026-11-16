@@ -25,7 +25,7 @@ Each migration must then work with the code that is still running: add tables an
 
 Open http://localhost:3000. To use a different port, run `HOST_PORT=8080 docker compose up -d --build`.
 
-`docker compose logs -f` follows the logs; `docker compose down` stops it. Logs are rotated at 5 files of 10 MB.
+`docker compose logs -f` follows the logs; `docker compose down` stops it. Logs are rotated at 5 files of 10 MB. In production (`compose.prod.yml`) the app's lines also go to a VictoriaLogs container, which keeps them across deploys for `LOGS_RETENTION` (90 days) or up to `LOGS_MAX_DISK` (2 GiB).
 
 Every conversion request writes one JSON line, without file names or IP addresses:
 
